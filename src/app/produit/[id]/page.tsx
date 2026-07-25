@@ -32,7 +32,7 @@ export default async function ProduitDetailPage({
       lots: {
         where: { status: "active" },
         orderBy: { createdAt: "desc" },
-        include: { _count: { select: { scans: true } } },
+        include: { _count: { select: { qrCodes: true } } },
       },
     },
   });
@@ -146,7 +146,7 @@ export default async function ProduitDetailPage({
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-gray-500">{lot._count.scans} scans</div>
+                        <div className="text-xs text-gray-500">{lot._count.qrCodes} QR code{lot._count.qrCodes > 1 ? "s" : ""}</div>
                         <div className="text-xs text-emerald-700 font-medium group-hover:underline">
                           Voir détails →
                         </div>

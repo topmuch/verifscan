@@ -31,11 +31,11 @@ export async function GET(req: Request) {
     orderBy: { createdAt: "desc" },
     include: {
       product: { select: { id: true, name: true, brand: true, photoUrl: true } },
-      qrCodes: { select: { id: true, qrCodeImageUrl: true } },
-      _count: { select: { scans: true } },
+      qrCodes: { select: { id: true, qrCodeImageUrl: true, isActive: true } },
+      _count: { select: { qrCodes: true } },
     },
   });
-  return NextResponse.json(lots);
+  return NextResponse.json({ lots });
 }
 
 /** Create lot + auto-generate QR code. */

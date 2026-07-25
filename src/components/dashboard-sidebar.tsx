@@ -11,6 +11,10 @@ import {
   Settings,
   LogOut,
   Home,
+  CreditCard,
+  Bell,
+  Download,
+  Layers3,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -22,7 +26,11 @@ const fabricantLinks = [
   { href: "/dashboard/produits", label: "Produits", icon: Package },
   { href: "/dashboard/lots", label: "Lots", icon: Layers },
   { href: "/dashboard/qr-codes", label: "QR Codes", icon: QrCode },
+  { href: "/dashboard/qr-codes/masse", label: "Génération en masse", icon: Layers3 },
   { href: "/dashboard/statistiques", label: "Statistiques", icon: BarChart3 },
+  { href: "/dashboard/abonnement", label: "Abonnement", icon: CreditCard },
+  { href: "/dashboard/export", label: "Exports", icon: Download },
+  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
 ];
 

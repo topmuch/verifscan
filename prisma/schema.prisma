@@ -27,6 +27,9 @@ model User {
 
   products      Product[]
   scans         Scan[]
+  subscription  Subscription?
+  notifications Notification[]
+  invoices      Invoice[]
 }
 
 model Category {
@@ -72,6 +75,8 @@ model Lot {
   transformationLocation String?
   salesCountries         String? // CSV: "Sénégal, Mali, Côte d'Ivoire"
   status                 String   @default("active") // 'active' | 'recalled'
+  recallReason           String?
+  recalledAt             DateTime?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -87,6 +92,10 @@ model QRCode {
   lotId         String
   publicUrl     String
   qrCodeImageUrl String?
+  logoUrl       String?
+  fgColor       String?  // foreground color (V2 customization)
+  bgColor       String?  // background color (V2 customization)
+  size          Int?     // size in pixels (V2)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -105,6 +114,9 @@ model Scan {
   location    String?
   deviceType  String?
   userAgent   String?
+  country     String?
+  city        String?
+  ipAddress   String?
 
   qrCode      QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -112,4 +124,68 @@ model Scan {
   @@index([qrCodeId])
   @@index([userId])
   @@index([scannedAt])
+  @@index([country])
+}
+
+// === V2: Système d'abonnement ===
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  plan            String   @default("starter") // 'starter' | 'pro' | 'enterprise'
+  status          String   @default("trial") // 'trial' | 'active' | 'past_due' | 'canceled'
+  qrCodesLimit    Int      @default(500)  // quota mensuel
+  qrCodesUsed     Int      @default(0)
+  productsLimit   Int      @default(5)    // -1 pour illimité
+  trialEndsAt     DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices        Invoice[]
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  userId          String
+  subscriptionId  String
+  amount          Int      // en FCFA
+  plan            String
+  periodStart     DateTime
+  periodEnd       DateTime
+  status          String   @default("paid") // 'paid' | 'failed' | 'pending'
+  paymentMethod   String?  // 'cinetpay' | 'stripe' | 'manual'
+  paymentRef      String?
+  invoiceNumber   String   @unique
+  pdfUrl          String?
+  createdAt       DateTime @default(now())
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([subscriptionId])
+}
+
+// === V2: Notifications ===
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // 'recall_alert' | 'quota_warning' | 'new_scan' | 'weekly_report' | 'payment'
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  link        String?
+  metadata    String?  // JSON string for additional data
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
 }

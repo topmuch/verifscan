@@ -21,6 +21,7 @@ import {
   QrCode,
   AlertTriangle,
   Info,
+  ShieldCheck,
 } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { Button } from "@/components/ui/button";
@@ -406,6 +407,39 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Verified badge V2 */}
+        {!isRecalled && (
+          <div className="mt-4 flex justify-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg">
+              <ShieldCheck className="size-4" />
+              <span className="text-sm font-semibold">Vérifié par VerifScan</span>
+              <span className="text-xs opacity-80">· Lot authentique</span>
+            </div>
+          </div>
+        )}
+
+        {/* Social share V2 */}
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ce produit vérifié sur VerifScan : ${lot.product.name} (${lot.product.brand})`)}&_url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+          >
+            <MessageCircle className="size-3.5" />
+            WhatsApp
+          </a>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1877F2] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+          >
+            <svg className="size-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </a>
         </div>
 
         {/* Footer note */}

@@ -17,7 +17,7 @@ export default async function DashboardLotsPage() {
     include: {
       product: { select: { id: true, name: true, brand: true, photoUrl: true, category: { select: { icon: true } } } },
       qrCodes: { select: { id: true, qrCodeImageUrl: true }, take: 1 },
-      _count: { select: { scans: true } },
+      _count: { select: { qrCodes: true } },
     },
   });
 
@@ -109,7 +109,7 @@ export default async function DashboardLotsPage() {
                             {lot.expirationDate.toLocaleDateString("fr-FR")}
                           </span>
                         </span>
-                        <span>{lot._count.scans} scan{lot._count.scans > 1 ? "s" : ""}</span>
+                        <span>{lot._count.qrCodes} QR code{lot._count.qrCodes > 1 ? "s" : ""}</span>
                       </div>
                     </div>
 
