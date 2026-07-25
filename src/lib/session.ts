@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 export type SessionUser = {
   id: string;
   email: string;
-  role: "superadmin" | "fabricant";
+  role: "superadmin" | "fabricant" | "distributor";
   companyName?: string | null;
 };
 
@@ -32,5 +32,13 @@ export async function requireFabricant(): Promise<SessionUser | null> {
 export async function requireSuperAdmin(): Promise<SessionUser | null> {
   const user = await getCurrentUser();
   if (!user || user.role !== "superadmin") return null;
+  return user;
+}
+
+export async function requireDistributor(): Promise<SessionUser | null> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "distributor") return null;
+  const dbUser = await db.user.findUnique({ where: { id: user.id } });
+  if (!dbUser || !dbUser.isActive) return null;
   return user;
 }

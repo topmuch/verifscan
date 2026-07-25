@@ -6,7 +6,12 @@ export type NotificationType =
   | "new_scan"
   | "weekly_report"
   | "payment"
-  | "system";
+  | "system"
+  | "ai_anomaly"
+  | "ai_prediction"
+  | "cert_expiring"
+  | "b2b_message"
+  | "b2b_order";
 
 export type CreateNotificationInput = {
   userId: string;

@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { ChatbotWidget } from "@/components/chatbot-widget";
+import { BlockchainBadge } from "@/components/blockchain-badge";
 
 type Lot = {
   id: string;
@@ -420,6 +422,11 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         )}
 
+        {/* V3 — Blockchain certificate badge */}
+        <div className="mt-4">
+          <BlockchainBadge lotId={lot.id} />
+        </div>
+
         {/* Social share V2 */}
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           <a
@@ -450,6 +457,9 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </Link>
         </p>
       </div>
+
+      {/* V3 — Chatbot IA assistant */}
+      <ChatbotWidget productId={lot.product.id} />
     </PublicShell>
   );
 }

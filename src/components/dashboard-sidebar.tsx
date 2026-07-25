@@ -15,6 +15,9 @@ import {
   Bell,
   Download,
   Layers3,
+  Brain,
+  Store,
+  ShieldCheck,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -27,6 +30,9 @@ const fabricantLinks = [
   { href: "/dashboard/lots", label: "Lots", icon: Layers },
   { href: "/dashboard/qr-codes", label: "QR Codes", icon: QrCode },
   { href: "/dashboard/qr-codes/masse", label: "Génération en masse", icon: Layers3 },
+  { href: "/dashboard/ia", label: "Intelligence IA", icon: Brain },
+  { href: "/dashboard/b2b", label: "Marketplace B2B", icon: Store },
+  { href: "/dashboard/blockchain", label: "Blockchain", icon: ShieldCheck },
   { href: "/dashboard/statistiques", label: "Statistiques", icon: BarChart3 },
   { href: "/dashboard/abonnement", label: "Abonnement", icon: CreditCard },
   { href: "/dashboard/export", label: "Exports", icon: Download },

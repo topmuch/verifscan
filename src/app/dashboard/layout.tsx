@@ -13,7 +13,8 @@ export default async function DashboardLayout({
   if (!session) redirect("/login?callbackUrl=/dashboard");
 
   const role = (session.user as any)?.role;
-  if (role !== "fabricant") redirect("/admin");
+  // V3: distributors also access dashboard with limited features
+  if (role !== "fabricant" && role !== "distributor") redirect("/admin");
 
   return (
     <div className="min-h-screen bg-emerald-50/30">
@@ -23,7 +24,9 @@ export default async function DashboardLayout({
         {/* Desktop top bar */}
         <header className="hidden md:flex sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-emerald-100 px-6 py-3 items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="font-semibold text-gray-700">Espace Fabricant</span>
+            <span className="font-semibold text-gray-700">
+              {role === "distributor" ? "Espace Distributeur" : "Espace Fabricant"}
+            </span>
             <span className="text-gray-300">·</span>
             <span>La vérité au bout du scan</span>
           </div>

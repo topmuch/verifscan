@@ -14,7 +14,7 @@ model User {
   id            String   @id @default(cuid())
   email         String   @unique
   passwordHash  String
-  role          String   @default("fabricant") // 'superadmin' | 'fabricant'
+  role          String   @default("fabricant") // 'superadmin' | 'fabricant' | 'distributor'
   companyName   String?
   logoUrl       String?
   phone         String?
@@ -30,6 +30,16 @@ model User {
   subscription  Subscription?
   notifications Notification[]
   invoices      Invoice[]
+  // V3 relations
+  distributor             Distributor?
+  b2bOrders               B2BOrder[]    @relation("FabricantOrders")
+  messagesReceived        B2BMessage[]  @relation("ReceiverMessages")
+  b2bSentMessages         B2BMessage[]  @relation("B2BSender")
+  contracts               Contract[]    @relation("FabricantOrders")
+  certifications          Certification[]
+  exportDocuments         ExportDocument[]
+  b2bReviewsReceived      B2BReview[]   @relation("FabricantReviews")
+  conversations           Conversation[]
 }
 
 model Category {
@@ -59,6 +69,11 @@ model Product {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category @relation(fields: [categoryId], references: [id])
   lots        Lot[]
+  // V3 relations
+  b2bInfo     B2BProduct?
+  conversations Conversation[]
+  aiAnomalies AIAnomaly[]
+  aiPredictions AIPrediction[]
 
   @@index([userId])
   @@index([categoryId])
@@ -82,6 +97,9 @@ model Lot {
 
   product                Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   qrCodes                QRCode[]
+  // V3 relations
+  aiAnomalies            AIAnomaly[]
+  blockchainCertificate  BlockchainCertificate?
 
   @@index([productId])
   @@index([status])
@@ -175,7 +193,7 @@ model Invoice {
 model Notification {
   id          String   @id @default(cuid())
   userId      String
-  type        String   // 'recall_alert' | 'quota_warning' | 'new_scan' | 'weekly_report' | 'payment'
+  type        String   // 'recall_alert' | 'quota_warning' | 'new_scan' | 'weekly_report' | 'payment' | 'ai_anomaly' | 'ai_prediction' | 'cert_expiring' | 'b2b_message' | 'b2b_order'
   title       String
   message     String
   isRead      Boolean  @default(false)
@@ -188,4 +206,282 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+}
+
+// === V3: Module IA ===
+
+model AIAnomaly {
+  id          String   @id @default(cuid())
+  type        String   // 'allergen' | 'dlc' | 'counterfeit' | 'ingredient' | 'cert_expiring'
+  productId   String?
+  lotId       String?
+  fabricantId String
+  severity    String   @default("info") // 'info' | 'warning' | 'critical'
+  description String
+  aiMetadata  String?  // JSON: détails (ingrédients suspects, pays, etc.)
+  status      String   @default("open") // 'open' | 'resolved' | 'ignored'
+  detectedAt  DateTime @default(now())
+  resolvedAt  DateTime?
+
+  lot         Lot?     @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([fabricantId])
+  @@index([status])
+  @@index([type])
+}
+
+model AIPrediction {
+  id                String   @id @default(cuid())
+  productId         String
+  predictionType    String   // 'demand' | 'seasonal'
+  predictedValue    Float    // % change attendu (ex: +30 = +30%)
+  confidenceScore   Float    // 0-100
+  periodStart       DateTime
+  periodEnd         DateTime
+  modelVersion      String   @default("v1.0")
+  generatedAt       DateTime @default(now())
+
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([predictionType])
+}
+
+model AIRecommendation {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  type            String   // 'seo' | 'trust' | 'publish_time' | 'competitive' | 'translation'
+  content         String
+  expectedImpactPct Int?
+  status          String   @default("pending") // 'pending' | 'applied' | 'dismissed'
+  createdAt       DateTime @default(now())
+
+  @@index([fabricantId])
+  @@index([status])
+}
+
+// === V3: Marketplace B2B ===
+
+model Distributor {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String
+  ninea           String?  // NINEA Sénégal
+  rccm            String?  // Registre Commerce
+  businessCategory String?
+  regionsServed   String?  // CSV: "Dakar, Thiès, Saint-Louis"
+  preferredCategories String? // CSV category IDs
+  verified        Boolean  @default(false)
+  verifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  b2bOrders       B2BOrder[] @relation("DistributorOrders")
+  reviewsGiven    B2BReview[]   @relation("ReviewerReviews")
+  contractsAsDistributor Contract[] @relation("DistributorContracts")
+  conversations   Conversation[]
+
+  @@index([verified])
+}
+
+model B2BProduct {
+  id                  String   @id @default(cuid())
+  productId           String   @unique
+  distributorPriceTiers String? // JSON: [{minQty: 100, price: 1500}, ...]
+  moq                 Int      @default(1) // Minimum Order Quantity
+  paymentTerms        String?  // ex: "30 jours net"
+  leadTimeDays        Int      @default(7)
+  monthlyCapacity     Int?
+  isB2BVisible        Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  b2bOrderItems       B2BOrderItem[]
+
+  @@index([isB2BVisible])
+}
+
+model Conversation {
+  id              String   @id @default(cuid())
+  distributorId   String
+  fabricantId     String
+  productId       String?
+  lastMessageAt   DateTime?
+  createdAt       DateTime @default(now())
+
+  distributor     Distributor @relation(fields: [distributorId], references: [id], onDelete: Cascade)
+  fabricant       User        @relation(fields: [fabricantId], references: [id], onDelete: Cascade)
+  product         Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  messages        B2BMessage[]
+  orders          B2BOrder[]
+
+  @@index([distributorId])
+  @@index([fabricantId])
+}
+
+model B2BMessage {
+  id              String   @id @default(cuid())
+  conversationId  String
+  senderId        String   // User ID (fabricant or distributor's user)
+  receiverId      String   // User ID
+  senderRole      String   // 'fabricant' | 'distributor'
+  content         String
+  attachments     String?  // JSON: [{name, url}]
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User        @relation("B2BSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User        @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([receiverId])
+  @@index([isRead])
+}
+
+model B2BOrder {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  distributorId   String
+  fabricantId     String
+  conversationId  String?
+  status          String   @default("quote_requested") // 'quote_requested' | 'quote_sent' | 'accepted' | 'rejected' | 'in_production' | 'shipped' | 'delivered' | 'cancelled'
+  totalAmount     Int      @default(0) // en FCFA
+  currency        String   @default("XOF")
+  paymentStatus   String   @default("pending") // 'pending' | 'paid' | 'failed' | 'refunded'
+  deliveryStatus  String   @default("pending") // 'pending' | 'preparing' | 'in_transit' | 'delivered'
+  deliveryAddress String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  distributor     Distributor @relation("DistributorOrders", fields: [distributorId], references: [id], onDelete: Cascade)
+  fabricant       User        @relation("FabricantOrders", fields: [fabricantId], references: [id], onDelete: Cascade)
+  conversation    Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  items           B2BOrderItem[]
+  reviews         B2BReview[]
+
+  @@index([distributorId])
+  @@index([fabricantId])
+  @@index([status])
+}
+
+model B2BOrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  b2bProductId    String
+  quantity        Int
+  unitPrice       Int      // en FCFA
+  total           Int      // quantity * unitPrice
+
+  order           B2BOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  b2bProduct      B2BProduct @relation(fields: [b2bProductId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model B2BReview {
+  id                  String   @id @default(cuid())
+  distributorReviewerId String   // Distributor ID (reviewer)
+  fabricantReviewedId String   // Fabricant User ID (reviewed)
+  orderId             String
+  reliabilityScore    Int      // 1-5
+  qualityScore        Int      // 1-5
+  professionalismScore Int     // 1-5
+  comment             String?
+  createdAt           DateTime @default(now())
+
+  reviewer            Distributor @relation("ReviewerReviews", fields: [distributorReviewerId], references: [id], onDelete: Cascade)
+  reviewed            User        @relation("FabricantReviews", fields: [fabricantReviewedId], references: [id], onDelete: Cascade)
+  order               B2BOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([distributorReviewerId])
+  @@index([fabricantReviewedId])
+}
+
+model Contract {
+  id                  String   @id @default(cuid())
+  fabricantId         String
+  distributorId       String
+  type                String   // 'supply' | 'exclusivity' | 'whitelabel'
+  title               String
+  contentHtml         String
+  signedByFabricantAt DateTime?
+  signedByDistributorAt DateTime?
+  signatureData       String?  // JSON
+  pdfUrl              String?
+  status              String   @default("draft") // 'draft' | 'sent' | 'signed' | 'expired' | 'terminated'
+  validFrom           DateTime?
+  validUntil          DateTime?
+  createdAt           DateTime @default(now())
+
+  fabricant           User        @relation("FabricantOrders", fields: [fabricantId], references: [id], onDelete: Cascade)
+  distributor         Distributor @relation("DistributorContracts", fields: [distributorId], references: [id], onDelete: Cascade)
+
+  @@index([fabricantId])
+  @@index([distributorId])
+  @@index([status])
+}
+
+// === V3: Blockchain & Certifications ===
+
+model BlockchainCertificate {
+  id              String   @id @default(cuid())
+  lotId           String   @unique
+  txHash          String   @unique
+  blockNumber     Int
+  dataHash        String   // SHA-256 des données certifiées
+  contractAddress String
+  network         String   @default("polygon") // 'polygon' | 'mumbai' | 'hyperledger'
+  certifiedAt     DateTime @default(now())
+
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([network])
+}
+
+model Certification {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  type            String   // 'bio' | 'halal' | 'iso22000' | 'fda' | 'haccp' | 'nsf' | 'cedeao'
+  issuer          String   // organisme certificateur
+  certificateNumber String?
+  issuedAt        DateTime?
+  expiresAt       DateTime?
+  documentUrl     String?  // S3/IPFS URL
+  verified        Boolean  @default(false)
+  verifiedAt      DateTime?
+  verificationMethod String? // 'api' | 'manual' | 'ocr'
+  ocrMetadata     String?  // JSON: données extraites via OCR
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  fabricant       User     @relation(fields: [fabricantId], references: [id], onDelete: Cascade)
+
+  @@index([fabricantId])
+  @@index([type])
+  @@index([verified])
+  @@index([expiresAt])
+}
+
+model ExportDocument {
+  id              String   @id @default(cuid())
+  lotId           String?
+  fabricantId     String
+  type            String   // 'ue_phytosanitary' | 'cedeao' | 'fda' | 'iso22000'
+  destinationCountry String?
+  generatedPdfUrl String?
+  metadata        String?  // JSON
+  generatedAt     DateTime @default(now())
+  generatedBy     String
+
+  fabricant       User     @relation(fields: [fabricantId], references: [id], onDelete: Cascade)
+
+  @@index([fabricantId])
+  @@index([type])
 }
