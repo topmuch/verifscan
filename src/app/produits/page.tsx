@@ -3,7 +3,15 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, PackageSearch, Filter, X } from "lucide-react";
+import {
+  Search,
+  PackageSearch,
+  Filter,
+  X,
+  Flame,
+  Eye,
+  Sparkles,
+} from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,6 +47,40 @@ type Product = {
   _count: { lots: number };
 };
 
+type FeaturedProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  description: string | null;
+  photoUrl: string | null;
+  weight: string | null;
+  createdAt: string;
+  scanCount: number;
+  category: { id: string; name: string; icon: string | null };
+  user: { id: string; companyName: string | null; logoUrl: string | null };
+};
+
+/* ============ Brand colors ============ */
+const BLUE = "#0f4382";
+const BLUE_LIGHT = "#E6EEF7";
+const GREEN = "#2ebd5a";
+const GREEN_DARK = "#1f8a42";
+const GREEN_LIGHT = "#E0F5E6";
+const ORANGE = "#F59E0B";
+const ORANGE_LIGHT = "#FEF3C7";
+
+/* Rotating palette for category cards */
+const CATEGORY_PALETTES = [
+  { bg: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, #FFFFFF 100%)`, color: BLUE, ring: BLUE },
+  { bg: `linear-gradient(135deg, ${GREEN_LIGHT} 0%, #FFFFFF 100%)`, color: GREEN_DARK, ring: GREEN },
+  { bg: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, #FFFFFF 100%)`, color: "#92400E", ring: ORANGE },
+  { bg: `linear-gradient(135deg, #FCE7F3 0%, #FFFFFF 100%)`, color: "#9D174D", ring: "#EC4899" },
+  { bg: `linear-gradient(135deg, #DBEAFE 0%, #FFFFFF 100%)`, color: "#1E40AF", ring: "#3B82F6" },
+  { bg: `linear-gradient(135deg, #D1FAE5 0%, #FFFFFF 100%)`, color: "#065F46", ring: "#10B981" },
+  { bg: `linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%)`, color: "#92400E", ring: "#F59E0B" },
+  { bg: `linear-gradient(135deg, #EDE9FE 0%, #FFFFFF 100%)`, color: "#5B21B6", ring: "#8B5CF6" },
+];
+
 export default function ProduitsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen" />}>
@@ -53,7 +95,9 @@ function ProduitsPageInner() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -83,9 +127,23 @@ function ProduitsPageInner() {
     setLoading(false);
   }, [search, categoryId, page]);
 
+  const fetchFeatured = useCallback(async () => {
+    setFeaturedLoading(true);
+    try {
+      const res = await fetch("/api/products/featured?limit=8");
+      const data = await res.json();
+      setFeatured(data.items || []);
+    } catch {
+      setFeatured([]);
+    } finally {
+      setFeaturedLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+    fetchFeatured();
+  }, [fetchCategories, fetchFeatured]);
 
   useEffect(() => {
     fetchProducts();
@@ -103,9 +161,11 @@ function ProduitsPageInner() {
     router.push(`/produits?${params.toString()}`);
   };
 
+  const isFiltered = Boolean(search || categoryId);
+
   return (
     <PublicShell>
-      {/* Hero */}
+      {/* ============ HERO ============ */}
       <section className="vs-gradient-hero border-b border-emerald-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
@@ -117,12 +177,112 @@ function ProduitsPageInner() {
           </h1>
           <p className="mt-2 text-gray-600 max-w-2xl">
             Parcourez le répertoire des produits tracés par VerifScan. Chaque produit est
-            authentifié par son fabricant et dispose d'un QR code unique pour la traçabilité.
+            authentifié par son fabricant et dispose d&apos;un QR code unique pour la traçabilité.
           </p>
         </div>
       </section>
 
-      {/* Filters */}
+      {/* ============ À LA UNE — Featured products (most scanned) ============ */}
+      {!isFiltered && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div
+              className="flex-shrink-0 size-9 rounded-xl flex items-center justify-center shadow-md"
+              style={{ backgroundColor: ORANGE }}
+            >
+              <Flame className="size-5 text-white" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl font-bold text-gray-900 leading-tight">
+                À la une
+              </h2>
+              <p className="text-xs text-gray-500">
+                Les produits les plus scannés par les consommateurs
+              </p>
+            </div>
+          </div>
+
+          {featuredLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="aspect-square" />
+                  <CardContent className="p-3 space-y-2">
+                    <Skeleton className="h-3 w-1/2" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : featured.length === 0 ? (
+            <div className="text-sm text-gray-400 italic">Aucun produit à la une pour le moment.</div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {featured.map((p) => (
+                <FeaturedCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ============ CATÉGORIES EN IMAGES ============ */}
+      {!isFiltered && (
+        <section className="border-t border-emerald-100 bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center gap-2 mb-5">
+              <div
+                className="flex-shrink-0 size-9 rounded-xl flex items-center justify-center shadow-md"
+                style={{ backgroundColor: BLUE }}
+              >
+                <Sparkles className="size-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-display text-2xl font-bold text-gray-900 leading-tight">
+                  Parcourir par catégorie
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Sélectionnez une catégorie pour filtrer le catalogue
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              {categories.map((c, i) => {
+                const palette = CATEGORY_PALETTES[i % CATEGORY_PALETTES.length];
+                const isActive = categoryId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => updateUrl({ categoryId: c.id })}
+                    className="group relative rounded-2xl overflow-hidden vs-card-shadow transition-all hover:-translate-y-1 hover:vs-card-shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      background: palette.bg,
+                      boxShadow: isActive ? `0 0 0 3px ${palette.ring}` : undefined,
+                    }}
+                    aria-label={`Filtrer par ${c.name}`}
+                  >
+                    <div className="aspect-square flex flex-col items-center justify-center p-3">
+                      <span className="text-5xl mb-2 group-hover:scale-110 transition-transform">
+                        {c.icon || "📦"}
+                      </span>
+                      <span
+                        className="text-xs font-semibold text-center leading-tight line-clamp-2"
+                        style={{ color: palette.color }}
+                      >
+                        {c.name}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ============ FILTRES ============ */}
       <section className="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-emerald-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col sm:flex-row gap-2">
@@ -134,7 +294,6 @@ function ProduitsPageInner() {
                 defaultValue={search}
                 onChange={(e) => {
                   const v = e.target.value;
-                  // Debounce
                   clearTimeout((window as any).__searchTimer);
                   (window as any).__searchTimer = setTimeout(() => {
                     updateUrl({ search: v || null });
@@ -159,7 +318,7 @@ function ProduitsPageInner() {
                 ))}
               </SelectContent>
             </Select>
-            {(search || categoryId) && (
+            {isFiltered && (
               <Button
                 variant="ghost"
                 onClick={() => updateUrl({ search: null, categoryId: null })}
@@ -170,44 +329,22 @@ function ProduitsPageInner() {
               </Button>
             )}
           </div>
-
-          {/* Category chips */}
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 vs-scroll">
-            <button
-              onClick={() => updateUrl({ categoryId: null })}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !categoryId
-                  ? "bg-emerald-600 text-white"
-                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              }`}
-            >
-              Toutes
-            </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => updateUrl({ categoryId: c.id })}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  categoryId === c.id
-                    ? "bg-emerald-600 text-white"
-                    : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                }`}
-              >
-                {c.icon} {c.name}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* Products grid */}
+      {/* ============ CATALOGUE — Grille de cards 300×300 ============ */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-sm text-gray-500 mb-4">
-          {loading ? "Chargement..." : `${total} produit${total > 1 ? "s" : ""} trouvé${total > 1 ? "s" : ""}`}
-        </p>
+        <div className="flex items-baseline justify-between mb-5">
+          <h2 className="font-display text-2xl font-bold text-gray-900">
+            {isFiltered ? "Résultats" : "Tous les produits"}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {loading ? "Chargement..." : `${total} produit${total > 1 ? "s" : ""} trouvé${total > 1 ? "s" : ""}`}
+          </p>
+        </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <Card key={i} className="overflow-hidden">
                 <Skeleton className="aspect-square" />
@@ -223,37 +360,13 @@ function ProduitsPageInner() {
             <PackageSearch className="mx-auto size-12 text-gray-300" />
             <h3 className="mt-4 font-semibold text-gray-900">Aucun produit trouvé</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Essayez d'élargir votre recherche ou de changer de catégorie.
+              Essayez d&apos;élargir votre recherche ou de changer de catégorie.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map((p) => (
-              <Link key={p.id} href={`/produit/${p.id}`} className="group">
-                <Card className="overflow-hidden vs-card-shadow border-emerald-100 transition-all group-hover:shadow-lg group-hover:-translate-y-1 h-full">
-                  <div className="aspect-square bg-gradient-to-br from-emerald-100 to-amber-100 flex items-center justify-center relative">
-                    {p.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-5xl">{p.category?.icon || "📦"}</span>
-                    )}
-                    {p._count.lots > 0 && (
-                      <Badge className="absolute top-2 right-2 bg-emerald-600 text-white text-xs">
-                        {p._count.lots} lot{p._count.lots > 1 ? "s" : ""}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardContent className="p-4 space-y-1.5">
-                    <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700">
-                      {p.category?.icon} {p.category?.name}
-                    </Badge>
-                    <h3 className="font-semibold text-gray-900 truncate">{p.name}</h3>
-                    <p className="text-xs text-gray-500 truncate">{p.brand} · {p.weight}</p>
-                    <p className="text-xs text-gray-400 truncate">par {p.user.companyName}</p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         )}
@@ -305,5 +418,109 @@ function ProduitsPageInner() {
         )}
       </section>
     </PublicShell>
+  );
+}
+
+/* ============ Product Card 300×300 ============ */
+function ProductCard({ product }: { product: Product }) {
+  return (
+    <Link href={`/produit/${product.id}`} className="group block">
+      <Card className="overflow-hidden vs-card-shadow border-emerald-100 transition-all group-hover:shadow-lg group-hover:-translate-y-1 h-full">
+        {/* 300×300 image area */}
+        <div
+          className="aspect-square flex items-center justify-center relative overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${GREEN_LIGHT} 0%, ${BLUE_LIGHT} 100%)`,
+          }}
+        >
+          {product.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.photoUrl}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <span className="text-6xl">{product.category?.icon || "📦"}</span>
+          )}
+          {product._count.lots > 0 && (
+            <Badge className="absolute top-2 right-2 text-white text-xs" style={{ backgroundColor: GREEN }}>
+              {product._count.lots} lot{product._count.lots > 1 ? "s" : ""}
+            </Badge>
+          )}
+        </div>
+        <CardContent className="p-3 space-y-1.5">
+          <Badge variant="outline" className="text-[10px] border-emerald-200 text-emerald-700">
+            {product.category?.icon} {product.category?.name}
+          </Badge>
+          <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
+          <p className="text-xs text-gray-500 truncate">
+            {product.brand}
+            {product.weight ? ` · ${product.weight}` : ""}
+          </p>
+          <p className="text-[11px] text-gray-400 truncate">par {product.user.companyName}</p>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+/* ============ Featured Card 300×300 (with scan count badge) ============ */
+function FeaturedCard({ product }: { product: FeaturedProduct }) {
+  return (
+    <Link href={`/produit/${product.id}`} className="group block">
+      <Card
+        className="overflow-hidden vs-card-shadow border-amber-200 transition-all group-hover:shadow-lg group-hover:-translate-y-1 h-full relative"
+        style={{ borderWidth: "2px" }}
+      >
+        {/* "À la une" badge */}
+        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-white text-[10px] font-bold shadow-md flex items-center gap-1"
+          style={{ backgroundColor: ORANGE }}
+        >
+          <Flame className="size-2.5" />
+          À la une
+        </div>
+
+        {/* Scan count badge */}
+        {product.scanCount > 0 && (
+          <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full bg-white/95 text-gray-700 text-[10px] font-semibold shadow-md flex items-center gap-1">
+            <Eye className="size-2.5 text-blue-600" />
+            {product.scanCount} scan{product.scanCount > 1 ? "s" : ""}
+          </div>
+        )}
+
+        {/* 300×300 image area */}
+        <div
+          className="aspect-square flex items-center justify-center relative overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, ${GREEN_LIGHT} 100%)`,
+          }}
+        >
+          {product.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.photoUrl}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <span className="text-6xl">{product.category?.icon || "📦"}</span>
+          )}
+        </div>
+        <CardContent className="p-3 space-y-1.5">
+          <Badge variant="outline" className="text-[10px] border-amber-200 text-amber-700">
+            {product.category?.icon} {product.category?.name}
+          </Badge>
+          <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
+          <p className="text-xs text-gray-500 truncate">
+            {product.brand}
+            {product.weight ? ` · ${product.weight}` : ""}
+          </p>
+          <p className="text-[11px] text-gray-400 truncate">
+            par {product.user.companyName ?? "Fabricant"}
+          </p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
