@@ -250,6 +250,42 @@
   .vs-reveal { opacity: 1; transform: none; }
 }
 
+/* ============ Marquee (horizontal scroll) ============ */
+@keyframes vs-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes vs-marquee-reverse {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.vs-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: vs-marquee 40s linear infinite;
+  will-change: transform;
+}
+.vs-marquee-track.vs-marquee-reverse {
+  animation: vs-marquee-reverse 40s linear infinite;
+}
+.vs-marquee-track.vs-marquee-fast {
+  animation-duration: 25s;
+}
+.vs-marquee-track.vs-marquee-slow {
+  animation-duration: 60s;
+}
+.vs-marquee:hover .vs-marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vs-marquee-track {
+    animation: none !important;
+    transform: none !important;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}
+
 /* Header backdrop blur */
 .vs-header-blur {
   background: rgba(255, 255, 255, 0.85);

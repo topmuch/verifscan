@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 const publicLinks = [
   { href: "/", label: "Accueil", anchor: "" },
   { href: "/produits", label: "Produits", anchor: "" },
+  { href: "/concept", label: "Le concept", anchor: "" },
   { href: "/#fonctionnalites", label: "Fonctionnalités", anchor: "fonctionnalites" },
   { href: "/contact", label: "Contact", anchor: "" },
 ];

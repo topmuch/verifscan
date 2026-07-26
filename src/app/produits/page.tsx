@@ -8,8 +8,6 @@ import {
   PackageSearch,
   Filter,
   X,
-  Flame,
-  Eye,
   Sparkles,
 } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
@@ -33,6 +31,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeaturedMarquee } from "@/components/featured-marquee";
 
 type Category = { id: string; name: string; icon: string | null };
 type Product = {
@@ -45,19 +44,6 @@ type Product = {
   category: { id: string; name: string; icon: string | null };
   user: { id: string; companyName: string };
   _count: { lots: number };
-};
-
-type FeaturedProduct = {
-  id: string;
-  name: string;
-  brand: string;
-  description: string | null;
-  photoUrl: string | null;
-  weight: string | null;
-  createdAt: string;
-  scanCount: number;
-  category: { id: string; name: string; icon: string | null };
-  user: { id: string; companyName: string | null; logoUrl: string | null };
 };
 
 /* ============ Brand colors ============ */
@@ -95,9 +81,7 @@ function ProduitsPageInner() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -127,23 +111,9 @@ function ProduitsPageInner() {
     setLoading(false);
   }, [search, categoryId, page]);
 
-  const fetchFeatured = useCallback(async () => {
-    setFeaturedLoading(true);
-    try {
-      const res = await fetch("/api/products/featured?limit=8");
-      const data = await res.json();
-      setFeatured(data.items || []);
-    } catch {
-      setFeatured([]);
-    } finally {
-      setFeaturedLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchCategories();
-    fetchFeatured();
-  }, [fetchCategories, fetchFeatured]);
+  }, [fetchCategories]);
 
   useEffect(() => {
     fetchProducts();
@@ -182,50 +152,8 @@ function ProduitsPageInner() {
         </div>
       </section>
 
-      {/* ============ À LA UNE — Featured products (most scanned) ============ */}
-      {!isFiltered && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center gap-2 mb-5">
-            <div
-              className="flex-shrink-0 size-9 rounded-xl flex items-center justify-center shadow-md"
-              style={{ backgroundColor: ORANGE }}
-            >
-              <Flame className="size-5 text-white" />
-            </div>
-            <div>
-              <h2 className="font-display text-2xl font-bold text-gray-900 leading-tight">
-                À la une
-              </h2>
-              <p className="text-xs text-gray-500">
-                Les produits les plus scannés par les consommateurs
-              </p>
-            </div>
-          </div>
-
-          {featuredLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="aspect-square" />
-                  <CardContent className="p-3 space-y-2">
-                    <Skeleton className="h-3 w-1/2" />
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3 w-1/3" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : featured.length === 0 ? (
-            <div className="text-sm text-gray-400 italic">Aucun produit à la une pour le moment.</div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {featured.map((p) => (
-                <FeaturedCard key={p.id} product={p} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      {/* ============ À LA UNE — Animated marquee (most scanned) ============ */}
+      {!isFiltered && <FeaturedMarquee />}
 
       {/* ============ CATÉGORIES EN IMAGES ============ */}
       {!isFiltered && (
@@ -459,66 +387,6 @@ function ProductCard({ product }: { product: Product }) {
             {product.weight ? ` · ${product.weight}` : ""}
           </p>
           <p className="text-[11px] text-gray-400 truncate">par {product.user.companyName}</p>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-/* ============ Featured Card 300×300 (with scan count badge) ============ */
-function FeaturedCard({ product }: { product: FeaturedProduct }) {
-  return (
-    <Link href={`/produit/${product.id}`} className="group block">
-      <Card
-        className="overflow-hidden vs-card-shadow border-amber-200 transition-all group-hover:shadow-lg group-hover:-translate-y-1 h-full relative"
-        style={{ borderWidth: "2px" }}
-      >
-        {/* "À la une" badge */}
-        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-white text-[10px] font-bold shadow-md flex items-center gap-1"
-          style={{ backgroundColor: ORANGE }}
-        >
-          <Flame className="size-2.5" />
-          À la une
-        </div>
-
-        {/* Scan count badge */}
-        {product.scanCount > 0 && (
-          <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full bg-white/95 text-gray-700 text-[10px] font-semibold shadow-md flex items-center gap-1">
-            <Eye className="size-2.5 text-blue-600" />
-            {product.scanCount} scan{product.scanCount > 1 ? "s" : ""}
-          </div>
-        )}
-
-        {/* 300×300 image area */}
-        <div
-          className="aspect-square flex items-center justify-center relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, ${GREEN_LIGHT} 100%)`,
-          }}
-        >
-          {product.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.photoUrl}
-              alt={product.name}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-          ) : (
-            <span className="text-6xl">{product.category?.icon || "📦"}</span>
-          )}
-        </div>
-        <CardContent className="p-3 space-y-1.5">
-          <Badge variant="outline" className="text-[10px] border-amber-200 text-amber-700">
-            {product.category?.icon} {product.category?.name}
-          </Badge>
-          <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
-          <p className="text-xs text-gray-500 truncate">
-            {product.brand}
-            {product.weight ? ` · ${product.weight}` : ""}
-          </p>
-          <p className="text-[11px] text-gray-400 truncate">
-            par {product.user.companyName ?? "Fabricant"}
-          </p>
         </CardContent>
       </Card>
     </Link>
