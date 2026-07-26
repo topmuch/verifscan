@@ -64,10 +64,57 @@ export async function generateQrCodeSvg(
 }
 
 /**
- * Returns the base public URL for a lot.
+ * Resolves the absolute base URL of the app for a given request.
+ *
+ * Priority order:
+ *   1. NEXT_PUBLIC_APP_URL env var (if set, must NOT end with a slash)
+ *   2. NEXTAUTH_URL env var (same fallback)
+ *   3. Dynamic derivation from the request headers:
+ *        - x-forwarded-proto + x-forwarded-host (reverse proxy / Coolify)
+ *        - Host header (direct)
+ *
+ * This ensures QR codes generated for one deployment don't accidentally
+ * encode the URL of a different deployment (e.g. `verifscan.sn` instead
+ * of the actual `verifscan.roomscan.pro`).
+ *
+ * Pass the incoming Request object so headers can be inspected.
+ * Returns a base URL WITHOUT trailing slash, e.g. "https://verifscan.roomscan.pro".
  */
-export function getLotPublicUrl(lotId: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "";
+export function resolveAppUrl(req?: Request | null): string {
+  // 1. Explicit env override
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "";
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+
+  // 2. Derive from request headers
+  if (req) {
+    try {
+      const xProto =
+        (req.headers.get("x-forwarded-proto") as string | null) ||
+        (req.headers.get("x-forwarded-protocol") as string | null);
+      const xHost =
+        (req.headers.get("x-forwarded-host") as string | null) ||
+        (req.headers.get("host") as string | null);
+
+      if (xHost) {
+        const proto = xProto || (xHost.startsWith("localhost") ? "http" : "https");
+        return `${proto}://${xHost}`;
+      }
+    } catch {
+      // ignore header access errors
+    }
+  }
+
+  // 3. Last resort — relative URL (works for same-origin scans)
+  return "";
+}
+
+/**
+ * Returns the absolute public URL for a lot, suitable for QR code encoding.
+ * Pass the incoming Request so the URL can be derived from headers.
+ */
+export function getLotPublicUrl(lotId: string, req?: Request | null): string {
+  const base = resolveAppUrl(req);
   return `${base}/p/${lotId}`;
 }
 

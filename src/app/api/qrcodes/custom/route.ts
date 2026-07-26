@@ -46,9 +46,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-  const publicUrl = getLotPublicUrl(lot.id);
-  const fullUrl = appUrl ? publicUrl : `/p/${lot.id}`;
+  const fullUrl = getLotPublicUrl(lot.id, req);
 
   const qrImage = await generateQrCodeDataUrl(fullUrl, {
     width: width ?? 512,

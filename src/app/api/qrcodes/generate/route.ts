@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireFabricant } from "@/lib/session";
+import { resolveAppUrl } from "@/lib/qr";
 
 const schema = z.object({
   lotId: z.string().min(1),
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
 
   const QRCode = (await import("qrcode")).default;
   const publicUrl = `/p/${lot.id}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://verifscan.sn";
+  const appUrl = resolveAppUrl(req);
   const fullUrl = `${appUrl}${publicUrl}`;
   const qrImage = await QRCode.toDataURL(fullUrl, {
     width: 512,

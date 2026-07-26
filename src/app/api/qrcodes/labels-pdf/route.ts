@@ -58,13 +58,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Aucun lot valide" }, { status: 404 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-
-  // Generate QR code data URLs for all lots
-  const publicUrls = lots.map((lot) => {
-    const url = getLotPublicUrl(lot.id);
-    return appUrl ? url : `/p/${lot.id}`;
-  });
+  // Generate QR code data URLs for all lots — derive the absolute URL from
+  // the request headers so labels work on any deployment domain.
+  const publicUrls = lots.map((lot) => getLotPublicUrl(lot.id, req));
 
   const qrDataUrls = await generateBatchQrCodes(publicUrls, {
     fgColor: fgColor || undefined,

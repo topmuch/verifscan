@@ -68,7 +68,6 @@ export async function POST(req: Request) {
   }
 
   // Generate QR codes
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
   const results: Array<{
     lotId: string;
     lotNumber: string;
@@ -80,8 +79,7 @@ export async function POST(req: Request) {
   }> = [];
 
   for (const lot of lots) {
-    const publicUrl = getLotPublicUrl(lot.id);
-    const fullUrl = appUrl ? publicUrl : `/p/${lot.id}`;
+    const fullUrl = getLotPublicUrl(lot.id, req);
 
     const qrImage = await generateQrCodeDataUrl(fullUrl, {
       width: customization?.width ?? 512,
