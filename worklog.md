@@ -323,3 +323,28 @@ Stage Summary:
 - Panel SuperAdmin complet avec design system bleu/vert/orange cohérent, sidebar 280px, header 70px, KPIs animés, graphiques recharts, tableaux avec filtres et pagination, dropdowns d'actions, modals et alertes
 - Toutes les actions RBAC sont protégées par requireSuperAdmin()
 - Prochaine étape : commit + push pour redéployer sur Coolify
+
+---
+Task ID: fix-qr-delete-recall
+Agent: main (Super Z)
+Task: 3 corrections — QR codes cassés, boutons suppression produit/lot, anomalies visibles sur rappel
+
+Work Log:
+- Diagnostic QR cassés : les anciens QR codes ont été générés avec `process.env.NEXT_PUBLIC_APP_URL || "https://verifscan.sn"` — or NEXT_PUBLIC_APP_URL n'est pas défini dans Coolify, donc le QR encode https://verifscan.sn/p/{lotId} qui n'héberge pas le lot. Le fix resolveAppUrl existe mais ne s'applique qu'aux NOUVEAUX QR.
+- Solution : bouton "Régénérer tous les QR" qui appelle POST /api/qrcodes/refresh-all (déjà existant) — régénère tous les QR actifs avec l'URL courante (NEXTAUTH_URL ou x-forwarded-host).
+- Créé DELETE /api/products/[id] — supprime un produit + cascade lots → QR → scans + nettoyage B2BProduct, AIPrediction, AIAnomaly. Gestion FK constraint P2003/P2014 (409 conflict).
+- Ajouté DELETE à /api/lots/[id] — supprime un lot + cascade QRCode → Scan + BlockchainCertificate + nettoyage AIAnomaly, ExportDocument.
+- Créé src/app/dashboard/lots/delete-lot-button.tsx avec 3 composants : DeleteLotButton (dialog confirmation), RegenerateQrButton (par lot), RegenerateAllQrButton (tous les QR).
+- Ajouté boutons delete + regenerate par lot sur dashboard/lots, bouton "Régénérer tous les QR" en header.
+- Ajouté bouton "Régénérer tous les QR" sur dashboard/qr-codes.
+- Amélioré LotStatusToggle : textarea pour saisir le motif de rappel (affiché publiquement).
+- Ajouté champ `anomalies` à GET /api/lots/[id] (AIAnomaly du lot, open d'abord, max 10).
+- Ajouté type Anomaly + section "Anomalies détectées" (carte rouge, badges sévérité, statut, timestamps relatifs) sur page publique /p/[lotId].
+- Build vérifié : npx next build → 19s, 0 errors.
+- Commit 3072885 poussé sur main.
+
+Stage Summary:
+- 3 problèmes résolus en un seul commit
+- QR : boutons de régénération ajoutés (1 par lot + global) — l'utilisateur doit cliquer dessus après déploiement pour corriger les QR existants
+- Suppression : DELETE endpoints créés pour produits ET lots, boutons UI fonctionnels avec confirmation
+- Rappel : le lot n'est PLUS désactivé, il reste visible avec bannière rouge + motif + section anomalies IA + reste de la page (traçabilité, certifications, etc.)
