@@ -457,3 +457,112 @@ Stage Summary:
      ajouté au commit précédent.
   2. Sinon, l'utilisateur doit recréer le lot et reimprimer le QR code.
 - Prochaine étape: attendre le redéploiement Coolify puis tester à nouveau.
+
+---
+Task ID: landing-v5-redesign
+Agent: main (Super Z)
+Task: Redesign complet de la page d'accueil selon spec détaillée (7 sections, gradients, animations)
+
+Work Log:
+- Lu l'état actuel des 7 composants landing + globals.css.
+- Ajouté à globals.css (200+ lignes de nouveaux tokens + animations):
+  * --gradient-primary, --gradient-secondary, --gradient-hero, --shadow-card, --shadow-card-hover, --shadow-popular
+  * vs-hero-bg: gradient subtil bleu→vert→blanc
+  * vs-particles: particules animées (CSS pur, 2 couches drift infini)
+  * vs-phone-3d: tilt perspective 1200px rotateY(-8deg) rotateX(4deg), hover réduit l'angle
+  * vs-qr-pulse: scale 1→1.05 + box-shadow 0→12px toutes les 3s
+  * vs-badge-new: rotation -6deg + translateY -4px (badge 'Nouveau' flottant)
+  * vs-card-lift: translateY(-6px) + shadow-card-hover au hover
+  * vs-icon-circle-blue/green/orange: cercles dégradés 64x64 avec ombre
+  * vs-link-arrow: gap 0.4rem→0.7rem + translateX(2px) au hover (slide arrow)
+  * vs-timeline-h: ligne horizontale qui scale de 0→1 sur 1.2s (desktop only)
+  * vs-step-circle: cercle 64x64 dégradé bleu→vert + anneau extérieur
+  * vs-popular-card: bordure dégradée (pseudo-element ::before)
+  * vs-quote-mark: guillemet décoratif Georgia 5rem
+  * vs-carousel: scroll smooth + scrollbar cachée
+  * vs-stat-number: tabular-nums pour alignement des chiffres
+  * vs-cta-pulse: box-shadow animée toutes les 2.5s
+  * vs-section-soft: gradient blanc→gris-50
+
+- Hero section (hero-section.tsx):
+  * Badge 'Sécurisé par blockchain' (au lieu de 'Passeport numérique')
+  * H1 plus court: 'La traçabilité alimentaire qui inspire confiance'
+  * Sous-titre: 'Le passeport numérique qui protège votre marque...'
+  * 2 CTAs: 'Essai gratuit 14 jours →' + 'Voir une démo'
+  * Ligne de réassurance: Sans CB, Annulation libre, Config 5 min
+  * Smartphone mockup 3D (vs-phone-3d) avec rotation perspective
+  * QR code pulse toutes les 3s (vs-qr-pulse)
+  * Badge 'Nouveau' flottant sur le produit (vs-badge-new)
+  * Particules animées en arrière-plan (vs-particles)
+  * Logos clients avec emojis (Sarine Bio 🌿, Téranga Foods 🍽️, etc.)
+
+- Features section (features-section.tsx):
+  * 3 cards avec icônes en cercles dégradés (vs-icon-circle-blue/green/orange)
+  * Liste à puces concrète par feature (3 bullets chacune)
+  * Bouton 'En savoir plus →' avec slide (vs-link-arrow)
+  * Card hover lift (vs-card-lift)
+  * Illustration dashboard en dessous: 2 KPI cards + bar chart 14 jours
+  * Fond section vs-section-soft
+
+- How It Works (how-it-works-section.tsx):
+  * Badge 'Simple & rapide' avec icône Zap
+  * H2 'Commencez en moins de 5 minutes'
+  * Timeline horizontale animée (vs-timeline-h) qui se déploie au scroll
+  * Cercles numérotés 1, 2, 3 avec dégradé + anneau (vs-step-circle)
+  * Card sous chaque étape avec icône + description courte
+  * Illustration processus: Produit → QR Code → Scan → Authentifié
+    avec flèches + ligne géo en bas
+  * CTA 'Démarrer maintenant' en bas
+
+- Testimonials (testimonials-section.tsx):
+  * 6 témoignages (au lieu de 3) avec carousel
+  * Photos emoji avatars (👩🏾‍🦱, 👨🏾, etc.) dans cercles colorés
+  * Étoiles avec animation pop échelonnée (vs-star-pop)
+  * Badge métrique par témoignage (ex: '+35% de ventes en 3 mois')
+  * Carousel avec flèches prev/next + indicateurs points
+  * Scroll horizontal smooth (vs-carousel)
+  * Bordure gauche colorée par témoignage
+  * Guillemet décoratif (vs-quote-mark)
+  * Bandeau trust badges en bas (250+, 4.9/5, 12 458, 4 pays)
+
+- Stats section (stats-section.tsx):
+  * 4 stat cards sur fond bleu gradient
+  * Icône au-dessus dans carré dégradé (vs-icon-circle style)
+  * Count-up animé (useRevealCounter) préservé
+  * Chiffres plus grands (text-5xl sm:text-6xl) avec tabular-nums
+  * Badge '14 jours d'essai gratuit' avec pulse en bas
+
+- Pricing section (pricing-section.tsx):
+  * Toggle Mensuel / Annuel (-30%) en haut
+  * 3 plans: Starter, Pro (populaire), Business
+  * Badge 'Le plus populaire' sur Pro avec dégradé
+  * Card Pro avec bordure dégradée (vs-popular-card)
+  * Prix qui se met à jour live quand on toggle mensuel/annuel
+  * Affiche l'économie annuelle en vert quand annuel sélectionné
+  * CTA du plan populaire avec vs-cta-pulse
+  * Liste features avec checkmarks dans cercles colorés
+
+- Final CTA (final-cta-section.tsx):
+  * Card avec bordure dégradée (vs-popular-card)
+  * Badge 'Démarrez aujourd'hui' avec icône Rocket
+  * H2 'Prêt à renforcer la confiance de vos clients ?'
+  * 2 CTAs: 'Créer votre compte gratuit →' (pulse) + 'Voir une démo'
+  * 4 cards avantages avec icônes (14 jours, Aucun engagement, Support, Config 5min)
+  * Social proof: stack d'avatars + 'Rejoint par 12 nouveaux fabricants cette semaine'
+
+- Build vérifié: npx next build → 21.3s, 70 pages, 0 errors.
+- Commit 56485ad poussé sur origin/main.
+
+Stage Summary:
+- Page d'accueil entièrement redessinée selon spec:
+  * Hero plus engageant avec mockup 3D + QR pulse + badge Nouveau
+  * Features avec icônes dégradées + bullets + illustration dashboard
+  * How It Works avec timeline animée + illustration processus
+  * Testimonials avec carousel + 6 témoignages + métriques
+  * Stats avec icônes au-dessus + count-up + badge essai
+  * Pricing avec toggle mensuel/annuel + card populaire dégradée
+  * Final CTA avec cards avantages + social proof
+- 200+ lignes de CSS ajoutées (tokens gradients/shadows + 15+ animations)
+- Toutes les animations respectent prefers-reduced-motion
+- Build passe sans erreur, 70 pages statiques
+- Prochaine étape: redéployer sur Coolify pour voir le résultat en production
