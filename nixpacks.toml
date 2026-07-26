@@ -1,0 +1,34 @@
+# Nixpacks configuration for Coolify
+# This file tells Coolify's buildpack exactly how to build and start the app.
+# It replaces the auto-detected defaults (which were using bun and next start).
+
+[phases.setup]
+# System packages needed at runtime.
+# - openssl: required by Prisma engine
+# - curl:    required by Coolify's healthcheck
+nixPkgs = ["nodejs_20", "openssl", "curl"]
+
+[phases.install]
+# Use npm (not bun) — more stable on Coolify build containers.
+cmds = ["npm ci --legacy-peer-deps || npm install --legacy-peer-deps"]
+
+[phases.build]
+# Generate Prisma client, then build Next.js standalone.
+# NODE_OPTIONS gives the build 4GB of heap to avoid OOM kills on Coolify.
+cmds = [
+  "npx prisma generate",
+  "NODE_OPTIONS='--max-old-space-size=4096' npm run build"
+]
+
+[start]
+# Start command — runs in the deployed container.
+# 1. Push Prisma schema to SQLite (idempotent — safe on every restart)
+# 2. Seed the SUPER_ADMIN + demo fabricant + categories (idempotent)
+# 3. Start the Next.js standalone server (NOT next start — standalone requires node server.js)
+cmd = "npx prisma db push --skip-generate --accept-data-loss && node scripts/create-admin.cjs && node .next/standalone/server.js"
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+PORT = "3000"
+HOSTNAME = "0.0.0.0"
