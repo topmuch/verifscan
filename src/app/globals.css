@@ -294,3 +294,114 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   background-size: 8px 8px;
   background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
 }
+
+/* ============================================
+   Public product page V4 — dark mode + animations
+   ============================================ */
+
+/* Dark mode tokens — applied when <html> has .dark */
+.dark {
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.97 0.005 260);
+  --card: oklch(0.2 0.02 260);
+  --card-foreground: oklch(0.97 0.005 260);
+  --popover: oklch(0.2 0.02 260);
+  --popover-foreground: oklch(0.97 0.005 260);
+  --primary: oklch(0.65 0.2 262);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.25 0.02 160);
+  --secondary-foreground: oklch(0.9 0.02 160);
+  --muted: oklch(0.25 0.005 260);
+  --muted-foreground: oklch(0.7 0.02 260);
+  --accent: oklch(0.75 0.18 65);
+  --accent-foreground: oklch(0.2 0.05 65);
+  --destructive: oklch(0.65 0.22 27);
+  --border: oklch(0.3 0.005 260);
+  --input: oklch(0.3 0.005 260);
+  --ring: oklch(0.65 0.2 262);
+  --sidebar: oklch(0.18 0.005 260);
+  --sidebar-foreground: oklch(0.97 0.005 260);
+  --sidebar-primary: oklch(0.65 0.2 262);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.25 0.005 260);
+  --sidebar-accent-foreground: oklch(0.9 0.02 260);
+  --sidebar-border: oklch(0.3 0.01 260);
+  --sidebar-ring: oklch(0.65 0.2 262);
+
+  --vs-bg: #0B1120;
+  --vs-bg-soft: #111827;
+  --vs-border: #1F2937;
+  --vs-text: #F9FAFB;
+  --vs-text-soft: #D1D5DB;
+  --vs-text-muted: #9CA3AF;
+  --vs-footer: #060912;
+  --vs-footer-border: #1F2937;
+
+  color-scheme: dark;
+}
+
+/* Smooth transition when toggling dark mode */
+.dark body, body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* V4 page-section reveal on scroll */
+.vs-section-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.vs-section-reveal.vs-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Product image zoom-on-hover */
+.vs-img-zoom {
+  overflow: hidden;
+}
+.vs-img-zoom img {
+  transition: transform 0.4s ease;
+}
+.vs-img-zoom:hover img {
+  transform: scale(1.06);
+}
+
+/* Timeline connector (vertical line for lot history) */
+.vs-timeline-line {
+  background: linear-gradient(180deg, #10B981 0%, #2563EB 50%, #F59E0B 100%);
+}
+
+/* Print styles — hide non-essential UI when printing */
+@media print {
+  .vs-no-print { display: none !important; }
+  .vs-card-shadow, .vs-card-shadow-hover, .vs-card-shadow-lg {
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+  }
+  body { background: white !important; color: black !important; }
+  .dark body { background: white !important; color: black !important; }
+  .dark { color-scheme: light; }
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 10px;
+    color: #555;
+  }
+  main { padding-top: 0 !important; }
+}
+
+/* Star rating pulse animation */
+@keyframes vs-star-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.vs-star-pop { animation: vs-star-pop 0.4s ease-out forwards; }
+
+/* Copy-link feedback */
+@keyframes vs-fade-out {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.vs-fade-out { animation: vs-fade-out 1.8s ease-out forwards; }
