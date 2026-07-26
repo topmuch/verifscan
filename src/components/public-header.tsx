@@ -20,7 +20,7 @@ const publicLinks = [
   { href: "/", label: "Accueil", anchor: "" },
   { href: "/produits", label: "Produits", anchor: "" },
   { href: "/concept", label: "Le concept", anchor: "" },
-  { href: "/#fonctionnalites", label: "Fonctionnalités", anchor: "fonctionnalites" },
+  { href: "/a-propos", label: "À propos", anchor: "" },
   { href: "/contact", label: "Contact", anchor: "" },
 ];
 
@@ -129,7 +129,7 @@ export function PublicHeader() {
                 size="sm"
                 className="bg-[#0f4382] hover:bg-[#0a3060] text-white font-semibold text-base px-5 py-2.5 rounded-lg shadow-md shadow-blue-200 transition-all hover:shadow-lg hover:scale-[1.02]"
               >
-                <Link href="/register">Essayer gratuitement</Link>
+                <Link href="/devenir-partenaire">Devenir partenaire</Link>
               </Button>
             </>
           )}
@@ -197,7 +197,7 @@ export function PublicHeader() {
                   size="sm"
                   className="w-full h-12 bg-[#0f4382] hover:bg-[#0a3060] text-white font-semibold"
                 >
-                  <Link href="/register">Essayer gratuitement</Link>
+                  <Link href="/devenir-partenaire">Devenir partenaire</Link>
                 </Button>
               </>
             )}

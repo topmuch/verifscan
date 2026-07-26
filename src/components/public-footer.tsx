@@ -5,21 +5,21 @@ import { VerifScanLogo } from "@/components/verifscan-logo";
 const footerLinks = {
   produit: [
     { label: "Produits", href: "/produits" },
+    { label: "Le concept", href: "/concept" },
     { label: "Fonctionnalités", href: "/#fonctionnalites" },
-    { label: "Tarifs", href: "/#pricing" },
     { label: "Marketplace B2B", href: "/marketplace" },
   ],
   entreprise: [
-    { label: "À propos", href: "/#about" },
+    { label: "À propos", href: "/a-propos" },
+    { label: "Devenir partenaire", href: "/devenir-partenaire" },
     { label: "Contact", href: "/contact" },
-    { label: "Blog", href: "/#blog" },
-    { label: "Carrières", href: "/#careers" },
+    { label: "Connexion", href: "/login" },
   ],
   legal: [
-    { label: "Mentions légales", href: "/#mentions" },
-    { label: "CGU", href: "/#cgu" },
-    { label: "Politique de confidentialité", href: "/#privacy" },
-    { label: "Cookies", href: "/#cookies" },
+    { label: "Mentions légales", href: "/mentions-legales" },
+    { label: "CGU", href: "/cgu" },
+    { label: "Politique de confidentialité", href: "/mentions-legales#donnees" },
+    { label: "Cookies", href: "/mentions-legales#cookies" },
   ],
 };
 
