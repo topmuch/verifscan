@@ -27,9 +27,12 @@ const CATEGORIES = [
   { name: "Huiles", icon: "🫒" },
 ];
 
-export async function POST() {
+export async function POST(req: Request) {
   const log = [];
   try {
+    const url = new URL(req.url);
+    const force = url.searchParams.get("force") === "true";
+
     const db = new PrismaClient();
 
     // --- 1. Admin ---
@@ -37,8 +40,19 @@ export async function POST() {
     const adminPwd = process.env.ADMIN_PASSWORD || "admin123";
 
     const existingAdmin = await db.user.findFirst({ where: { role: "superadmin" } });
-    if (existingAdmin) {
-      log.push(`SUPER_ADMIN exists: ${existingAdmin.email}`);
+    if (existingAdmin && !force) {
+      log.push(`SUPER_ADMIN exists: ${existingAdmin.email} (use ?force=true to reset password)`);
+    } else if (existingAdmin && force) {
+      const pwdHash = await bcrypt.hash(adminPwd, 10);
+      await db.user.update({
+        where: { id: existingAdmin.id },
+        data: {
+          passwordHash: pwdHash,
+          isActive: true,
+          role: "superadmin",
+        },
+      });
+      log.push(`SUPER_ADMIN password RESET for: ${existingAdmin.email} -> ${adminPwd}`);
     } else {
       const pwdHash = await bcrypt.hash(adminPwd, 10);
       await db.user.create({
@@ -61,8 +75,18 @@ export async function POST() {
     const fabPwd = process.env.DEMO_FABRICANT_PASSWORD || "fabricant123";
 
     const existingFab = await db.user.findUnique({ where: { email: fabEmail } });
-    if (existingFab) {
-      log.push(`Demo fabricant exists: ${fabEmail}`);
+    if (existingFab && !force) {
+      log.push(`Demo fabricant exists: ${fabEmail} (use ?force=true to reset password)`);
+    } else if (existingFab && force) {
+      const pwdHash = await bcrypt.hash(fabPwd, 10);
+      await db.user.update({
+        where: { id: existingFab.id },
+        data: {
+          passwordHash: pwdHash,
+          isActive: true,
+        },
+      });
+      log.push(`Demo fabricant password RESET for: ${fabEmail} -> ${fabPwd}`);
     } else {
       const pwdHash = await bcrypt.hash(fabPwd, 10);
       const fab = await db.user.create({
