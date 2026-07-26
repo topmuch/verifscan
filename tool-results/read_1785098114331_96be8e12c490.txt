@@ -1,0 +1,1367 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useRef, useState, use } from "react";
+     4→import Link from "next/link";
+     5→import { useRouter } from "next/navigation";
+     6→import {
+     7→  ArrowLeft,
+     8→  Calendar,
+     9→  Package,
+    10→  MapPin,
+    11→  Globe2,
+    12→  Scale,
+    13→  Leaf,
+    14→  Factory,
+    15→  CheckCircle2,
+    16→  XCircle,
+    17→  Phone,
+    18→  Mail,
+    19→  MessageCircle,
+    20→  QrCode,
+    21→  AlertTriangle,
+    22→  Info,
+    23→  ShieldCheck,
+    24→  Sun,
+    25→  Moon,
+    26→  Printer,
+    27→  Copy,
+    28→  Check,
+    29→  Twitter,
+    30→  Linkedin,
+    31→  Eye,
+    32→  ThumbsUp,
+    33→  Clock,
+    34→  Star,
+    35→  Sparkles,
+    36→  Award,
+    37→  Microscope,
+    38→  Box,
+    39→  Share2,
+    40→} from "lucide-react";
+    41→import { PublicShell } from "@/components/public-shell";
+    42→import { Button } from "@/components/ui/button";
+    43→import { Badge } from "@/components/ui/badge";
+    44→import { Skeleton } from "@/components/ui/skeleton";
+    45→import { toast } from "sonner";
+    46→import { ChatbotWidget } from "@/components/chatbot-widget";
+    47→import { BlockchainBadge } from "@/components/blockchain-badge";
+    48→import {
+    49→  detectAllergens,
+    50→  ALLERGEN_TONE_CLASSES,
+    51→  getCertificationMeta,
+    52→  CERT_TONE_CLASSES,
+    53→  formatDate,
+    54→  formatDateTime,
+    55→  formatRelative,
+    56→  isExpired,
+    57→  daysUntil,
+    58→  cn,
+    59→  starArray,
+    60→} from "../_lib/product-helpers";
+    61→import { useDarkMode } from "../_lib/use-dark-mode";
+    62→
+    63→/* ============ Types ============ */
+    64→
+    65→type Certification = {
+    66→  id: string;
+    67→  type: string;
+    68→  issuer: string;
+    69→  certificateNumber: string | null;
+    70→  issuedAt: string | null;
+    71→  expiresAt: string | null;
+    72→  verified: boolean;
+    73→  documentUrl: string | null;
+    74→};
+    75→
+    76→type Review = {
+    77→  id: string;
+    78→  reliabilityScore: number;
+    79→  qualityScore: number;
+    80→  professionalismScore: number;
+    81→  comment: string | null;
+    82→  createdAt: string;
+    83→  reviewer: { companyName: string };
+    84→};
+    85→
+    86→type SimilarProduct = {
+    87→  id: string;
+    88→  name: string;
+    89→  brand: string;
+    90→  photoUrl: string | null;
+    91→  weight: string | null;
+    92→  category: { name: string; icon: string | null };
+    93→  user: { companyName: string };
+    94→  lotId: string | null;
+    95→};
+    96→
+    97→type Anomaly = {
+    98→  id: string;
+    99→  type: string;
+   100→  severity: string;
+   101→  description: string;
+   102→  status: string;
+   103→  detectedAt: string;
+   104→};
+   105→
+   106→type Lot = {
+   107→  id: string;
+   108→  lotNumber: string;
+   109→  manufacturingDate: string;
+   110→  expirationDate: string;
+   111→  ingredients: string | null;
+   112→  manufacturingLocation: string | null;
+   113→  transformationLocation: string | null;
+   114→  salesCountries: string | null;
+   115→  status: string;
+   116→  recallReason: string | null;
+   117→  recalledAt: string | null;
+   118→  createdAt: string;
+   119→  product: {
+   120→    id: string;
+   121→    name: string;
+   122→    brand: string;
+   123→    description: string | null;
+   124→    photoUrl: string | null;
+   125→    weight: string | null;
+   126→    category: { name: string; icon: string | null };
+   127→    user: {
+   128→      id: string;
+   129→      companyName: string;
+   130→      logoUrl: string | null;
+   131→      phone: string | null;
+   132→      whatsapp: string | null;
+   133→      emailContact: string | null;
+   134→      address: string | null;
+   135→      createdAt: string;
+   136→    };
+   137→  };
+   138→  qrCodes: { id: string; qrCodeImageUrl: string | null }[];
+   139→  certifications: Certification[];
+   140→  scanCount: number;
+   141→  lastScanAt: string | null;
+   142→  fabricantSince: string;
+   143→  similarProducts: SimilarProduct[];
+   144→  reviews: Review[];
+   145→  reviewAggregates: {
+   146→    reliability: number;
+   147→    quality: number;
+   148→    professionalism: number;
+   149→    overall: number;
+   150→    count: number;
+   151→  };
+   152→  anomalies: Anomaly[];
+   153→};
+   154→
+   155→/* ============ Brand colors (harmonized) ============ */
+   156→const BLUE = "#0f4382";
+   157→const BLUE_DARK = "#0a3060";
+   158→const BLUE_LIGHT = "#E6EEF7";
+   159→const GREEN = "#2ebd5a";
+   160→const GREEN_DARK = "#1f8a42";
+   161→const GREEN_LIGHT = "#E0F5E6";
+   162→const ORANGE = "#F59E0B";
+   163→const ORANGE_LIGHT = "#FEF3C7";
+   164→
+   165→/* ============ Page ============ */
+   166→
+   167→export default function PublicLotPage({ params }: { params: Promise<{ lotId: string }> }) {
+   168→  const { lotId } = use(params);
+   169→  const router = useRouter();
+   170→
+   171→  const [lot, setLot] = useState<Lot | null>(null);
+   172→  const [loading, setLoading] = useState(true);
+   173→  const [notFound, setNotFound] = useState(false);
+   174→  const [shareOpen, setShareOpen] = useState(false);
+   175→  const [copied, setCopied] = useState(false);
+   176→
+   177→  const { theme, toggle, mounted: themeMounted } = useDarkMode();
+   178→
+   179→  useEffect(() => {
+   180→    (async () => {
+   181→      try {
+   182→        const res = await fetch(`/api/lots/${lotId}`);
+   183→        if (res.status === 404) {
+   184→          setNotFound(true);
+   185→          setLoading(false);
+   186→          return;
+   187→        }
+   188→        const data = await res.json();
+   189→        setLot(data);
+   190→
+   191→        if (data.qrCodes?.[0]?.id) {
+   192→          const ua = navigator.userAgent;
+   193→          const isMobile = /Mobile|Android|iPhone/i.test(ua);
+   194→          let location: string | undefined;
+   195→          try {
+   196→            const ipRes = await fetch("https://ipapi.co/json/");
+   197→            if (ipRes.ok) {
+   198→              const ipData = await ipRes.json();
+   199→              location = [ipData.city, ipData.country_name].filter(Boolean).join(", ");
+   200→            }
+   201→          } catch {}
+   202→          fetch("/api/scans", {
+   203→            method: "POST",
+   204→            headers: { "Content-Type": "application/json" },
+   205→            body: JSON.stringify({
+   206→              qrCodeId: data.qrCodes[0].id,
+   207→              location,
+   208→              deviceType: isMobile ? "mobile" : "desktop",
+   209→              userAgent: ua,
+   210→            }),
+   211→          }).catch(() => {});
+   212→        }
+   213→
+   214→        setLoading(false);
+   215→      } catch {
+   216→        setLoading(false);
+   217→        setNotFound(true);
+   218→      }
+   219→    })();
+   220→  }, [lotId]);
+   221→
+   222→  const handlePrint = () => {
+   223→    if (typeof window !== "undefined") window.print();
+   224→  };
+   225→
+   226→  const handleCopyLink = async () => {
+   227→    if (typeof window === "undefined") return;
+   228→    try {
+   229→      await navigator.clipboard.writeText(window.location.href);
+   230→      setCopied(true);
+   231→      toast.success("Lien copié dans le presse-papiers");
+   232→      setTimeout(() => setCopied(false), 1800);
+   233→    } catch {
+   234→      toast.error("Impossible de copier le lien");
+   235→    }
+   236→  };
+   237→
+   238→  if (loading) {
+   239→    return (
+   240→      <PublicShell>
+   241→        <div className="mx-auto max-w-5xl px-4 py-8 space-y-4">
+   242→          <Skeleton className="h-8 w-32" />
+   243→          <Skeleton className="h-64 w-full" />
+   244→          <Skeleton className="h-8 w-1/2" />
+   245→          <Skeleton className="h-32 w-full" />
+   246→        </div>
+   247→      </PublicShell>
+   248→    );
+   249→  }
+   250→
+   251→  if (notFound || !lot) {
+   252→    const scannedUrl = typeof window !== "undefined" ? window.location.href : "";
+   253→    return (
+   254→      <PublicShell>
+   255→        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+   256→          <AlertTriangle className="mx-auto size-12 text-amber-500" />
+   257→          <h1 className="mt-4 text-2xl font-bold">Produit introuvable</h1>
+   258→          <p className="mt-2 text-gray-600 dark:text-gray-300">
+   259→            Ce QR code ne correspond à aucun produit enregistré. Il peut s&apos;agir d&apos;une
+   260→            contrefaçon ou d&apos;un code expiré.
+   261→          </p>
+   262→
+   263→          <div className="mt-6 mx-auto max-w-md text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-xs space-y-1">
+   264→            <div className="flex justify-between gap-2">
+   265→              <span className="text-gray-500 dark:text-gray-400">URL scannée :</span>
+   266→              <code className="font-mono text-gray-700 dark:text-gray-200 break-all">{scannedUrl}</code>
+   267→            </div>
+   268→            <div className="flex justify-between gap-2">
+   269→              <span className="text-gray-500 dark:text-gray-400">Lot ID :</span>
+   270→              <code className="font-mono text-gray-700 dark:text-gray-200 break-all">{lotId}</code>
+   271→            </div>
+   272→            <p className="pt-2 text-gray-500 dark:text-gray-400">
+   273→              Si vous êtes le fabricant, vérifiez que ce lot existe dans votre tableau de bord.
+   274→              Si le QR a été imprimé avant une migration, régénérez-le depuis la page QR Codes.
+   275→            </p>
+   276→          </div>
+   277→
+   278→          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+   279→            <Button asChild style={{ backgroundColor: GREEN }}>
+   280→              <Link href="/produits">Voir les produits authentiques</Link>
+   281→            </Button>
+   282→            {scannedUrl && (
+   283→              <Button
+   284→                variant="outline"
+   285→                onClick={() => {
+   286→                  if (typeof window !== "undefined") {
+   287→                    navigator.clipboard
+   288→                      .writeText(scannedUrl)
+   289→                      .then(() => toast.success("URL copiée"))
+   290→                      .catch(() => toast.error("Impossible de copier"));
+   291→                  }
+   292→                }}
+   293→              >
+   294→                <Copy className="mr-1 size-4" />
+   295→                Copier l&apos;URL
+   296→              </Button>
+   297→            )}
+   298→          </div>
+   299→        </div>
+   300→      </PublicShell>
+   301→    );
+   302→  }
+   303→
+   304→  const isRecalled = lot.status === "recalled";
+   305→  const expired = isExpired(lot.expirationDate);
+   306→  const remainingDays = daysUntil(lot.expirationDate);
+   307→  const isNew = daysUntil(lot.createdAt) > -7;
+   308→  const allergens = detectAllergens(lot.ingredients);
+   309→  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+   310→  const shareText = `Découvrez ce produit vérifié sur VerifScan : ${lot.product.name} (${lot.product.brand})`;
+   311→
+   312→  return (
+   313→    <PublicShell>
+   314→      {/* Top toolbar — sticky, hidden in print */}
+   315→      <div className="sticky top-16 z-30 vs-no-print bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
+   316→        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-2">
+   317→          <Button
+   318→            variant="ghost"
+   319→            size="sm"
+   320→            onClick={() => router.back()}
+   321→            className="text-gray-500 dark:text-gray-400"
+   322→          >
+   323→            <ArrowLeft className="mr-1 size-4" />
+   324→            Retour
+   325→          </Button>
+   326→          <div className="flex items-center gap-1">
+   327→            <Button
+   328→              variant="ghost"
+   329→              size="sm"
+   330→              onClick={toggle}
+   331→              title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+   332→              className="text-gray-500 dark:text-gray-400"
+   333→            >
+   334→              {themeMounted && theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+   335→            </Button>
+   336→            <Button
+   337→              variant="ghost"
+   338→              size="sm"
+   339→              onClick={handlePrint}
+   340→              title="Imprimer cette fiche"
+   341→              className="text-gray-500 dark:text-gray-400"
+   342→            >
+   343→              <Printer className="size-4" />
+   344→            </Button>
+   345→            <Button
+   346→              variant="ghost"
+   347→              size="sm"
+   348→              onClick={() => setShareOpen((s) => !s)}
+   349→              title="Partager"
+   350→              className="text-gray-500 dark:text-gray-400"
+   351→            >
+   352→              <Share2 className="size-4" />
+   353→            </Button>
+   354→          </div>
+   355→        </div>
+   356→
+   357→        {/* Share panel */}
+   358→        {shareOpen && (
+   359→          <div className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+   360→            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-2">
+   361→              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">Partager :</span>
+   362→              <a
+   363→                href={`https://wa.me/?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(currentUrl)}`}
+   364→                target="_blank"
+   365→                rel="noopener noreferrer"
+   366→                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366] text-white text-xs font-medium hover:opacity-90"
+   367→              >
+   368→                <MessageCircle className="size-3.5" />
+   369→                WhatsApp
+   370→              </a>
+   371→              <a
+   372→                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+   373→                target="_blank"
+   374→                rel="noopener noreferrer"
+   375→                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1877F2] text-white text-xs font-medium hover:opacity-90"
+   376→              >
+   377→                <svg className="size-3.5" fill="currentColor" viewBox="0 0 24 24">
+   378→                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+   379→                </svg>
+   380→                Facebook
+   381→              </a>
+   382→              <a
+   383→                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(currentUrl)}`}
+   384→                target="_blank"
+   385→                rel="noopener noreferrer"
+   386→                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black text-white text-xs font-medium hover:opacity-90"
+   387→              >
+   388→                <Twitter className="size-3.5" />
+   389→                Twitter / X
+   390→              </a>
+   391→              <a
+   392→                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+   393→                target="_blank"
+   394→                rel="noopener noreferrer"
+   395→                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A66C2] text-white text-xs font-medium hover:opacity-90"
+   396→              >
+   397→                <Linkedin className="size-3.5" />
+   398→                LinkedIn
+   399→              </a>
+   400→              <button
+   401→                onClick={handleCopyLink}
+   402→                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium hover:opacity-90"
+   403→                style={{ backgroundColor: GREEN }}
+   404→              >
+   405→                {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+   406→                {copied ? "Copié !" : "Copier le lien"}
+   407→              </button>
+   408→            </div>
+   409→          </div>
+   410→        )}
+   411→      </div>
+   412→
+   413→      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+   414→        {/* === 1. HEADER AUTHENTIFICATION — gradient banner === */}
+   415→        <Reveal>
+   416→          {isRecalled ? (
+   417→            <div
+   418→              className="rounded-2xl p-6 sm:p-8 flex items-start gap-4 shadow-lg"
+   419→              style={{ background: "linear-gradient(135deg, #FEE2E2 0%, #FFFFFF 100%)", border: `2px solid #DC2626` }}
+   420→            >
+   421→              <div className="flex-shrink-0 size-14 rounded-2xl bg-red-500 flex items-center justify-center shadow-md">
+   422→                <XCircle className="size-8 text-white" />
+   423→              </div>
+   424→              <div>
+   425→                <p className="font-display text-xl font-bold text-red-900 uppercase tracking-wide">
+   426→                  Produit rappelé
+   427→                </p>
+   428→                <p className="mt-1 text-sm text-red-700 leading-relaxed">
+   429→                  Ce lot a été rappelé par le fabricant. Il est déconseillé de le consommer.
+   430→                  Contactez le fabricant pour plus d&apos;informations.
+   431→                </p>
+   432→                {lot.recallReason && (
+   433→                  <p className="mt-2 text-xs text-red-700 italic">Motif : {lot.recallReason}</p>
+   434→                )}
+   435→              </div>
+   436→            </div>
+   437→          ) : expired ? (
+   438→            <div
+   439→              className="rounded-2xl p-6 sm:p-8 flex items-start gap-4 shadow-lg"
+   440→              style={{ background: "linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%)", border: `2px solid ${ORANGE}` }}
+   441→            >
+   442→              <div className="flex-shrink-0 size-14 rounded-2xl flex items-center justify-center shadow-md" style={{ backgroundColor: ORANGE }}>
+   443→                <AlertTriangle className="size-8 text-white" />
+   444→              </div>
+   445→              <div>
+   446→                <p className="font-display text-xl font-bold uppercase tracking-wide" style={{ color: "#92400E" }}>
+   447→                  Date de péremption dépassée
+   448→                </p>
+   449→                <p className="mt-1 text-sm leading-relaxed" style={{ color: "#B45309" }}>
+   450→                  La date de péremption de ce lot est dépassée. Vérifiez auprès du fabricant.
+   451→                </p>
+   452→              </div>
+   453→            </div>
+   454→          ) : (
+   455→            <div
+   456→              className="rounded-2xl p-6 sm:p-8 flex items-start gap-4 shadow-lg vs-animate-pulse-soft"
+   457→              style={{ background: `linear-gradient(135deg, ${GREEN_LIGHT} 0%, #FFFFFF 100%)`, border: `2px solid ${GREEN}` }}
+   458→            >
+   459→              <div className="flex-shrink-0 size-14 rounded-2xl flex items-center justify-center shadow-md" style={{ backgroundColor: GREEN }}>
+   460→                <CheckCircle2 className="size-8 text-white" />
+   461→              </div>
+   462→              <div className="flex-1">
+   463→                <p className="font-display text-xl font-bold uppercase tracking-wide" style={{ color: GREEN_DARK }}>
+   464→                  Produit authentique et vérifié
+   465→                </p>
+   466→                <p className="mt-1 text-sm leading-relaxed" style={{ color: "#166534" }}>
+   467→                  Ce produit a été authentifié par{" "}
+   468→                  <span className="font-semibold">{lot.product.user.companyName}</span>. Les informations
+   469→                  ci-dessous sont officielles et vérifiables.
+   470→                </p>
+   471→                {remainingDays > 0 && remainingDays <= 30 && (
+   472→                  <p className="mt-2 text-xs font-medium" style={{ color: "#B45309" }}>
+   473→                    ⏳ À consommer dans les {remainingDays} jours
+   474→                  </p>
+   475→                )}
+   476→              </div>
+   477→            </div>
+   478→          )}
+   479→        </Reveal>
+   480→
+   481→        {/* === 2. STATS RAPIDES — 4 cards colorées (style QRTags) === */}
+   482→        <Reveal>
+   483→          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+   484→            <QuickStat
+   485→              icon={Eye}
+   486→              value={lot.scanCount.toLocaleString("fr-FR")}
+   487→              label="Scans effectués"
+   488→              bg={BLUE}
+   489→              bgLight={BLUE_LIGHT}
+   490→            />
+   491→            <QuickStat
+   492→              icon={ShieldCheck}
+   493→              value="Vérifié"
+   494→              label="Par VerifScan"
+   495→              bg={GREEN}
+   496→              bgLight={GREEN_LIGHT}
+   497→            />
+   498→            <QuickStat
+   499→              icon={Clock}
+   500→              value={formatRelative(lot.lastScanAt || lot.createdAt)}
+   501→              label="Dernier scan"
+   502→              bg={BLUE}
+   503→              bgLight={BLUE_LIGHT}
+   504→            />
+   505→            <QuickStat
+   506→              icon={Award}
+   507→              value={lot.certifications.length.toString()}
+   508→              label="Fabricant inscrit"
+   509→              bg={GREEN}
+   510→              bgLight={GREEN_LIGHT}
+   511→            />
+   512→          </div>
+   513→        </Reveal>
+   514→
+   515→        {/* === 3. CARTE PRODUIT PRINCIPALE === */}
+   516→        <Reveal>
+   517→          <div
+   518→            className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 overflow-hidden shadow-md"
+   519→            style={{ borderWidth: "2px" }}
+   520→          >
+   521→            <div className="grid sm:grid-cols-[300px_1fr] gap-6 p-6 sm:p-8">
+   522→              {/* Product photo 300x300 */}
+   523→              <div className="relative">
+   524→                <div
+   525→                  className="aspect-square rounded-xl flex items-center justify-center overflow-hidden vs-img-zoom shadow-md"
+   526→                  style={{ background: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, ${GREEN_LIGHT} 100%)` }}
+   527→                >
+   528→                  {lot.product.photoUrl ? (
+   529→                    // eslint-disable-next-line @next/next/no-img-element
+   530→                    <img src={lot.product.photoUrl} alt={lot.product.name} className="w-full h-full object-cover" />
+   531→                  ) : (
+   532→                    <span className="text-8xl">{lot.product.category?.icon || "📦"}</span>
+   533→                  )}
+   534→                </div>
+   535→                {isNew && !isRecalled && !expired && (
+   536→                  <div className="absolute -top-2 -right-2 px-3 py-1 rounded-full text-white text-xs font-bold shadow-lg" style={{ backgroundColor: GREEN }}>
+   537→                    <Sparkles className="size-3 mr-1 inline" />
+   538→                    Nouveau
+   539→                  </div>
+   540→                )}
+   541→              </div>
+   542→
+   543→              {/* Product info */}
+   544→              <div className="space-y-3">
+   545→                <h1 className="font-display text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+   546→                  {lot.product.name}
+   547→                </h1>
+   548→                <p className="text-gray-600 dark:text-gray-300">
+   549→                  Marque : <span className="font-semibold text-gray-900 dark:text-gray-100">{lot.product.brand}</span>
+   550→                </p>
+   551→                <p className="text-sm text-gray-600 dark:text-gray-300">
+   552→                  Fabricant :{" "}
+   553→                  <span className="font-semibold" style={{ color: GREEN_DARK }}>
+   554→                    {lot.product.user.companyName}
+   555→                  </span>
+   556→                </p>
+   557→                {lot.product.description && (
+   558→                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pt-2 border-t border-gray-100 dark:border-gray-800">
+   559→                    {lot.product.description}
+   560→                  </p>
+   561→                )}
+   562→
+   563→                {/* Badges row */}
+   564→                <div className="flex flex-wrap items-center gap-2 pt-2">
+   565→                  <Badge variant="outline" className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+   566→                    {lot.product.category?.icon} {lot.product.category?.name}
+   567→                  </Badge>
+   568→                  {lot.product.weight && (
+   569→                    <Badge variant="outline" className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
+   570→                      <Scale className="size-3 mr-1" />
+   571→                      {lot.product.weight}
+   572→                    </Badge>
+   573→                  )}
+   574→                  {isNew && !isRecalled && !expired && (
+   575→                    <Badge className="text-white" style={{ backgroundColor: GREEN }}>
+   576→                      <Sparkles className="size-3 mr-1" />
+   577→                      Nouveau
+   578→                    </Badge>
+   579→                  )}
+   580→                </div>
+   581→              </div>
+   582→            </div>
+   583→          </div>
+   584→        </Reveal>
+   585→
+   586→        {/* === 4. INFORMATIONS DE TRAÇABILITÉ — grille colorée === */}
+   587→        <Reveal>
+   588→          <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
+   589→            <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   590→              <Info className="size-5" style={{ color: BLUE }} />
+   591→              Informations de traçabilité
+   592→            </h2>
+   593→
+   594→            {/* Numéro de lot — jaune clair */}
+   595→            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: ORANGE_LIGHT }}>
+   596→              <div className="text-xs uppercase tracking-wide font-medium text-amber-800 mb-1">
+   597→                Numéro de lot
+   598→              </div>
+   599→              <code className="text-lg font-mono font-bold text-amber-900">{lot.lotNumber}</code>
+   600→            </div>
+   601→
+   602→            {/* Dates — fabrication (vert) / péremption (orange) */}
+   603→            <div className="grid sm:grid-cols-2 gap-3 mb-4">
+   604→              <ColorBlock
+   605→                icon={Calendar}
+   606→                label="Date de fabrication"
+   607→                value={formatDate(lot.manufacturingDate)}
+   608→                bg={GREEN_LIGHT}
+   609→                color={GREEN_DARK}
+   610→              />
+   611→              <ColorBlock
+   612→                icon={Calendar}
+   613→                label="Date de péremption"
+   614→                value={formatDate(lot.expirationDate)}
+   615→                bg={ORANGE_LIGHT}
+   616→                color={expired ? "#DC2626" : "#92400E"}
+   617→                bold={expired}
+   618→              />
+   619→            </div>
+   620→
+   621→            {/* Lieux — fabrication (bleu) / transformation (vert) */}
+   622→            <div className="grid sm:grid-cols-2 gap-3 mb-4">
+   623→              {lot.manufacturingLocation && (
+   624→                <ColorBlock
+   625→                  icon={Factory}
+   626→                  label="Lieu de fabrication"
+   627→                  value={lot.manufacturingLocation}
+   628→                  bg={BLUE_LIGHT}
+   629→                  color={BLUE}
+   630→                />
+   631→              )}
+   632→              {lot.transformationLocation && (
+   633→                <ColorBlock
+   634→                  icon={MapPin}
+   635→                  label="Lieu de transformation"
+   636→                  value={lot.transformationLocation}
+   637→                  bg={GREEN_LIGHT}
+   638→                  color={GREEN_DARK}
+   639→                />
+   640→              )}
+   641→            </div>
+   642→
+   643→            {/* Pays de vente — jaune */}
+   644→            {lot.salesCountries && (
+   645→              <ColorBlock
+   646→                icon={Globe2}
+   647→                label="Pays de vente"
+   648→                value={lot.salesCountries}
+   649→                bg={ORANGE_LIGHT}
+   650→                color="#92400E"
+   651→                full
+   652→              />
+   653→            )}
+   654→
+   655→            {/* Ingrédients */}
+   656→            {lot.ingredients && (
+   657→              <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+   658→                <div className="flex items-center gap-2 mb-2">
+   659→                  <Leaf className="size-5" style={{ color: GREEN }} />
+   660→                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Ingrédients</h3>
+   661→                </div>
+   662→                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+   663→                  {lot.ingredients}
+   664→                </p>
+   665→              </div>
+   666→            )}
+   667→          </div>
+   668→        </Reveal>
+   669→
+   670→        {/* === 5. HISTORIQUE DU LOT — Timeline améliorée === */}
+   671→        <Reveal>
+   672→          <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
+   673→            <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   674→              <Clock className="size-5" style={{ color: BLUE }} />
+   675→              Historique du lot
+   676→            </h2>
+   677→            <Timeline items={buildTimeline(lot)} />
+   678→          </div>
+   679→        </Reveal>
+   680→
+   681→        {/* === ANOMALIES (si présentes) === */}
+   682→        {lot.anomalies && lot.anomalies.length > 0 && (
+   683→          <Reveal>
+   684→            <div className="rounded-2xl bg-white border-2 border-red-200 dark:bg-gray-900 dark:border-red-900/60 p-6 sm:p-8 shadow-md">
+   685→              <div className="flex items-center justify-between mb-4">
+   686→                <h2 className="font-display text-xl font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   687→                  <AlertTriangle className="size-5 text-red-600" />
+   688→                  Anomalies détectées
+   689→                </h2>
+   690→                <Badge className="bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 hover:bg-red-100">
+   691→                  {lot.anomalies.filter((a) => a.status === "open").length} ouverte(s) ·{" "}
+   692→                  {lot.anomalies.length} au total
+   693→                </Badge>
+   694→              </div>
+   695→              <div className="space-y-2">
+   696→                {lot.anomalies.map((a) => {
+   697→                  const sev = a.severity === "critical" ? "red" : a.severity === "warning" ? "amber" : "blue";
+   698→                  const sevClasses = {
+   699→                    red: "border-red-200 bg-red-50 dark:bg-red-950/40 dark:border-red-900",
+   700→                    amber: "border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-900",
+   701→                    blue: "border-blue-200 bg-blue-50 dark:bg-blue-950/40 dark:border-blue-900",
+   702→                  };
+   703→                  const sevIcon = {
+   704→                    red: <XCircle className="size-4 text-red-600" />,
+   705→                    amber: <AlertTriangle className="size-4 text-amber-600" />,
+   706→                    blue: <Info className="size-4 text-blue-600" />,
+   707→                  };
+   708→                  const typeLabels: Record<string, string> = {
+   709→                    allergen: "Allergène",
+   710→                    dlc: "Date de péremption",
+   711→                    counterfeit: "Contrefaçon",
+   712→                    ingredient: "Ingrédient",
+   713→                    cert_expiring: "Certification expirant",
+   714→                  };
+   715→                  return (
+   716→                    <div key={a.id} className={`rounded-lg border p-3 flex items-start gap-3 ${sevClasses[sev]}`}>
+   717→                      <div className="flex-shrink-0 mt-0.5">{sevIcon[sev]}</div>
+   718→                      <div className="flex-1 min-w-0">
+   719→                        <div className="flex items-center gap-2 flex-wrap">
+   720→                          <Badge variant="outline" className="text-[10px] border-current">
+   721→                            {typeLabels[a.type] || a.type}
+   722→                          </Badge>
+   723→                          {a.status === "open" ? (
+   724→                            <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px]">Ouverte</Badge>
+   725→                          ) : a.status === "resolved" ? (
+   726→                            <Badge className="text-white text-[10px]" style={{ backgroundColor: GREEN }}>Résolue</Badge>
+   727→                          ) : (
+   728→                            <Badge variant="secondary" className="text-[10px]">Ignorée</Badge>
+   729→                          )}
+   730→                          <span className="text-xs text-gray-500 dark:text-gray-400">{formatRelative(a.detectedAt)}</span>
+   731→                        </div>
+   732→                        <p className="text-sm text-gray-800 dark:text-gray-200 mt-1">{a.description}</p>
+   733→                      </div>
+   734→                    </div>
+   735→                  );
+   736→                })}
+   737→              </div>
+   738→              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 italic">
+   739→                Ces anomalies sont détectées automatiquement par le module IA VerifScan à partir
+   740→                des données du lot, des ingrédients et des signaux du marché. En cas de doute,
+   741→                contactez le fabricant.
+   742→              </p>
+   743→            </div>
+   744→          </Reveal>
+   745→        )}
+   746→
+   747→        {/* === 6. CERTIFICATIONS & QUALITÉ === */}
+   748→        <Reveal>
+   749→          <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
+   750→            <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   751→              <Award className="size-5" style={{ color: GREEN }} />
+   752→              Certifications & Qualité
+   753→            </h2>
+   754→            {lot.certifications.length === 0 ? (
+   755→              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+   756→                Aucune certification enregistrée pour ce fabricant.
+   757→              </p>
+   758→            ) : (
+   759→              <div className="grid sm:grid-cols-3 gap-3">
+   760→                {lot.certifications.map((cert) => {
+   761→                  const meta = getCertificationMeta(cert.type);
+   762→                  return (
+   763→                    <div
+   764→                      key={cert.id}
+   765→                      className={cn(
+   766→                        "rounded-xl border-2 p-4 text-center transition-all hover:shadow-md hover:-translate-y-1",
+   767→                        CERT_TONE_CLASSES[meta.tone]
+   768→                      )}
+   769→                    >
+   770→                      <div className="text-5xl mb-2">{meta.icon}</div>
+   771→                      <p className="font-display font-bold text-lg">{meta.label}</p>
+   772→                      {cert.verified && (
+   773→                        <Badge className="text-white text-[10px] mt-1" style={{ backgroundColor: GREEN }}>
+   774→                          <CheckCircle2 className="size-3 mr-0.5" /> Vérifié
+   775→                        </Badge>
+   776→                      )}
+   777→                      <p className="text-xs opacity-80 mt-2">{meta.description}</p>
+   778→                      <p className="text-[10px] mt-1 opacity-70">Émetteur : {cert.issuer}</p>
+   779→                      {cert.expiresAt && (
+   780→                        <p className="text-[10px] mt-0.5 opacity-70">Expire le {formatDate(cert.expiresAt)}</p>
+   781→                      )}
+   782→                    </div>
+   783→                  );
+   784→                })}
+   785→              </div>
+   786→            )}
+   787→          </div>
+   788→        </Reveal>
+   789→
+   790→        {/* === 7. ALLERGÈNES & INFOS SANITAIRES === */}
+   791→        <Reveal>
+   792→          <div
+   793→            className="rounded-2xl p-6 sm:p-8 shadow-md"
+   794→            style={{ backgroundColor: ORANGE_LIGHT, border: `2px solid ${ORANGE}` }}
+   795→          >
+   796→            <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: "#92400E" }}>
+   797→              <AlertTriangle className="size-5" />
+   798→              Allergènes & Informations sanitaires
+   799→            </h2>
+   800→            {allergens.length > 0 ? (
+   801→              <>
+   802→                <p className="text-sm text-amber-900 mb-3">
+   803→                  Ce produit contient ou peut contenir les allergènes suivants :
+   804→                </p>
+   805→                <div className="flex flex-wrap gap-2 mb-4">
+   806→                  {allergens.map((a) => (
+   807→                    <span
+   808→                      key={a.key}
+   809→                      className={cn(
+   810→                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium",
+   811→                        ALLERGEN_TONE_CLASSES[a.tone]
+   812→                      )}
+   813→                    >
+   814→                      <span>{a.icon}</span>
+   815→                      {a.label}
+   816→                    </span>
+   817→                  ))}
+   818→                </div>
+   819→                <div className="rounded-lg bg-white/60 p-3 text-xs" style={{ color: "#92400E" }}>
+   820→                  <p className="font-medium mb-1">⚠️ Avertissement sanitaire</p>
+   821→                  <p>
+   822→                    Les personnes souffrant d&apos;allergies ou d&apos;intolérances alimentaires
+   823→                    doivent consulter la liste complète des ingrédients ci-dessus. En cas de
+   824→                    doute, contactez le fabricant avant consommation.
+   825→                  </p>
+   826→                </div>
+   827→              </>
+   828→            ) : (
+   829→              <p className="text-sm" style={{ color: "#92400E" }}>
+   830→                Aucun allergène majeur détecté dans les ingrédients renseignés. Les informations
+   831→                nutritionnelles détaillées ne sont pas disponibles pour ce produit.
+   832→              </p>
+   833→            )}
+   834→          </div>
+   835→        </Reveal>
+   836→
+   837→        {/* === 8. QR CODE & CONTACT === */}
+   838→        <div className="grid sm:grid-cols-2 gap-4">
+   839→          {lot.qrCodes[0]?.qrCodeImageUrl && (
+   840→            <Reveal>
+   841→              <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 text-center shadow-md h-full">
+   842→                <h3 className="font-display font-semibold mb-4 flex items-center justify-center gap-2 text-gray-900 dark:text-gray-100">
+   843→                  <QrCode className="size-5" style={{ color: BLUE }} />
+   844→                  QR code officiel
+   845→                </h3>
+   846→                <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+   847→                  {/* eslint-disable-next-line @next/next/no-img-element */}
+   848→                  <img
+   849→                    src={lot.qrCodes[0].qrCodeImageUrl}
+   850→                    alt="QR code"
+   851→                    className="w-40 h-40"
+   852→                  />
+   853→                </div>
+   854→                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+   855→                  Scannez ce code pour vérifier l&apos;authenticité à tout moment
+   856→                </p>
+   857→              </div>
+   858→            </Reveal>
+   859→          )}
+   860→
+   861→          <Reveal>
+   862→            <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md h-full">
+   863→              <h3 className="font-display font-semibold mb-3 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   864→                <Phone className="size-5" style={{ color: GREEN }} />
+   865→                Contacter le fabricant
+   866→              </h3>
+   867→              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+   868→                Une question sur ce produit ? Contactez directement{" "}
+   869→                <span className="font-semibold" style={{ color: GREEN_DARK }}>
+   870→                  {lot.product.user.companyName}
+   871→                </span>.
+   872→              </p>
+   873→              <div className="space-y-2">
+   874→                {lot.product.user.whatsapp && (
+   875→                  <Button asChild className="w-full text-white" style={{ backgroundColor: "#25D366" }}>
+   876→                    <a
+   877→                      href={`https://wa.me/${lot.product.user.whatsapp.replace(/[^0-9]/g, "")}`}
+   878→                      target="_blank"
+   879→                      rel="noopener noreferrer"
+   880→                    >
+   881→                      <MessageCircle className="mr-2 size-4" />
+   882→                      WhatsApp
+   883→                    </a>
+   884→                  </Button>
+   885→                )}
+   886→                {lot.product.user.phone && (
+   887→                  <Button asChild variant="outline" className="w-full" style={{ borderColor: GREEN, color: GREEN_DARK }}>
+   888→                    <a href={`tel:${lot.product.user.phone}`}>
+   889→                      <Phone className="mr-2 size-4" />
+   890→                      {lot.product.user.phone}
+   891→                    </a>
+   892→                  </Button>
+   893→                )}
+   894→                {lot.product.user.emailContact && (
+   895→                  <Button asChild variant="outline" className="w-full" style={{ borderColor: BLUE, color: BLUE }}>
+   896→                    <a href={`mailto:${lot.product.user.emailContact}`}>
+   897→                      <Mail className="mr-2 size-4" />
+   898→                      Email
+   899→                    </a>
+   900→                  </Button>
+   901→                )}
+   902→              </div>
+   903→            </div>
+   904→          </Reveal>
+   905→        </div>
+   906→
+   907→        {/* === 9. AVIS & NOTES === */}
+   908→        <Reveal>
+   909→          <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
+   910→            <div className="flex items-center justify-between mb-4">
+   911→              <h2 className="font-display text-xl font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
+   912→                <Star className="size-5 text-amber-500" />
+   913→                Avis & Notes
+   914→              </h2>
+   915→              {lot.reviewAggregates.count > 0 && (
+   916→                <Badge variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
+   917→                  {lot.reviewAggregates.count} avis
+   918→                </Badge>
+   919→              )}
+   920→            </div>
+   921→            {lot.reviewAggregates.count === 0 ? (
+   922→              <div className="text-center py-8">
+   923→                <ThumbsUp className="mx-auto size-12 text-gray-300 dark:text-gray-700" />
+   924→                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+   925→                  Aucun avis pour le moment. Soyez le premier à partager votre expérience avec ce
+   926→                  fabricant.
+   927→                </p>
+   928→              </div>
+   929→            ) : (
+   930→              <>
+   931→                <div className="grid sm:grid-cols-[180px_1fr] gap-6 mb-5">
+   932→                  <div className="text-center">
+   933→                    <div className="text-5xl font-bold text-amber-500">
+   934→                      {lot.reviewAggregates.overall.toFixed(1)}
+   935→                    </div>
+   936→                    <div className="flex justify-center mt-2">
+   937→                      {starArray(lot.reviewAggregates.overall).map((filled, i) => (
+   938→                        <Star
+   939→                          key={i}
+   940→                          className={cn(
+   941→                            "size-5 vs-star-pop",
+   942→                            filled ? "text-amber-400 fill-amber-400" : "text-gray-300 dark:text-gray-700"
+   943→                          )}
+   944→                          style={{ animationDelay: `${i * 60}ms` }}
+   945→                        />
+   946→                      ))}
+   947→                    </div>
+   948→                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+   949→                      Basé sur {lot.reviewAggregates.count} avis
+   950→                    </p>
+   951→                  </div>
+   952→                  <div className="space-y-3">
+   953→                    <RatingBar label="Fiabilité" value={lot.reviewAggregates.reliability} />
+   954→                    <RatingBar label="Qualité" value={lot.reviewAggregates.quality} />
+   955→                    <RatingBar label="Professionnalisme" value={lot.reviewAggregates.professionalism} />
+   956→                  </div>
+   957→                </div>
+   958→                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+   959→                  {lot.reviews.slice(0, 3).map((r) => {
+   960→                    const avg = (r.reliabilityScore + r.qualityScore + r.professionalismScore) / 3;
+   961→                    return (
+   962→                      <div key={r.id} className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4">
+   963→                        <div className="flex items-center justify-between">
+   964→                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+   965→                            {r.reviewer.companyName}
+   966→                          </p>
+   967→                          <span className="text-xs text-gray-500 dark:text-gray-400">
+   968→                            {formatDate(r.createdAt)}
+   969→                          </span>
+   970→                        </div>
+   971→                        <div className="flex items-center gap-1 mt-1">
+   972→                          {starArray(avg).map((filled, i) => (
+   973→                            <Star
+   974→                              key={i}
+   975→                              className={cn(
+   976→                                "size-3",
+   977→                                filled ? "text-amber-400 fill-amber-400" : "text-gray-300 dark:text-gray-700"
+   978→                              )}
+   979→                            />
+   980→                          ))}
+   981→                        </div>
+   982→                        {r.comment && (
+   983→                          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 italic">
+   984→                            &ldquo;{r.comment}&rdquo;
+   985→                          </p>
+   986→                        )}
+   987→                      </div>
+   988→                    );
+   989→                  })}
+   990→                </div>
+   991→              </>
+   992→            )}
+   993→          </div>
+   994→        </Reveal>
+   995→
+   996→        {/* === SIMILAR PRODUCTS (bonus, kept for context) === */}
+   997→        {lot.similarProducts.length > 0 && (
+   998→          <Reveal>
+   999→            <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
+  1000→              <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+  1001→                <Package className="size-5" style={{ color: BLUE }} />
+  1002→                Produits similaires
+  1003→              </h2>
+  1004→              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  1005→                {lot.similarProducts.map((p) => (
+  1006→                  <Link
+  1007→                    key={p.id}
+  1008→                    href={p.lotId ? `/p/${p.lotId}` : `/produit/${p.id}`}
+  1009→                    className="group rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-md transition-all hover:-translate-y-1 bg-white dark:bg-gray-800/50"
+  1010→                  >
+  1011→                    <div
+  1012→                      className="aspect-square flex items-center justify-center overflow-hidden vs-img-zoom"
+  1013→                      style={{ background: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, ${GREEN_LIGHT} 100%)` }}
+  1014→                    >
+  1015→                      {p.photoUrl ? (
+  1016→                        // eslint-disable-next-line @next/next/no-img-element
+  1017→                        <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" />
+  1018→                      ) : (
+  1019→                        <span className="text-4xl">{p.category?.icon || "📦"}</span>
+  1020→                      )}
+  1021→                    </div>
+  1022→                    <div className="p-2.5">
+  1023→                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+  1024→                        {p.name}
+  1025→                      </p>
+  1026→                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.brand}</p>
+  1027→                      <p className="text-xs mt-1 truncate" style={{ color: GREEN_DARK }}>
+  1028→                        {p.user.companyName}
+  1029→                      </p>
+  1030→                    </div>
+  1031→                  </Link>
+  1032→                ))}
+  1033→              </div>
+  1034→            </div>
+  1035→          </Reveal>
+  1036→        )}
+  1037→
+  1038→        {/* === 10. BADGE FINAL — Vérifié par VerifScan === */}
+  1039→        {!isRecalled && (
+  1040→          <Reveal>
+  1041→            <div
+  1042→              className="rounded-2xl p-6 sm:p-8 text-center shadow-lg"
+  1043→              style={{ background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)` }}
+  1044→            >
+  1045→              <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-white/20 mb-3">
+  1046→                <ShieldCheck className="size-8 text-white" />
+  1047→              </div>
+  1048→              <p className="font-display text-2xl font-bold text-white uppercase tracking-wide">
+  1049→                Vérifié par VerifScan
+  1050→              </p>
+  1051→              <p className="mt-1 text-sm text-white/90">
+  1052→                Lot authentique · Informations vérifiées et garanties par VerifScan
+  1053→              </p>
+  1054→              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+  1055→                <button
+  1056→                  onClick={() => setShareOpen(true)}
+  1057→                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-sm font-semibold hover:bg-white/95 transition-colors"
+  1058→                  style={{ color: GREEN_DARK }}
+  1059→                >
+  1060→                  <Share2 className="size-4" />
+  1061→                  Partager
+  1062→                </button>
+  1063→                <a
+  1064→                  href={`https://wa.me/?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(currentUrl)}`}
+  1065→                  target="_blank"
+  1066→                  rel="noopener noreferrer"
+  1067→                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/15 text-white text-sm font-semibold hover:bg-white/25 transition-colors"
+  1068→                >
+  1069→                  <MessageCircle className="size-4" />
+  1070→                  WhatsApp
+  1071→                </a>
+  1072→                <a
+  1073→                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+  1074→                  target="_blank"
+  1075→                  rel="noopener noreferrer"
+  1076→                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/15 text-white text-sm font-semibold hover:bg-white/25 transition-colors"
+  1077→                >
+  1078→                  <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
+  1079→                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  1080→                  </svg>
+  1081→                  Facebook
+  1082→                </a>
+  1083→              </div>
+  1084→              <Link
+  1085→                href="/"
+  1086→                className="inline-block mt-4 text-xs text-white/80 hover:text-white underline underline-offset-2"
+  1087→              >
+  1088→                En savoir plus sur VerifScan
+  1089→              </Link>
+  1090→            </div>
+  1091→          </Reveal>
+  1092→        )}
+  1093→
+  1094→        {/* Blockchain certificate */}
+  1095→        <Reveal>
+  1096→          <BlockchainBadge lotId={lot.id} />
+  1097→        </Reveal>
+  1098→
+  1099→        {/* Footer note */}
+  1100→        <p className="pt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+  1101→          Informations vérifiées et garanties par VerifScan ·{" "}
+  1102→          <Link href="/" className="underline" style={{ color: GREEN_DARK }}>
+  1103→            En savoir plus
+  1104→          </Link>
+  1105→        </p>
+  1106→      </div>
+  1107→
+  1108→      <ChatbotWidget productId={lot.product.id} />
+  1109→    </PublicShell>
+  1110→  );
+  1111→}
+  1112→
+  1113→/* ============ Sub-components ============ */
+  1114→
+  1115→function Reveal({ children }: { children: React.ReactNode }) {
+  1116→  const ref = useRef<HTMLDivElement>(null);
+  1117→  const [visible, setVisible] = useState(false);
+  1118→
+  1119→  useEffect(() => {
+  1120→    const el = ref.current;
+  1121→    if (!el) return;
+  1122→    const obs = new IntersectionObserver(
+  1123→      (entries) => {
+  1124→        entries.forEach((e) => {
+  1125→          if (e.isIntersecting) {
+  1126→            setVisible(true);
+  1127→            obs.unobserve(e.target);
+  1128→          }
+  1129→        });
+  1130→      },
+  1131→      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+  1132→    );
+  1133→    obs.observe(el);
+  1134→    return () => obs.disconnect();
+  1135→  }, []);
+  1136→
+  1137→  return (
+  1138→    <div ref={ref} className={cn("vs-section-reveal", visible && "vs-revealed")}>
+  1139→      {children}
+  1140→    </div>
+  1141→  );
+  1142→}
+  1143→
+  1144→/** Quick stat card — colored background (alternating blue / green) */
+  1145→function QuickStat({
+  1146→  icon: Icon,
+  1147→  value,
+  1148→  label,
+  1149→  bg,
+  1150→  bgLight,
+  1151→}: {
+  1152→  icon: React.ElementType;
+  1153→  value: string;
+  1154→  label: string;
+  1155→  bg: string;
+  1156→  bgLight: string;
+  1157→}) {
+  1158→  return (
+  1159→    <div
+  1160→      className="rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+  1161→      style={{ backgroundColor: bgLight, border: `2px solid ${bg}30` }}
+  1162→    >
+  1163→      <div
+  1164→        className="size-10 rounded-xl flex items-center justify-center text-white shadow-sm mb-2"
+  1165→        style={{ backgroundColor: bg }}
+  1166→      >
+  1167→        <Icon className="size-5" />
+  1168→      </div>
+  1169→      <p className="text-lg font-bold leading-tight" style={{ color: bg }}>
+  1170→        {value}
+  1171→      </p>
+  1172→      <p className="text-[10px] uppercase tracking-wide font-medium text-gray-600 dark:text-gray-300 mt-0.5">
+  1173→        {label}
+  1174→      </p>
+  1175→    </div>
+  1176→  );
+  1177→}
+  1178→
+  1179→/** Colored info block for traceability grid */
+  1180→function ColorBlock({
+  1181→  icon: Icon,
+  1182→  label,
+  1183→  value,
+  1184→  bg,
+  1185→  color,
+  1186→  full = false,
+  1187→  bold = false,
+  1188→}: {
+  1189→  icon: React.ElementType;
+  1190→  label: string;
+  1191→  value: string;
+  1192→  bg: string;
+  1193→  color: string;
+  1194→  full?: boolean;
+  1195→  bold?: boolean;
+  1196→}) {
+  1197→  return (
+  1198→    <div
+  1199→      className={cn(
+  1200→        "rounded-xl p-4 flex items-start gap-3 transition-all hover:shadow-md",
+  1201→        full && "sm:col-span-2"
+  1202→      )}
+  1203→      style={{ backgroundColor: bg }}
+  1204→    >
+  1205→      <div
+  1206→        className="flex-shrink-0 size-10 rounded-lg flex items-center justify-center text-white shadow-sm"
+  1207→        style={{ backgroundColor: color }}
+  1208→      >
+  1209→        <Icon className="size-5" />
+  1210→      </div>
+  1211→      <div className="min-w-0">
+  1212→        <p className="text-xs uppercase tracking-wide font-medium opacity-80" style={{ color }}>
+  1213→          {label}
+  1214→        </p>
+  1215→        <p className={cn("text-sm mt-0.5", bold ? "font-bold" : "font-medium")} style={{ color }}>
+  1216→          {value}
+  1217→        </p>
+  1218→      </div>
+  1219→    </div>
+  1220→  );
+  1221→}
+  1222→
+  1223→type TimelineItem = {
+  1224→  icon: React.ElementType;
+  1225→  title: string;
+  1226→  subtitle: string;
+  1227→  date: string;
+  1228→  tone: "green" | "blue" | "amber" | "red" | "violet";
+  1229→  done: boolean;
+  1230→};
+  1231→
+  1232→function buildTimeline(lot: Lot): TimelineItem[] {
+  1233→  const items: TimelineItem[] = [];
+  1234→
+  1235→  items.push({
+  1236→    icon: Factory,
+  1237→    title: "Fabrication",
+  1238→    subtitle: lot.manufacturingLocation || "Site de production",
+  1239→    date: formatDate(lot.manufacturingDate),
+  1240→    tone: "green",
+  1241→    done: true,
+  1242→  });
+  1243→
+  1244→  items.push({
+  1245→    icon: Microscope,
+  1246→    title: "Contrôle qualité",
+  1247→    subtitle: "Tests et vérification conformité",
+  1248→    date: formatDate(lot.createdAt),
+  1249→    tone: "violet",
+  1250→    done: true,
+  1251→  });
+  1252→
+  1253→  items.push({
+  1254→    icon: Box,
+  1255→    title: "Mise sur le marché",
+  1256→    subtitle: "Lot enregistré sur VerifScan",
+  1257→    date: formatDateTime(lot.createdAt),
+  1258→    tone: "blue",
+  1259→    done: true,
+  1260→  });
+  1261→
+  1262→  if (lot.status === "recalled") {
+  1263→    items.push({
+  1264→      icon: XCircle,
+  1265→      title: "Rappel produit",
+  1266→      subtitle: lot.recallReason || "Rappelé par le fabricant",
+  1267→      date: lot.recalledAt ? formatDateTime(lot.recalledAt) : "—",
+  1268→      tone: "red",
+  1269→      done: true,
+  1270→    });
+  1271→  } else if (isExpired(lot.expirationDate)) {
+  1272→    items.push({
+  1273→      icon: AlertTriangle,
+  1274→      title: "Date de péremption dépassée",
+  1275→      subtitle: "Ne plus consommer",
+  1276→      date: formatDate(lot.expirationDate),
+  1277→      tone: "red",
+  1278→      done: true,
+  1279→    });
+  1280→  } else {
+  1281→    items.push({
+  1282→      icon: Clock,
+  1283→      title: "Statut actuel : Actif",
+  1284→      subtitle: `Péremption dans ${daysUntil(lot.expirationDate)} jours`,
+  1285→      date: formatDate(lot.expirationDate),
+  1286→      tone: "amber",
+  1287→      done: false,
+  1288→    });
+  1289→  }
+  1290→
+  1291→  return items;
+  1292→}
+  1293→
+  1294→function Timeline({ items }: { items: TimelineItem[] }) {
+  1295→  const toneBg: Record<TimelineItem["tone"], string> = {
+  1296→    green: GREEN,
+  1297→    blue: BLUE,
+  1298→    amber: ORANGE,
+  1299→    red: "#DC2626",
+  1300→    violet: "#8B5CF6",
+  1301→  };
+  1302→  const toneBgLight: Record<TimelineItem["tone"], string> = {
+  1303→    green: GREEN_LIGHT,
+  1304→    blue: BLUE_LIGHT,
+  1305→    amber: ORANGE_LIGHT,
+  1306→    red: "#FEE2E2",
+  1307→    violet: "#F3E8FF",
+  1308→  };
+  1309→  return (
+  1310→    <div className="relative pl-10">
+  1311→      {/* Vertical connecting line */}
+  1312→      <div
+  1313→        className="absolute left-4 top-3 bottom-3 w-0.5"
+  1314→        style={{ background: `linear-gradient(180deg, ${GREEN}, ${BLUE}, ${ORANGE})` }}
+  1315→      />
+  1316→      <div className="space-y-5">
+  1317→        {items.map((item, i) => (
+  1318→          <div key={i} className="relative">
+  1319→            {/* Colored circle */}
+  1320→            <div
+  1321→              className="absolute -left-10 top-0 size-8 rounded-full flex items-center justify-center text-white shadow-md ring-4 ring-white dark:ring-gray-900"
+  1322→              style={{ backgroundColor: toneBg[item.tone] }}
+  1323→            >
+  1324→              <item.icon className="size-4" />
+  1325→            </div>
+  1326→            {/* Card with colored background */}
+  1327→            <div
+  1328→              className="rounded-xl p-4 transition-all hover:shadow-md"
+  1329→              style={{ backgroundColor: toneBgLight[item.tone] }}
+  1330→            >
+  1331→              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+  1332→                {item.title}
+  1333→                {!item.done && (
+  1334→                  <span className="inline-flex items-center gap-1 text-xs font-normal" style={{ color: "#B45309" }}>
+  1335→                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: ORANGE }} />
+  1336→                    En cours
+  1337→                  </span>
+  1338→                )}
+  1339→              </p>
+  1340→              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{item.subtitle}</p>
+  1341→              <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 font-medium">{item.date}</p>
+  1342→            </div>
+  1343→          </div>
+  1344→        ))}
+  1345→      </div>
+  1346→    </div>
+  1347→  );
+  1348→}
+  1349→
+  1350→function RatingBar({ label, value }: { label: string; value: number }) {
+  1351→  const pct = Math.min(100, Math.max(0, (value / 5) * 100));
+  1352→  return (
+  1353→    <div>
+  1354→      <div className="flex items-center justify-between text-xs mb-1">
+  1355→        <span className="text-gray-600 dark:text-gray-300">{label}</span>
+  1356→        <span className="font-semibold text-gray-900 dark:text-gray-100">{value.toFixed(1)} / 5</span>
+  1357→      </div>
+  1358→      <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+  1359→        <div
+  1360→          className="h-full transition-all duration-700"
+  1361→          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${BLUE}, ${GREEN})` }}
+  1362→        />
+  1363→      </div>
+  1364→    </div>
+  1365→  );
+  1366→}
+  1367→

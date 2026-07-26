@@ -703,3 +703,64 @@ Stage Summary:
 - Logo PNG transparent (272x66, ~16 KB) — fonctionne sur fond blanc (header/sidebar) ET fond sombre (footer #0a3060)
 - API VerifScanLogo conservée (size/variant/showText) — aucun changement requis dans les 4 fichiers consommateurs
 - Artéfacts: public/logo.png, scripts/prepare-logo.py (re-exécutable)
+
+---
+Task ID: product-page-ux-reviews
+Agent: Super Z (main)
+Task: Page produit — fix flash orange, supprimer 4 stats cards, déplacer ingrédients sous description, alerte péremption rouge (10j/5j/périmé), notification avis à 15s avec publication auto + email au fabricant
+
+Work Log:
+- Bug "flash orange cards": remplacé le Skeleton (barres grises) par un spinner minimal centré avec libellé "Vérification du produit…". Plus aucun placeholder en forme de card pendant le chargement.
+- Supprimé la section "2. STATS RAPIDES — 4 cards colorées" (Scans / Vérifié / Dernier scan / Fabricant inscrit). Composant QuickStat supprimé. Imports inutilisés nettoyés (Eye, Skeleton).
+- Déplacé les ingrédients de la card de traçabilité (section 3) vers la card produit principale (section 2), juste sous la description. Icône Leaf verte + label "Ingrédients" en majuscules.
+- Ajouté une bannière rouge dédiée "1.bis ALERTE DE PÉREMPTION" qui s'affiche quand remainingDays ≤ 10 (non rappelé):
+  * 6-10 jours: rouge léger "À consommer rapidement — X jours restants"
+  * 1-5 jours: rouge plus fort "Bientôt périmé — plus que X jour(s) !"
+  * Périmé: rouge foncé "Produit périmé" + message "ne doit plus être consommé"
+  * 3 gradients + 3 couleurs de bordure différentes selon le niveau
+  * Icône AlertTriangle pulsante (ou XCircle si périmé)
+- Modifié la section 1 (auth banner): supprimé la branche "expired" orange (redondante avec la nouvelle alerte rouge). Affiche toujours "Authentic" (vert) sauf si rappelé — l'authenticité et la péremption sont 2 sujets séparés.
+- Ajouté un timer 15s après le chargement du lot → toast Sonner "Donnez votre avis sur ce produit" avec bouton action "Laisser un avis". Garde reviewNotified pour ne pas renotifier. Skipped pour les lots rappelés.
+- Ajouté un composant ReviewModal:
+  * Picker 1-5 étoiles avec hover state + label contextuel (Très déçu → Excellent)
+  * Commentaire optionnel (max 2000 chars, compteur)
+  * Nom optionnel (max 100), téléphone optionnel (max 30)
+  * Submit POST /api/lots/[id]/reviews
+  * État succès avec CheckCircle2 + auto-close après 1.8s
+  * Esc to close, backdrop click to close, scroll lock pendant l'ouverture
+  * Mise à jour optimiste : onSubmitted ajoute le nouvel avis en tête de liste + recalcule la moyenne
+- Section 8 (Avis & Notes) réécrite:
+  * Bouton "Laisser un avis" dans l'en-tête (ouvre le modal)
+  * Badge total (productReviews + b2bReviews)
+  * Sous-section 8.a "Avis consommateurs" : moyenne + compteur + 5 derniers avis
+  * Sous-section 8.b "Avis B2B" (distributeurs) : moyenne + 3 RatingBars + 3 derniers avis
+  * Si 0 avis partout : empty state avec bouton "Laisser un avis"
+- Backend:
+  * Nouveau modèle Prisma ProductReview (lotId, productId, fabricantId, rating 1-5, comment, reviewerName, reviewerPhone) + relations Lot.productReviews, Product.productReviews, User.productReviewsReceived
+  * prisma db push → schéma synchronisé sur SQLite
+  * Nouveau fichier src/lib/email.ts: nodemailer + readSmtpEnv (SMTP_HOST/PORT/USER/PASS/FROM/FROM_NAME). Fallback ethereal test account si SMTP non configuré (preview URL loggé). sendReviewNotificationEmail() avec template HTML branded (gradient blue→green, table product/lot/rating, bloc commentaire).
+  * Nouveau endpoint POST /api/lots/[id]/reviews (public, sans auth):
+    - Valide rating 1-5, comment ≤ 2000, name ≤ 100, phone ≤ 30
+    - Crée le ProductReview
+    - createNotification() au fabricant (type b2b_message — le plus proche existant)
+    - sendReviewNotificationEmail() au fabricant (best-effort, non-bloquant)
+    - Retourne 201 avec le review créé
+  * Nouveau endpoint GET /api/lots/[id]/reviews (public): 20 derniers avis + aggregates
+  * Mis à jour GET /api/lots/[id]: ajoute productReviews (10 derniers) + productReviewAggregates {average, count}
+- Testé sur dev server:
+  * GET /p/cms0synuq000hmq618cuiiriz → 200, HTML montre le spinner "Vérification du produit" (page client-side)
+  * GET /api/lots/[id] → 200, productReviews:[] + aggregates {average:0, count:0}
+  * POST /api/lots/[id]/reviews {rating:5, comment:"Produit excellent…", reviewerName:"Awa D."} → 201, review créé avec id
+  * GET /api/lots/[id]/reviews → 200, aggregates {average:5, count:1}, top review = Awa D. 5/5
+  * GET /api/lots/[id] (après POST) → productReviews contient le nouvel avis, aggregates {average:5, count:1}
+  * Notification INSERT visible dans dev.log (in-app notif créée pour le fabricant)
+- Dépendance: bun add nodemailer@9.0.3 → bun.lock créé
+- tsc --noEmit: 0 erreur dans les fichiers modifiés
+- Commit + push origin/main: 807991a
+
+Stage Summary:
+- Page produit: 5 changements UX (flash orange corrigé, 4 stats cards supprimées, ingrédients déplacés, alerte péremption rouge 3 niveaux, notification + modal avis)
+- Nouveau flow d'avis consommateurs: notification auto à 15s → modal → POST → publication immédiate + email au fabricant + notif in-app
+- Backend: nouveau modèle ProductReview, nouveau lib/email.ts (nodemailer + fallback ethereal), 2 nouveaux endpoints API, GET lots étendu
+- Pour activer les emails réels en prod: set SMTP_HOST/PORT/USER/PASS/FROM env vars (sinon fallback ethereal qui logge un preview URL)
+- Artéfacts: src/lib/email.ts, src/app/api/lots/[id]/reviews/route.ts, scripts/prepare-logo.py (re-exécutable)
