@@ -82,7 +82,7 @@ export async function GET(
   }
 
   // Parallel enrichment queries
-  const [certifications, scanAgg, lastScan, similarProducts, reviews, reviewAgg, anomalies] =
+  const [certifications, scanAgg, lastScan, similarProducts, reviews, reviewAgg, anomalies, productReviews, productReviewAgg] =
     await Promise.all([
       // 1. Fabricant's certifications (verified first, then by createdAt desc)
       db.certification.findMany({
@@ -158,7 +158,7 @@ export async function GET(
         },
       }),
 
-      // 6. Review aggregates (averages + total count)
+      // 6. B2B Review aggregates (averages + total count)
       db.b2BReview.aggregate({
         where: { fabricantReviewedId: lot.product.userId },
         _avg: {
@@ -182,6 +182,27 @@ export async function GET(
           status: true,
           detectedAt: true,
         },
+      }),
+
+      // 8. Consumer (public) reviews on this lot — latest 10
+      db.productReview.findMany({
+        where: { lotId: lot.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          reviewerName: true,
+          createdAt: true,
+        },
+      }),
+
+      // 9. Consumer review aggregates
+      db.productReview.aggregate({
+        where: { lotId: lot.id },
+        _avg: { rating: true },
+        _count: { _all: true },
       }),
     ]);
 
@@ -214,6 +235,11 @@ export async function GET(
     reviews,
     reviewAggregates,
     anomalies,
+    productReviews,
+    productReviewAggregates: {
+      average: productReviewAgg._avg.rating ?? 0,
+      count: productReviewAgg._count._all,
+    },
   });
 }
 

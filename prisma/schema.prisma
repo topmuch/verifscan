@@ -39,6 +39,7 @@ model User {
   certifications          Certification[]
   exportDocuments         ExportDocument[]
   b2bReviewsReceived      B2BReview[]   @relation("FabricantReviews")
+  productReviewsReceived  ProductReview[] @relation("ProductReviewFabricant")
   conversations           Conversation[]
 }
 
@@ -74,6 +75,7 @@ model Product {
   conversations Conversation[]
   aiAnomalies AIAnomaly[]
   aiPredictions AIPrediction[]
+  productReviews ProductReview[]
 
   @@index([userId])
   @@index([categoryId])
@@ -100,6 +102,7 @@ model Lot {
   // V3 relations
   aiAnomalies            AIAnomaly[]
   blockchainCertificate  BlockchainCertificate?
+  productReviews         ProductReview[]
 
   @@index([productId])
   @@index([status])
@@ -484,4 +487,27 @@ model ExportDocument {
 
   @@index([fabricantId])
   @@index([type])
+}
+
+/// Public consumer review submitted after scanning a QR code.
+/// No auth required — anyone with the lot URL can submit.
+/// The fabricant is notified by email + in-app notification on creation.
+model ProductReview {
+  id            String   @id @default(cuid())
+  lotId         String
+  productId     String
+  fabricantId   String   // merchant who owns the product — notified on creation
+  rating        Int      // 1-5 overall rating
+  comment       String?
+  reviewerName  String?  // optional name left by the consumer
+  reviewerPhone String?  // optional phone (useful for follow-up)
+  createdAt     DateTime @default(now())
+
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fabricant     User     @relation("ProductReviewFabricant", fields: [fabricantId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([productId])
+  @@index([fabricantId])
 }

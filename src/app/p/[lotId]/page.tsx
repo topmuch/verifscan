@@ -28,7 +28,6 @@ import {
   Check,
   Twitter,
   Linkedin,
-  Eye,
   ThumbsUp,
   Clock,
   Star,
@@ -41,7 +40,6 @@ import {
 import { PublicShell } from "@/components/public-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ChatbotWidget } from "@/components/chatbot-widget";
 import { BlockchainBadge } from "@/components/blockchain-badge";
@@ -81,6 +79,14 @@ type Review = {
   comment: string | null;
   createdAt: string;
   reviewer: { companyName: string };
+};
+
+type ProductReviewItem = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  reviewerName: string | null;
+  createdAt: string;
 };
 
 type SimilarProduct = {
@@ -149,6 +155,11 @@ type Lot = {
     overall: number;
     count: number;
   };
+  productReviews: ProductReviewItem[];
+  productReviewAggregates: {
+    average: number;
+    count: number;
+  };
   anomalies: Anomaly[];
 };
 
@@ -173,6 +184,8 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
   const [notFound, setNotFound] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewNotified, setReviewNotified] = useState(false);
 
   const { theme, toggle, mounted: themeMounted } = useDarkMode();
 
@@ -219,6 +232,26 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
     })();
   }, [lotId]);
 
+  // 15-second review prompt: after the lot loads, wait 15s, then show a
+  // non-blocking toast inviting the consumer to leave a review. Only fires
+  // once per page load (guarded by reviewNotified). Skipped for recalled lots.
+  useEffect(() => {
+    if (!lot || reviewNotified || lot.status === "recalled") return;
+    const t = setTimeout(() => {
+      toast.info("Donnez votre avis sur ce produit", {
+        description: "Cliquez ici pour partager votre expérience en 30 secondes.",
+        action: {
+          label: "Laisser un avis",
+          onClick: () => setReviewModalOpen(true),
+        },
+        duration: 12000,
+      });
+      setReviewNotified(true);
+    }, 15000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lot, reviewNotified]);
+
   const handlePrint = () => {
     if (typeof window !== "undefined") window.print();
   };
@@ -238,11 +271,17 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
   if (loading) {
     return (
       <PublicShell>
-        <div className="mx-auto max-w-5xl px-4 py-8 space-y-4">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-8 w-1/2" />
-          <Skeleton className="h-32 w-full" />
+        <div className="mx-auto max-w-5xl px-4 py-16 flex flex-col items-center justify-center gap-4">
+          {/* Minimal spinner — no card-shaped placeholders to avoid any
+              "orange cards flash" perception while data is loading. */}
+          <div
+            className="size-10 rounded-full border-4 border-gray-200 dark:border-gray-800 animate-spin"
+            style={{ borderTopColor: BLUE }}
+            aria-label="Chargement"
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Vérification du produit…
+          </p>
         </div>
       </PublicShell>
     );
@@ -412,6 +451,10 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
         {/* === 1. HEADER AUTHENTIFICATION — gradient banner === */}
+        {/* Note: expired/near-expiry cases are handled by the dedicated red
+            alert banner in section 1.bis below. This banner always shows
+            "authentic" (when not recalled) — because authenticity and
+            expiration are two separate concerns. */}
         <Reveal>
           {isRecalled ? (
             <div
@@ -434,23 +477,6 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                 )}
               </div>
             </div>
-          ) : expired ? (
-            <div
-              className="rounded-2xl p-6 sm:p-8 flex items-start gap-4 shadow-lg"
-              style={{ background: "linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%)", border: `2px solid ${ORANGE}` }}
-            >
-              <div className="flex-shrink-0 size-14 rounded-2xl flex items-center justify-center shadow-md" style={{ backgroundColor: ORANGE }}>
-                <AlertTriangle className="size-8 text-white" />
-              </div>
-              <div>
-                <p className="font-display text-xl font-bold uppercase tracking-wide" style={{ color: "#92400E" }}>
-                  Date de péremption dépassée
-                </p>
-                <p className="mt-1 text-sm leading-relaxed" style={{ color: "#B45309" }}>
-                  La date de péremption de ce lot est dépassée. Vérifiez auprès du fabricant.
-                </p>
-              </div>
-            </div>
           ) : (
             <div
               className="rounded-2xl p-6 sm:p-8 flex items-start gap-4 shadow-lg vs-animate-pulse-soft"
@@ -468,51 +494,71 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                   <span className="font-semibold">{lot.product.user.companyName}</span>. Les informations
                   ci-dessous sont officielles et vérifiables.
                 </p>
-                {remainingDays > 0 && remainingDays <= 30 && (
-                  <p className="mt-2 text-xs font-medium" style={{ color: "#B45309" }}>
-                    ⏳ À consommer dans les {remainingDays} jours
-                  </p>
-                )}
               </div>
             </div>
           )}
         </Reveal>
 
-        {/* === 2. STATS RAPIDES — 4 cards colorées (style QRTags) === */}
-        <Reveal>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <QuickStat
-              icon={Eye}
-              value={lot.scanCount.toLocaleString("fr-FR")}
-              label="Scans effectués"
-              bg={BLUE}
-              bgLight={BLUE_LIGHT}
-            />
-            <QuickStat
-              icon={ShieldCheck}
-              value="Vérifié"
-              label="Par VerifScan"
-              bg={GREEN}
-              bgLight={GREEN_LIGHT}
-            />
-            <QuickStat
-              icon={Clock}
-              value={formatRelative(lot.lastScanAt || lot.createdAt)}
-              label="Dernier scan"
-              bg={BLUE}
-              bgLight={BLUE_LIGHT}
-            />
-            <QuickStat
-              icon={Award}
-              value={lot.certifications.length.toString()}
-              label="Fabricant inscrit"
-              bg={GREEN}
-              bgLight={GREEN_LIGHT}
-            />
-          </div>
-        </Reveal>
+        {/* === 1.bis ALERTE DE PÉREMPTION — bandeau rouge (10 j / 5 j / périmé) === */}
+        {!isRecalled && (expired || (remainingDays > 0 && remainingDays <= 10)) && (
+          <Reveal>
+            <div
+              className="rounded-2xl p-5 sm:p-6 flex items-start gap-4 shadow-lg"
+              style={{
+                background: expired
+                  ? "linear-gradient(135deg, #FEE2E2 0%, #FFFFFF 100%)"
+                  : remainingDays <= 5
+                    ? "linear-gradient(135deg, #FECACA 0%, #FFFFFF 100%)"
+                    : "linear-gradient(135deg, #FED7D7 0%, #FFFFFF 100%)",
+                border: `2px solid ${expired ? "#B91C1C" : remainingDays <= 5 ? "#DC2626" : "#EF4444"}`,
+              }}
+              role="alert"
+            >
+              <div
+                className="flex-shrink-0 size-12 rounded-xl flex items-center justify-center shadow-md"
+                style={{ backgroundColor: expired ? "#991B1B" : remainingDays <= 5 ? "#DC2626" : "#EF4444" }}
+              >
+                {expired ? (
+                  <XCircle className="size-7 text-white" />
+                ) : (
+                  <AlertTriangle className="size-7 text-white animate-pulse" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p
+                  className="font-display text-lg font-bold uppercase tracking-wide"
+                  style={{ color: expired ? "#7F1D1D" : "#991B1B" }}
+                >
+                  {expired
+                    ? "Produit périmé"
+                    : remainingDays <= 5
+                      ? `Bientôt périmé — plus que ${remainingDays} jour${remainingDays > 1 ? "s" : ""} !`
+                      : `À consommer rapidement — ${remainingDays} jours restants`}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed" style={{ color: "#7F1D1D" }}>
+                  {expired ? (
+                    <>
+                      La date de péremption ({formatDate(lot.expirationDate)}) est dépassée.
+                      Ce produit ne doit plus être consommé. Contactez le fabricant en cas de doute.
+                    </>
+                  ) : remainingDays <= 5 ? (
+                    <>
+                      Ce produit expire le <strong>{formatDate(lot.expirationDate)}</strong>. Vérifiez
+                      l&apos;emballage et consommez-le rapidement. Au-delà de cette date, ne le consommez plus.
+                    </>
+                  ) : (
+                    <>
+                      Ce produit expire le <strong>{formatDate(lot.expirationDate)}</strong>. Pensez à le
+                      consommer avant cette date pour une qualité optimale.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          </Reveal>
+        )}
 
-        {/* === 3. CARTE PRODUIT PRINCIPALE === */}
+        {/* === 2. CARTE PRODUIT PRINCIPALE === */}
         <Reveal>
           <div
             className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 overflow-hidden shadow-md"
@@ -560,6 +606,21 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                   </p>
                 )}
 
+                {/* Ingrédients — moved here (right under the description) per UX request */}
+                {lot.ingredients && (
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Leaf className="size-4" style={{ color: GREEN }} />
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-gray-700 dark:text-gray-300">
+                        Ingrédients
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {lot.ingredients}
+                    </p>
+                  </div>
+                )}
+
                 {/* Badges row */}
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <Badge variant="outline" className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
@@ -583,7 +644,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         </Reveal>
 
-        {/* === 4. INFORMATIONS DE TRAÇABILITÉ — grille colorée === */}
+        {/* === 3. INFORMATIONS DE TRAÇABILITÉ — grille colorée === */}
         <Reveal>
           <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
             <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
@@ -651,23 +712,10 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                 full
               />
             )}
-
-            {/* Ingrédients */}
-            {lot.ingredients && (
-              <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <Leaf className="size-5" style={{ color: GREEN }} />
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Ingrédients</h3>
-                </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {lot.ingredients}
-                </p>
-              </div>
-            )}
           </div>
         </Reveal>
 
-        {/* === 5. HISTORIQUE DU LOT — Timeline améliorée === */}
+        {/* === 4. HISTORIQUE DU LOT — Timeline améliorée === */}
         <Reveal>
           <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
             <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
@@ -744,7 +792,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </Reveal>
         )}
 
-        {/* === 6. CERTIFICATIONS & QUALITÉ === */}
+        {/* === 5. CERTIFICATIONS & QUALITÉ === */}
         <Reveal>
           <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
             <h2 className="font-display text-xl font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-gray-100">
@@ -787,7 +835,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         </Reveal>
 
-        {/* === 7. ALLERGÈNES & INFOS SANITAIRES === */}
+        {/* === 6. ALLERGÈNES & INFOS SANITAIRES === */}
         <Reveal>
           <div
             className="rounded-2xl p-6 sm:p-8 shadow-md"
@@ -834,7 +882,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         </Reveal>
 
-        {/* === 8. QR CODE & CONTACT === */}
+        {/* === 7. QR CODE & CONTACT === */}
         <div className="grid sm:grid-cols-2 gap-4">
           {lot.qrCodes[0]?.qrCodeImageUrl && (
             <Reveal>
@@ -904,29 +952,114 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </Reveal>
         </div>
 
-        {/* === 9. AVIS & NOTES === */}
+        {/* === 8. AVIS & NOTES === */}
         <Reveal>
           <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 shadow-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
               <h2 className="font-display text-xl font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
                 <Star className="size-5 text-amber-500" />
                 Avis & Notes
               </h2>
-              {lot.reviewAggregates.count > 0 && (
-                <Badge variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
-                  {lot.reviewAggregates.count} avis
-                </Badge>
-              )}
-            </div>
-            {lot.reviewAggregates.count === 0 ? (
-              <div className="text-center py-8">
-                <ThumbsUp className="mx-auto size-12 text-gray-300 dark:text-gray-700" />
-                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  Aucun avis pour le moment. Soyez le premier à partager votre expérience avec ce
-                  fabricant.
-                </p>
+              <div className="flex items-center gap-2">
+                {(lot.productReviewAggregates.count > 0 || lot.reviewAggregates.count > 0) && (
+                  <Badge variant="outline" className="border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400">
+                    {lot.productReviewAggregates.count + lot.reviewAggregates.count} avis
+                  </Badge>
+                )}
+                {!isRecalled && (
+                  <Button
+                    size="sm"
+                    onClick={() => setReviewModalOpen(true)}
+                    className="text-white"
+                    style={{ backgroundColor: GREEN }}
+                  >
+                    <Star className="mr-1.5 size-4" />
+                    Laisser un avis
+                  </Button>
+                )}
               </div>
-            ) : (
+            </div>
+
+            {/* 8.a — Avis consommateurs (ProductReview — public, post-scan) */}
+            {lot.productReviewAggregates.count > 0 && (
+              <div className="mb-6">
+                <div className="grid sm:grid-cols-[180px_1fr] gap-6 mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+                  <div className="text-center">
+                    <div className="text-5xl font-bold" style={{ color: GREEN_DARK }}>
+                      {lot.productReviewAggregates.average.toFixed(1)}
+                    </div>
+                    <div className="flex justify-center mt-2">
+                      {starArray(lot.productReviewAggregates.average).map((filled, i) => (
+                        <Star
+                          key={i}
+                          className={cn(
+                            "size-5 vs-star-pop",
+                            filled ? "text-amber-400 fill-amber-400" : "text-gray-300 dark:text-gray-700"
+                          )}
+                          style={{ animationDelay: `${i * 60}ms` }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Basé sur {lot.productReviewAggregates.count} avis consommateurs
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Avis laissés par les consommateurs après scan du QR code. Chaque avis est
+                      publié automatiquement et notifie le fabricant.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400">
+                        Répartition :
+                      </span>
+                      <Badge variant="outline" className="text-[10px]" style={{ borderColor: GREEN, color: GREEN_DARK }}>
+                        {lot.productReviewAggregates.count} avis
+                      </Badge>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Moyenne {lot.productReviewAggregates.average.toFixed(1)} / 5
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {lot.productReviews.slice(0, 5).map((r) => (
+                    <div key={r.id} className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {r.reviewerName || "Consommateur anonyme"}
+                        </p>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(r.createdAt)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {starArray(r.rating).map((filled, i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              "size-3",
+                              filled ? "text-amber-400 fill-amber-400" : "text-gray-300 dark:text-gray-700"
+                            )}
+                          />
+                        ))}
+                        <span className="ml-1.5 text-xs font-medium" style={{ color: GREEN_DARK }}>
+                          {r.rating}/5
+                        </span>
+                      </div>
+                      {r.comment && (
+                        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 italic">
+                          &ldquo;{r.comment}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 8.b — Avis B2B (distributeurs — professionnels) */}
+            {lot.reviewAggregates.count > 0 ? (
               <>
                 <div className="grid sm:grid-cols-[180px_1fr] gap-6 mb-5">
                   <div className="text-center">
@@ -946,7 +1079,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                       ))}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Basé sur {lot.reviewAggregates.count} avis
+                      Basé sur {lot.reviewAggregates.count} avis B2B
                     </p>
                   </div>
                   <div className="space-y-3">
@@ -956,6 +1089,9 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                   </div>
                 </div>
                 <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <p className="text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400 mb-2">
+                    Avis de distributeurs professionnels
+                  </p>
                   {lot.reviews.slice(0, 3).map((r) => {
                     const avg = (r.reliabilityScore + r.qualityScore + r.professionalismScore) / 3;
                     return (
@@ -989,6 +1125,25 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                   })}
                 </div>
               </>
+            ) : lot.productReviewAggregates.count === 0 && (
+              <div className="text-center py-8">
+                <ThumbsUp className="mx-auto size-12 text-gray-300 dark:text-gray-700" />
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                  Aucun avis pour le moment. Soyez le premier à partager votre expérience avec ce
+                  produit.
+                </p>
+                {!isRecalled && (
+                  <Button
+                    size="sm"
+                    onClick={() => setReviewModalOpen(true)}
+                    className="mt-4 text-white"
+                    style={{ backgroundColor: GREEN }}
+                  >
+                    <Star className="mr-1.5 size-4" />
+                    Laisser un avis
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </Reveal>
@@ -1035,7 +1190,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </Reveal>
         )}
 
-        {/* === 10. BADGE FINAL — Vérifié par VerifScan === */}
+        {/* === 9. BADGE FINAL — Vérifié par VerifScan === */}
         {!isRecalled && (
           <Reveal>
             <div
@@ -1105,6 +1260,36 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
         </p>
       </div>
 
+      {/* Review modal — opened by the 15-second notification toast or by
+          clicking the "Laisser un avis" button in the reviews section. */}
+      <ReviewModal
+        open={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        lotId={lot.id}
+        productName={lot.product.name}
+        brand={lot.product.brand}
+        onSubmitted={(review) => {
+          // Optimistically push the new review at the top of the list so the
+          // user sees their contribution immediately.
+          setLot((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  productReviews: [review, ...prev.productReviews],
+                  productReviewAggregates: {
+                    average:
+                      prev.productReviewAggregates.count === 0
+                        ? review.rating
+                        : (prev.productReviewAggregates.average * prev.productReviewAggregates.count + review.rating) /
+                          (prev.productReviewAggregates.count + 1),
+                    count: prev.productReviewAggregates.count + 1,
+                  },
+                }
+              : prev
+          );
+        }}
+      />
+
       <ChatbotWidget productId={lot.product.id} />
     </PublicShell>
   );
@@ -1137,41 +1322,6 @@ function Reveal({ children }: { children: React.ReactNode }) {
   return (
     <div ref={ref} className={cn("vs-section-reveal", visible && "vs-revealed")}>
       {children}
-    </div>
-  );
-}
-
-/** Quick stat card — colored background (alternating blue / green) */
-function QuickStat({
-  icon: Icon,
-  value,
-  label,
-  bg,
-  bgLight,
-}: {
-  icon: React.ElementType;
-  value: string;
-  label: string;
-  bg: string;
-  bgLight: string;
-}) {
-  return (
-    <div
-      className="rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-      style={{ backgroundColor: bgLight, border: `2px solid ${bg}30` }}
-    >
-      <div
-        className="size-10 rounded-xl flex items-center justify-center text-white shadow-sm mb-2"
-        style={{ backgroundColor: bg }}
-      >
-        <Icon className="size-5" />
-      </div>
-      <p className="text-lg font-bold leading-tight" style={{ color: bg }}>
-        {value}
-      </p>
-      <p className="text-[10px] uppercase tracking-wide font-medium text-gray-600 dark:text-gray-300 mt-0.5">
-        {label}
-      </p>
     </div>
   );
 }
@@ -1360,6 +1510,286 @@ function RatingBar({ label, value }: { label: string; value: number }) {
           className="h-full transition-all duration-700"
           style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${BLUE}, ${GREEN})` }}
         />
+      </div>
+    </div>
+  );
+}
+
+/* ============ Review modal ============ */
+
+/**
+ * Modal for a consumer to leave a review on a product. Submitting POSTs to
+ * /api/lots/[id]/reviews — the merchant is notified by email + in-app
+ * notification on the server side. No auth required.
+ *
+ * After a successful submit, the parent's `onSubmitted` callback is invoked
+ * with the new review so the UI can update optimistically.
+ */
+function ReviewModal({
+  open,
+  onClose,
+  lotId,
+  productName,
+  brand,
+  onSubmitted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  lotId: string;
+  productName: string;
+  brand: string;
+  onSubmitted: (review: ProductReviewItem) => void;
+}) {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewerPhone, setReviewerPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  // Reset state every time the modal opens
+  useEffect(() => {
+    if (open) {
+      setRating(0);
+      setHoverRating(0);
+      setComment("");
+      setReviewerName("");
+      setReviewerPhone("");
+      setSubmitting(false);
+      setDone(false);
+    }
+  }, [open]);
+
+  // Esc to close
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, submitting, onClose]);
+
+  // Lock body scroll while open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  const submit = async () => {
+    if (rating < 1 || rating > 5) {
+      toast.error("Veuillez sélectionner une note entre 1 et 5 étoiles.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/lots/${lotId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating,
+          comment: comment.trim() || null,
+          reviewerName: reviewerName.trim() || null,
+          reviewerPhone: reviewerPhone.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de l'envoi de l'avis");
+      }
+      const data = await res.json();
+      setDone(true);
+      toast.success("Merci ! Votre avis a été publié et le fabricant a été notifié.");
+      onSubmitted(data.review);
+      // Close the modal after a short delay so the user sees the confirmation.
+      setTimeout(() => {
+        onClose();
+      }, 1800);
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de l'envoi de l'avis");
+      setSubmitting(false);
+    }
+  };
+
+  const displayRating = hoverRating || rating;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-modal-title"
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={() => !submitting && !done && onClose()}
+      />
+
+      {/* Modal */}
+      <div
+        className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[92vh] overflow-y-auto"
+        style={{ borderTop: `4px solid ${GREEN}` }}
+      >
+        {/* Header */}
+        <div
+          className="sticky top-0 z-10 px-5 py-4 flex items-start justify-between gap-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+        >
+          <div className="min-w-0">
+            <h3 id="review-modal-title" className="font-display text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <Star className="size-5" style={{ color: GREEN }} />
+              Donner votre avis
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+              {productName} <span className="opacity-70">· {brand}</span>
+            </p>
+          </div>
+          <button
+            onClick={() => !submitting && !done && onClose()}
+            className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Fermer"
+          >
+            <XCircle className="size-5" />
+          </button>
+        </div>
+
+        {done ? (
+          <div className="p-8 text-center">
+            <div
+              className="mx-auto size-14 rounded-full flex items-center justify-center mb-3"
+              style={{ backgroundColor: GREEN_LIGHT }}
+            >
+              <CheckCircle2 className="size-8" style={{ color: GREEN_DARK }} />
+            </div>
+            <p className="font-display text-lg font-bold text-gray-900 dark:text-gray-100">
+              Merci pour votre avis !
+            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Votre avis a été publié et le fabricant a été notifié par email.
+            </p>
+          </div>
+        ) : (
+          <div className="p-5 space-y-5">
+            {/* Star rating */}
+            <div>
+              <label className="block text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Votre note <span style={{ color: "#DC2626" }}>*</span>
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRating(n)}
+                    onMouseEnter={() => setHoverRating(n)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
+                  >
+                    <Star
+                      className={cn(
+                        "size-9 transition-all",
+                        n <= displayRating ? "text-amber-400 fill-amber-400 scale-110" : "text-gray-300 dark:text-gray-700"
+                      )}
+                    />
+                  </button>
+                ))}
+                {displayRating > 0 && (
+                  <span className="ml-2 text-sm font-semibold" style={{ color: GREEN_DARK }}>
+                    {displayRating}/5
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {displayRating === 0 && "Sélectionnez une note"}
+                {displayRating === 1 && "Très déçu"}
+                {displayRating === 2 && "Déçu"}
+                {displayRating === 3 && "Correct"}
+                {displayRating === 4 && "Bien"}
+                {displayRating === 5 && "Excellent"}
+              </div>
+            </div>
+
+            {/* Comment */}
+            <div>
+              <label htmlFor="review-comment" className="block text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Commentaire <span className="opacity-60 font-normal">(optionnel)</span>
+              </label>
+              <textarea
+                id="review-comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value.slice(0, 2000))}
+                rows={3}
+                placeholder="Partagez votre expérience avec ce produit…"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0"
+                style={{ "--tw-ring-color": GREEN } as React.CSSProperties}
+              />
+              <p className="mt-1 text-[10px] text-gray-400 text-right">{comment.length}/2000</p>
+            </div>
+
+            {/* Reviewer name */}
+            <div>
+              <label htmlFor="reviewer-name" className="block text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Votre nom <span className="opacity-60 font-normal">(optionnel)</span>
+              </label>
+              <input
+                id="reviewer-name"
+                type="text"
+                value={reviewerName}
+                onChange={(e) => setReviewerName(e.target.value.slice(0, 100))}
+                placeholder="Ex : Awa D."
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2"
+                style={{ "--tw-ring-color": GREEN } as React.CSSProperties}
+              />
+            </div>
+
+            {/* Reviewer phone */}
+            <div>
+              <label htmlFor="reviewer-phone" className="block text-xs uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Téléphone <span className="opacity-60 font-normal">(optionnel — pour suivi)</span>
+              </label>
+              <input
+                id="reviewer-phone"
+                type="tel"
+                value={reviewerPhone}
+                onChange={(e) => setReviewerPhone(e.target.value.slice(0, 30))}
+                placeholder="Ex : +221 77 000 00 00"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2"
+                style={{ "--tw-ring-color": GREEN } as React.CSSProperties}
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="pt-2 flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                disabled={submitting}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={submit}
+                disabled={submitting || rating < 1}
+                className="flex-1 text-white"
+                style={{ backgroundColor: GREEN }}
+              >
+                {submitting ? "Envoi…" : "Publier mon avis"}
+              </Button>
+            </div>
+            <p className="text-[10px] text-center text-gray-400">
+              Votre avis sera publié immédiatement et le fabricant sera notifié par email.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
