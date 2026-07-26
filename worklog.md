@@ -669,3 +669,37 @@ Stage Summary:
 - Page produit: 10 sections QRTags-style avec blocs colorés (bleu/vert/jaune/orange), timeline avec cercles colorés, certifications en grille 3 col, allergènes en bandeau jaune, badge final gradient vert
 - Footer: palette alignée sur le bleu deep #0a3060
 - Artéfacts: public/hero/hero-main.png (régénérée), scripts/gen-hero-image.ts (prompt mis à jour)
+
+---
+Task ID: logo-integration
+Agent: Super Z (main)
+Task: Intégrer le logo fourni (upload 7abff173...) sur le site
+
+Work Log:
+- Analysé le PNG uploadé (275x70, RGBA, fond blanc opaque, contenu 256x50 centré)
+  - Couleurs dominantes du contenu: #003070 (deep blue) + #009050 (vivid green) — déjà alignées sur la palette brand #0f4382 + #2ebd5a
+- Préparé le logo via scripts/prepare-logo.py:
+  - Seuil blanc (R,G,B ≥ 230) → alpha=0 (transparence)
+  - Auto-crop sur bounding box du contenu + padding 8px
+  - Sortie: public/logo.png (272x66, 82% pixels transparents, ~16 KB)
+- Réécrit src/components/verifscan-logo.tsx:
+  - Remplacé l'icône CSS (gradient bleu→vert + ScanLine lucide) + texte "VerifScan" par <Image src="/logo.png">
+  - Le wordmark étant déjà dans l'image, showText est gardé pour backward-compat mais sans effet visuel
+  - Sizes sm/md/lg/xl mappés sur hauteurs 28/36/48/64px, largeur auto via aspect ratio 272/66
+  - variant="light" ajoute drop-shadow pour les fonds sombres (footer)
+  - priority + alt="VerifScan" pour LCP et accessibilité
+- Mis à jour src/app/layout.tsx:
+  - metadata.icons: icon + apple → /logo.png (favicon)
+  - metadata.openGraph.images: [{ url: "/logo.png", width: 272, height: 66, alt: "VerifScan" }]
+- Vérifié sur dev server (Next 16.1.3 Turbopack):
+  - GET /logo.png → 200, 15937 bytes
+  - GET / → 200 en 5.4s (compile)
+  - HTML rendu contient 2 <img alt="VerifScan"> : header (148x36, md) + footer (198x48, lg avec drop-shadow)
+  - Les deux référencent /_next/image?url=%2Flogo.png (pipeline image optimization)
+- Commit + push origin/main: 9e0f311
+
+Stage Summary:
+- Nouveau logo brand intégré partout: header (md), footer (lg + drop-shadow sur fond navy), favicon, OpenGraph
+- Logo PNG transparent (272x66, ~16 KB) — fonctionne sur fond blanc (header/sidebar) ET fond sombre (footer #0a3060)
+- API VerifScanLogo conservée (size/variant/showText) — aucun changement requis dans les 4 fichiers consommateurs
+- Artéfacts: public/logo.png, scripts/prepare-logo.py (re-exécutable)
