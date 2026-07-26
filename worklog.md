@@ -249,3 +249,38 @@ Stage Summary:
 - RBAC préservé : SUPER_ADMIN → /admin, FABRICANT → /dashboard.
 - Rappel sécurité : le token GitHub PAT ([REDACTED]) est toujours exposé dans l'historique git, il faut le révoquer.
 - Prochaine étape : redéployer sur Coolify (le build repassera).
+
+---
+Task ID: landing-redesign
+Agent: main
+Task: Reconstruction complète de la page d'accueil VerifScan selon spec détaillée (palette bleu/vert/orange, Poppins/Inter/Roboto Mono, 9 sections pro)
+
+Work Log:
+- Mis à jour src/app/layout.tsx : remplacement Geist par Poppins (titres) + Inter (corps) + Roboto Mono (chiffres) via next/font/google
+- Réécrit src/app/globals.css : nouveaux tokens --vs-blue/green/orange, classes utilitaires (.vs-gradient-hero, .vs-card-shadow, .vs-step-line, .vs-qr-pattern), keyframes animations (vs-float, vs-pulse-soft, vs-fade-in-up, vs-shimmer), support prefers-reduced-motion
+- Mis à jour VerifScanLogo : gradient bleu (#2563EB) → vert (#10B981), variants color/light, hover scale + rotation
+- Reconstruit public-header.tsx : fixed 80px, blanc avec backdrop-blur au scroll, menu centré, CTAs "Connexion" + "Essayer gratuitement", mobile menu
+- Reconstruit public-footer.tsx : fond #111827, 4 colonnes (Produit/Entreprise/Légal/Contact), réseaux sociaux Facebook/Twitter/LinkedIn/Instagram, badge blockchain
+- Créé src/lib/use-animations.ts : hooks useReveal (IntersectionObserver), useCounter ( RAF easing), useRevealCounter
+- Créé 7 composants landing dans src/components/landing/ :
+  * hero-section.tsx : H1 + slogan + CTA + 2 stats inline + mockup smartphone avec cards flottantes (Bissap, blockchain, 0.3s scan)
+  * features-section.tsx : 3 cards (Traçabilité/Export/Stats) avec icônes colorées et hover translate
+  * how-it-works-section.tsx : 3 étapes numérotées avec ligne de connexion dégradée
+  * testimonials-section.tsx : 3 témoignages avec étoiles + photos initiales + trust badges row
+  * stats-section.tsx : fond bleu gradient, 4 compteurs animés (12458/250+/98%/35%)
+  * pricing-section.tsx : 3 plans (Starter/Pro populaire/Business) avec features list et économies annuelles
+  * final-cta-section.tsx : centré, 2 boutons, 4 avantages avec checks
+- Mis à jour src/app/page.tsx : assemblage des 7 sections dans PublicShell (suppression des anciennes sections DB-driven)
+- Mis à jour public-shell.tsx : ajout pt-20 pour compenser header fixed
+- Corrections build pré-existantes :
+  * contact/page.tsx : ajout "use client" (formulaire onSubmit)
+  * login/page.tsx : wrapping useSearchParams dans Suspense boundary
+  * produits/page.tsx : même wrapping Suspense
+
+Stage Summary:
+- Build vérifié : `bun run build` passe, 63 pages statiques générées avec succès
+- Page d'accueil entièrement reconstruite selon spec : palette bleu #2563EB / vert #10B981 / orange #F59E0B, polices Poppins/Inter/Roboto Mono, 9 sections (Header fixe, Hero, Features, How It Works, Testimonials, Stats animées, Pricing, CTA finale, Footer dark)
+- Animations : reveal au scroll (IntersectionObserver), compteurs animés (RAF + ease-out cubic), floating cards, pulse CTA
+- Responsive : mobile-first avec breakpoints sm/md/lg, menu mobile, grilles adaptatives
+- Accessibilité : aria-labels, focus visible via Tailwind, prefers-reduced-motion respecté
+- Prochaine étape : commit + push pour redéployer sur Coolify

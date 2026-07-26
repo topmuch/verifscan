@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, PackageSearch, Filter, X } from "lucide-react";
@@ -40,6 +40,14 @@ type Product = {
 };
 
 export default function ProduitsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <ProduitsPageInner />
+    </Suspense>
+  );
+}
+
+function ProduitsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
