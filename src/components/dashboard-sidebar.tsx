@@ -18,6 +18,7 @@ import {
   Brain,
   Store,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
