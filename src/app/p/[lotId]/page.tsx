@@ -247,6 +247,8 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
   }
 
   if (notFound || !lot) {
+    const scannedUrl =
+      typeof window !== "undefined" ? window.location.href : "";
     return (
       <PublicShell>
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
@@ -256,9 +258,45 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
             Ce QR code ne correspond à aucun produit enregistré. Il peut s&apos;agir d&apos;une
             contrefaçon ou d&apos;un code expiré.
           </p>
-          <Button asChild className="mt-6 bg-emerald-600 hover:bg-emerald-700">
-            <Link href="/produits">Voir les produits authentiques</Link>
-          </Button>
+
+          {/* Diagnostic info — helps the fabricant understand WHY the page 404s.
+              Visible to everyone but in a discreet gray box. */}
+          <div className="mt-6 mx-auto max-w-md text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-xs space-y-1">
+            <div className="flex justify-between gap-2">
+              <span className="text-gray-500 dark:text-gray-400">URL scannée :</span>
+              <code className="font-mono text-gray-700 dark:text-gray-200 break-all">{scannedUrl}</code>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-gray-500 dark:text-gray-400">Lot ID :</span>
+              <code className="font-mono text-gray-700 dark:text-gray-200 break-all">{lotId}</code>
+            </div>
+            <p className="pt-2 text-gray-500 dark:text-gray-400">
+              Si vous êtes le fabricant, vérifiez que ce lot existe dans votre tableau de bord.
+              Si le QR a été imprimé avant une migration, régénérez-le depuis la page QR Codes.
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+              <Link href="/produits">Voir les produits authentiques</Link>
+            </Button>
+            {scannedUrl && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    navigator.clipboard
+                      .writeText(scannedUrl)
+                      .then(() => toast.success("URL copiée"))
+                      .catch(() => toast.error("Impossible de copier"));
+                  }
+                }}
+              >
+                <Copy className="mr-1 size-4" />
+                Copier l&apos;URL
+              </Button>
+            )}
+          </div>
         </div>
       </PublicShell>
     );

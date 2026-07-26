@@ -21,7 +21,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const lot = await db.lot.findUnique({
+
+  // 1. Try by primary key (cuid) — the normal case for QR codes generated
+  //    after the resolveAppUrl fix.
+  let lot = await db.lot.findUnique({
     where: { id },
     include: {
       product: {
@@ -44,6 +47,35 @@ export async function GET(
       qrCodes: { where: { isActive: true }, take: 1 },
     },
   });
+
+  // 2. Fallback: try by lotNumber (e.g. LOT-20260726-1234). Some legacy QR
+  //    codes were generated with the lot number in the URL instead of the
+  //    cuid. This makes those old prints still work.
+  if (!lot) {
+    lot = await db.lot.findFirst({
+      where: { lotNumber: id },
+      include: {
+        product: {
+          include: {
+            category: true,
+            user: {
+              select: {
+                id: true,
+                companyName: true,
+                logoUrl: true,
+                phone: true,
+                whatsapp: true,
+                emailContact: true,
+                address: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+        qrCodes: { where: { isActive: true }, take: 1 },
+      },
+    });
+  }
 
   if (!lot) {
     return NextResponse.json({ error: "Lot introuvable" }, { status: 404 });

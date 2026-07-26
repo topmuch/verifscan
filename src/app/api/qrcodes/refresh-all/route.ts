@@ -7,14 +7,21 @@
 //
 // Body (optional):
 //   { "lotIds": ["lot-id-1", "lot-id-2"] }
-// If lotIds is omitted, ALL the fabricant's active QR codes are refreshed.
+// If lotIds is omitted, ALL the fabricant's lots are processed.
 //
-// Returns: { refreshed: number, skipped: number, lotIds: string[] }
+// Behaviour:
+//   - If a lot already has an active QR code → UPDATE its image in place
+//     (preserves the QR code ID + scan history).
+//   - If a lot has NO active QR code → CREATE a new one (previously the
+//     endpoint would skip these, leaving the user with broken QR codes
+//     after a DB wipe).
+//
+// Returns: { refreshed: number, created: number, lotIds: string[] }
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireFabricant } from "@/lib/session";
-import { getLotPublicUrl } from "@/lib/qr";
+import { getLotPublicUrl, resolveAppUrl } from "@/lib/qr";
 import QRCode from "qrcode";
 
 export const dynamic = "force-dynamic";
@@ -48,15 +55,10 @@ export async function POST(req: Request) {
   });
 
   let refreshed = 0;
-  let skipped = 0;
-  const refreshedLotIds: string[] = [];
+  let created = 0;
+  const processedLotIds: string[] = [];
 
   for (const lot of lots) {
-    if (lot.qrCodes.length === 0) {
-      skipped++;
-      continue;
-    }
-
     const fullUrl = getLotPublicUrl(lot.id, req);
     const qrImage = await QRCode.toDataURL(fullUrl, {
       width: 512,
@@ -65,24 +67,39 @@ export async function POST(req: Request) {
       color: { dark: "#065f46", light: "#ffffff" },
     });
 
-    // Update the active QR code in place (preserve its ID + scans history)
-    await db.qRCode.update({
-      where: { id: lot.qrCodes[0].id },
-      data: { qrCodeImageUrl: qrImage },
-    });
+    if (lot.qrCodes.length === 0) {
+      // No active QR code — create one
+      await db.qRCode.create({
+        data: {
+          lotId: lot.id,
+          publicUrl: `/p/${lot.id}`,
+          qrCodeImageUrl: qrImage,
+          isActive: true,
+        },
+      });
+      created++;
+    } else {
+      // Update the active QR code in place (preserve its ID + scans history)
+      await db.qRCode.update({
+        where: { id: lot.qrCodes[0].id },
+        data: { qrCodeImageUrl: qrImage },
+      });
+      refreshed++;
+    }
 
-    refreshed++;
-    refreshedLotIds.push(lot.id);
+    processedLotIds.push(lot.id);
   }
 
   return NextResponse.json({
     ok: true,
     refreshed,
-    skipped,
-    lotIds: refreshedLotIds,
+    created,
+    processed: refreshed + created,
+    lotIds: processedLotIds,
+    appUrl: resolveAppUrl(req), // expose for debugging
     note:
-      refreshed > 0
-        ? "QR codes regenerated. Old prints still embed the old URL — reprint them."
-        : "No QR codes needed refreshing.",
+      refreshed + created > 0
+        ? `${refreshed} QR code(s) updated, ${created} new QR code(s) created. Old printed QR codes still embed the old URL — reprint them.`
+        : "No QR codes needed processing.",
   });
 }

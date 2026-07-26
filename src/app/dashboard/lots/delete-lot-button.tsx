@@ -107,8 +107,11 @@ export function RegenerateQrButton({ lotId }: { lotId: string }) {
         toast.error(data.error || "Erreur lors de la régénération");
         return;
       }
-      if (data.refreshed > 0) {
-        toast.success(`QR code régénéré avec l'URL actuelle`);
+      const total = (data.refreshed || 0) + (data.created || 0);
+      if (total > 0) {
+        toast.success(
+          `QR code régénéré (URL: ${data.appUrl || "—"})`
+        );
       } else {
         toast.info("Aucun QR code à régénérer pour ce lot");
       }
@@ -154,8 +157,10 @@ export function RegenerateAllQrButton() {
         toast.error(data.error || "Erreur lors de la régénération");
         return;
       }
+      const refreshed = data.refreshed || 0;
+      const created = data.created || 0;
       toast.success(
-        `${data.refreshed} QR code(s) régénéré(s) avec l'URL actuelle`
+        `${refreshed} QR mis à jour, ${created} créé(s) — URL: ${data.appUrl || "—"}`
       );
       router.refresh();
     } catch {

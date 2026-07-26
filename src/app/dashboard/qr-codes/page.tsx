@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, QrCode, Eye, Layers } from "lucide-react";
+import { QrCode, Eye, Layers, Stethoscope } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QrCodeDownloadButton } from "./qr-download-button";
 import { RegenerateAllQrButton } from "../lots/delete-lot-button";
+import { QrDiagnosticBanner } from "./qr-diagnostic-banner";
 
 export default async function DashboardQrCodesPage() {
   const user = await getCurrentUser();
@@ -40,6 +41,12 @@ export default async function DashboardQrCodesPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {qrCodes.length > 0 && <RegenerateAllQrButton />}
+          <Button asChild variant="outline">
+            <Link href="/api/debug/qr-check" target="_blank">
+              <Stethoscope className="mr-2 size-4" />
+              Diagnostiquer
+            </Link>
+          </Button>
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
             <Link href="/dashboard/lots/nouveau">
               <Layers className="mr-2 size-4" />
@@ -49,13 +56,17 @@ export default async function DashboardQrCodesPage() {
         </div>
       </div>
 
+      {/* Diagnostic banner — shown when the user has lots but no QR codes,
+          or when the QR codes might be pointing to the wrong URL. */}
+      <QrDiagnosticBanner />
+
       {qrCodes.length === 0 ? (
         <Card className="vs-card-shadow border-emerald-100">
           <CardContent className="p-12 text-center">
             <QrCode className="mx-auto size-12 text-emerald-200" />
             <h3 className="mt-4 font-semibold text-lg">Aucun QR code pour le moment</h3>
             <p className="mt-1 text-sm text-gray-500 max-w-md mx-auto">
-              Les QR codes sont générés automatiquement à la création d'un lot.
+              Les QR codes sont générés automatiquement à la création d&apos;un lot.
               Créez votre premier lot pour obtenir votre premier QR code.
             </p>
             <Button asChild className="mt-4 bg-emerald-600 hover:bg-emerald-700">
