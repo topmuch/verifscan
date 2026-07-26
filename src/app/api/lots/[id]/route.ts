@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireFabricant } from "@/lib/session";
 
 /**
  * Public lot detail (used by /p/[lotId] page, accessed by scanning QR codes).
@@ -13,6 +14,7 @@ import { db } from "@/lib/db";
  *   - similarProducts: 4 most recent visible products from the same category
  *   - reviews: latest B2B reviews left on this fabricant (max 6)
  *   - reviewAggregates: average + count per dimension (reliability, quality, professionalism)
+ *   - anomalies: AI anomalies attached to this lot (max 10, open ones first)
  */
 export async function GET(
   _req: Request,
@@ -48,7 +50,7 @@ export async function GET(
   }
 
   // Parallel enrichment queries
-  const [certifications, scanAgg, lastScan, similarProducts, reviews, reviewAgg] =
+  const [certifications, scanAgg, lastScan, similarProducts, reviews, reviewAgg, anomalies] =
     await Promise.all([
       // 1. Fabricant's certifications (verified first, then by createdAt desc)
       db.certification.findMany({
@@ -134,6 +136,21 @@ export async function GET(
         },
         _count: { _all: true },
       }),
+
+      // 7. AI anomalies attached to this lot (open ones first, max 10)
+      db.aIAnomaly.findMany({
+        where: { lotId: lot.id },
+        orderBy: [{ status: "asc" }, { detectedAt: "desc" }],
+        take: 10,
+        select: {
+          id: true,
+          type: true,
+          severity: true,
+          description: true,
+          status: true,
+          detectedAt: true,
+        },
+      }),
     ]);
 
   const reviewAggregates = {
@@ -164,5 +181,71 @@ export async function GET(
     })),
     reviews,
     reviewAggregates,
+    anomalies,
   });
 }
+
+/**
+ * DELETE /api/lots/[id]
+ *
+ * Deletes a lot owned by the authenticated fabricant.
+ *
+ * Cascades (handled by Prisma `onDelete: Cascade` on QRCode → Scan,
+ * and `onDelete: SetNull` on AIAnomaly.lotId + ExportDocument.lotId).
+ *
+ * Returns 200 on success, 404 if not found / not owned, 401 if not logged in.
+ */
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireFabricant();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  // Verify ownership
+  const lot = await db.lot.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      lotNumber: true,
+      productId: true,
+      product: { select: { userId: true } },
+      _count: { select: { qrCodes: true } },
+    },
+  });
+
+  if (!lot) {
+    return NextResponse.json({ error: "Lot introuvable" }, { status: 404 });
+  }
+  if (lot.product.userId !== user.id) {
+    return NextResponse.json({ error: "Vous ne possédez pas ce lot" }, { status: 403 });
+  }
+
+  try {
+    // Anomalies + ExportDocuments reference lotId with SetNull — let Prisma
+    // handle them, but explicit cleanup avoids orphaned records.
+    await db.aIAnomaly.deleteMany({ where: { lotId: id } });
+    await db.exportDocument.deleteMany({ where: { lotId: id } });
+
+    // Delete the lot — cascades to QRCode → Scan + BlockchainCertificate.
+    await db.lot.delete({ where: { id } });
+
+    return NextResponse.json({
+      ok: true,
+      deletedLotId: id,
+      deletedLotNumber: lot.lotNumber,
+      cascadedQrCodesCount: lot._count.qrCodes,
+    });
+  } catch (err: any) {
+    console.error("[lots DELETE] error:", err);
+    return NextResponse.json(
+      { error: "Erreur lors de la suppression du lot" },
+      { status: 500 }
+    );
+  }
+}
+

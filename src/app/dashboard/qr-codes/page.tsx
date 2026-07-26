@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QrCodeDownloadButton } from "./qr-download-button";
+import { RegenerateAllQrButton } from "../lots/delete-lot-button";
 
 export default async function DashboardQrCodesPage() {
   const user = await getCurrentUser();
@@ -37,12 +38,15 @@ export default async function DashboardQrCodesPage() {
             Téléchargez et imprimez les QR codes de vos lots.
           </p>
         </div>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-          <Link href="/dashboard/lots/nouveau">
-            <Layers className="mr-2 size-4" />
-            Créer un nouveau lot
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {qrCodes.length > 0 && <RegenerateAllQrButton />}
+          <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+            <Link href="/dashboard/lots/nouveau">
+              <Layers className="mr-2 size-4" />
+              Créer un nouveau lot
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {qrCodes.length === 0 ? (

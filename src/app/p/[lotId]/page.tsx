@@ -98,6 +98,15 @@ type SimilarProduct = {
   lotId: string | null;
 };
 
+type Anomaly = {
+  id: string;
+  type: string; // 'allergen' | 'dlc' | 'counterfeit' | 'ingredient' | 'cert_expiring'
+  severity: string; // 'info' | 'warning' | 'critical'
+  description: string;
+  status: string; // 'open' | 'resolved' | 'ignored'
+  detectedAt: string;
+};
+
 type Lot = {
   id: string;
   lotNumber: string;
@@ -145,6 +154,7 @@ type Lot = {
     overall: number;
     count: number;
   };
+  anomalies: Anomaly[];
 };
 
 export default function PublicLotPage({ params }: { params: Promise<{ lotId: string }> }) {
@@ -580,6 +590,77 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
             </CardContent>
           </Card>
         </Reveal>
+
+        {/* === Certifications === */}
+        {/* === Anomalies (shown prominently when lot is recalled or has open alerts) === */}
+        {lot.anomalies && lot.anomalies.length > 0 && (
+          <Reveal>
+            <Card className="vs-card-shadow border-red-200 dark:border-red-900/60 dark:bg-gray-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <AlertTriangle className="size-5 text-red-600" />
+                    Anomalies détectées
+                  </h2>
+                  <Badge className="bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 hover:bg-red-100">
+                    {lot.anomalies.filter((a) => a.status === "open").length} ouverte(s) ·{" "}
+                    {lot.anomalies.length} au total
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {lot.anomalies.map((a) => {
+                    const sev = a.severity === "critical" ? "red" : a.severity === "warning" ? "amber" : "blue";
+                    const sevClasses = {
+                      red: "border-red-200 bg-red-50 dark:bg-red-950/40 dark:border-red-900",
+                      amber: "border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-900",
+                      blue: "border-blue-200 bg-blue-50 dark:bg-blue-950/40 dark:border-blue-900",
+                    };
+                    const sevIcon = {
+                      red: <XCircle className="size-4 text-red-600" />,
+                      amber: <AlertTriangle className="size-4 text-amber-600" />,
+                      blue: <Info className="size-4 text-blue-600" />,
+                    };
+                    const typeLabels: Record<string, string> = {
+                      allergen: "Allergène",
+                      dlc: "Date de péremption",
+                      counterfeit: "Contrefaçon",
+                      ingredient: "Ingrédient",
+                      cert_expiring: "Certification expirant",
+                    };
+                    return (
+                      <div key={a.id} className={`rounded-lg border p-3 flex items-start gap-3 ${sevClasses[sev]}`}>
+                        <div className="flex-shrink-0 mt-0.5">{sevIcon[sev]}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-[10px] border-current">
+                              {typeLabels[a.type] || a.type}
+                            </Badge>
+                            {a.status === "open" ? (
+                              <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px]">Ouverte</Badge>
+                            ) : a.status === "resolved" ? (
+                              <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px]">Résolue</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px]">Ignorée</Badge>
+                            )}
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatRelative(a.detectedAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 dark:text-gray-200 mt-1">{a.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 italic">
+                  Ces anomalies sont détectées automatiquement par le module IA VerifScan à partir
+                  des données du lot, des ingrédients et des signaux du marché. En cas de doute,
+                  contactez le fabricant.
+                </p>
+              </CardContent>
+            </Card>
+          </Reveal>
+        )}
 
         {/* === Certifications === */}
         <Reveal>

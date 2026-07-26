@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,23 +29,34 @@ export function LotStatusToggle({
   const router = useRouter();
   const isRecalled = currentStatus === "recalled";
   const newStatus = isRecalled ? "active" : "recalled";
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function onToggle() {
-    const res = await fetch(`/api/lots/${lotId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (!res.ok) {
-      toast.error("Erreur lors du changement de statut");
-      return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/lots/${lotId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+          recallReason: newStatus === "recalled" ? reason.trim() || undefined : undefined,
+        }),
+      });
+      if (!res.ok) {
+        toast.error("Erreur lors du changement de statut");
+        return;
+      }
+      toast.success(
+        newStatus === "recalled"
+          ? "Lot marqué comme rappelé — un avis rouge sera affiché aux consommateurs"
+          : "Lot réactivé"
+      );
+      setReason("");
+      router.refresh();
+    } finally {
+      setSubmitting(false);
     }
-    toast.success(
-      newStatus === "recalled"
-        ? "Lot marqué comme rappelé"
-        : "Lot réactivé"
-    );
-    router.refresh();
   }
 
   return (
@@ -74,16 +88,37 @@ export function LotStatusToggle({
           <AlertDialogDescription>
             {isRecalled
               ? "Le lot sera à nouveau visible comme authentique et actif pour les consommateurs."
-              : "Ce lot sera marqué comme rappelé. Les consommateurs qui scanneront le QR code verront un avertissement rouge. À utiliser en cas de retrait produit."}
+              : "Ce lot sera marqué comme rappelé. Les consommateurs qui scanneront le QR code verront un avertissement rouge avec le motif que vous indiquez. À utiliser en cas de retrait produit."}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {!isRecalled && (
+          <div className="space-y-1.5 py-2">
+            <Label htmlFor="recall-reason" className="text-sm font-medium">
+              Motif du rappel (recommandé)
+            </Label>
+            <Textarea
+              id="recall-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Ex : Détection d'un allergène non déclaré, défaut d'emballage, contamination microbienne possible…"
+              rows={3}
+              className="resize-none"
+            />
+            <p className="text-xs text-gray-500">
+              Ce motif sera affiché publiquement aux consommateurs qui scanneront le QR code.
+            </p>
+          </div>
+        )}
+
         <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={submitting}>Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={onToggle}
+            disabled={submitting}
             className={isRecalled ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
           >
-            Confirmer
+            {submitting ? "Traitement..." : "Confirmer"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

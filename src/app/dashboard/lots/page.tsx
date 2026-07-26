@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LotStatusToggle } from "./lot-status-toggle";
+import { DeleteLotButton, RegenerateQrButton, RegenerateAllQrButton } from "./delete-lot-button";
 
 export default async function DashboardLotsPage() {
   const user = await getCurrentUser();
@@ -30,12 +31,15 @@ export default async function DashboardLotsPage() {
             Chaque lot a un QR code unique pour la traçabilité.
           </p>
         </div>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-          <Link href="/dashboard/lots/nouveau">
-            <Plus className="mr-2 size-4" />
-            Nouveau lot
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {lots.length > 0 && <RegenerateAllQrButton />}
+          <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+            <Link href="/dashboard/lots/nouveau">
+              <Plus className="mr-2 size-4" />
+              Nouveau lot
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {lots.length === 0 ? (
@@ -114,7 +118,7 @@ export default async function DashboardLotsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button asChild size="sm" variant="outline" className="border-emerald-200">
                         <Link href={`/p/${lot.id}`} target="_blank">
                           <Eye className="mr-2 size-4" />
@@ -122,6 +126,8 @@ export default async function DashboardLotsPage() {
                         </Link>
                       </Button>
                       <LotStatusToggle lotId={lot.id} currentStatus={lot.status as "active" | "recalled"} />
+                      <RegenerateQrButton lotId={lot.id} />
+                      <DeleteLotButton lotId={lot.id} lotNumber={lot.lotNumber} />
                     </div>
                   </div>
                 </CardContent>
