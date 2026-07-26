@@ -216,3 +216,36 @@ Stage Summary:
 - Compte distributeur démo créé (distrib@verifscan.sn / dist123)
 - Code validé via Agent Browser: toutes les fonctionnalités testées et fonctionnelles
 - Architecture V3 modulaire, prête pour brancher un vrai LLM (GLM-4) ou une vraie blockchain (Polygon RPC)
+
+---
+Task ID: rbac-detach-dashboard
+Agent: main
+Task: Détacher le tableau de bord du site public et le rendre pro/autonome (fini le look "bizarre" avec cosmic-bg violet/fuchsia).
+
+Work Log:
+- Restructuré les routes via Route Groups Next.js :
+  * root layout (src/app/layout.tsx) ne contient plus que <html><body>
+  * pages publiques (/, /auth, /products, /scan) déplacées dans (public)/ avec leur propre layout qui wrap Header+Footer
+  * dashboard/ et admin/ restent en racine → plus de Header/Footer public qui "bleed" dans l'admin
+- Redessiné dashboard/layout.tsx en shell admin pro :
+  * sidebar sombre slate-900 (260px) avec icônes Lucide (LayoutDashboard, Package, Tags, QrCode, BarChart3, CreditCard, Settings)
+  * top bar sticky avec breadcrumb, lien site public, cloche notif, menu user collapsible
+  * drawer mobile avec backdrop
+  * indicateur actif indigo + point
+  * état loading : dot indigo pulsé sur slate-50
+- Redessiné admin/layout.tsx avec le même shell pro pour cohérence (badge "Super Admin", nav Users/Categories/Plans)
+- Nettoyé toutes les pages internes du dashboard :
+  * supprimé tous les emojis (📦🏷️🔳🔍⚡➕✅⚠️💡 etc.) → remplacés par icônes Lucide
+  * supprimé classes cosmic-bg / glass-card / font-display / brand-* → palette slate + indigo
+  * empty states avec tuiles icône Lucide au lieu de gros emojis
+  * tableaux et cartes avec border-slate-200 + shadow-sm
+- Étendu le type AuthUser avec phone/country/preferredLang optionnels (compilation Parametres)
+- Ajouté export const dynamic = 'force-dynamic' sur (public)/layout.tsx
+
+Stage Summary:
+- Build vérifié : 36 routes compilent, `next build` passe sans erreur.
+- Commit f98dfd0 poussé sur origin/main.
+- Le dashboard est maintenant un shell admin autonome détaché du site public, avec look pro (sidebar sombre, top bar, icônes Lucide) au lieu du cosmic-bg violet.
+- RBAC préservé : SUPER_ADMIN → /admin, FABRICANT → /dashboard.
+- Rappel sécurité : le token GitHub PAT ([REDACTED]) est toujours exposé dans l'historique git, il faut le révoquer.
+- Prochaine étape : redéployer sur Coolify (le build repassera).
