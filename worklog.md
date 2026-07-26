@@ -348,3 +348,65 @@ Stage Summary:
 - QR : boutons de régénération ajoutés (1 par lot + global) — l'utilisateur doit cliquer dessus après déploiement pour corriger les QR existants
 - Suppression : DELETE endpoints créés pour produits ET lots, boutons UI fonctionnels avec confirmation
 - Rappel : le lot n'est PLUS désactivé, il reste visible avec bannière rouge + motif + section anomalies IA + reste de la page (traçabilité, certifications, etc.)
+
+---
+Task ID: qr-diagnostic-fix
+Agent: main (Super Z)
+Task: User reports "même après régénérer les QR code, affiche QR code introuvable" — diagnostic + fixes
+
+Work Log:
+- Investigation: lu /api/qrcodes/generate, /api/qrcodes/refresh-all, /api/lots/[id], /p/[lotId], /api/scans, src/lib/qr.ts.
+- Identifié 3 causes possibles:
+  1. QR codes legacy pourraient encoder le lotNumber (LOT-YYYYMMDD-XXXX) au lieu du lot ID (cuid). L'API ne cherchait que par ID.
+  2. /api/qrcodes/refresh-all SKIPPAIT les lots sans QR code actif (counter 'skipped'). Après un wipe DB, le bouton 'Régénérer tous les QR' ne faisait rien.
+  3. Aucun moyen de diagnostiquer pourquoi les QR 404 (l'utilisateur ne sait pas si l'URL est mauvaise ou si le lot n'existe pas en DB).
+
+- Créé GET /api/debug/qr-check (endpoint public, /home/z/my-project/src/app/api/debug/qr-check/route.ts):
+  * Retourne appUrl (résultat de resolveAppUrl(req))
+  * Retourne les variables d'env (NEXT_PUBLIC_APP_URL, NEXTAUTH_URL)
+  * Retourne les headers (x-forwarded-proto, x-forwarded-host, host)
+  * Retourne les totaux DB (lots, qrCodesActive, qrCodesTotal, scans)
+  * Retourne les 20 derniers lots avec ID, lotNumber, status, QR code actif ID, publicUrl, fullEncodedUrl, testUrl
+  * Retourne un champ 'diagnosis' qui explique automatiquement la cause probable
+
+- Ajouté fallback par lotNumber dans GET /api/lots/[id] (src/app/api/lots/[id]/route.ts):
+  * Si findUnique({where:{id}}) retourne null, essaie findFirst({where:{lotNumber:id}})
+  * Permet aux anciens QR codes imprimés avec le lotNumber de continuer à fonctionner
+
+- Modifié /api/qrcodes/refresh-all (src/app/api/qrcodes/refresh-all/route.ts):
+  * Au lieu de SKIP les lots sans QR code actif, CRÉE un nouveau QR code pour eux
+  * Update in-place les lots qui ont déjà un QR code actif (préserve l'ID + historique scans)
+  * Nouvelle shape de réponse: {refreshed, created, processed, lotIds, appUrl, note}
+  * Expose appUrl pour debug
+
+- Amélioré page not-found /p/[lotId] (src/app/p/[lotId]/page.tsx):
+  * Affiche l'URL scannée dans une boîte grise discrète
+  * Affiche le lotId tenté
+  * Bouton 'Copier l'URL' pour faciliter le support
+  * Explication pour le fabricant
+
+- Amélioré RegenerateQrButton + RegenerateAllQrButton (src/app/dashboard/lots/delete-lot-button.tsx):
+  * Toast affiche maintenant l'appUrl utilisé pour la régénération
+  * L'utilisateur peut immédiatement vérifier si l'URL est correcte
+
+- Créé src/app/dashboard/qr-codes/qr-diagnostic-banner.tsx (client component):
+  * Fetch /api/debug/qr-check au montage
+  * Affiche une bannière jaune si problème détecté (0 lots, 0 QR actifs, appUrl vide)
+  * Affiche les totaux + l'URL courante + le diagnostic
+
+- Ajouté bouton 'Diagnostiquer' sur /dashboard/qr-codes qui ouvre /api/debug/qr-check dans un nouvel onglet.
+
+- Build vérifié: npx next build → 20.1s, 70 pages, 0 errors.
+- Commit 72c6161 poussé sur origin/main.
+
+Stage Summary:
+- 3 problèmes adressés en un seul commit:
+  1. Fallback lotNumber dans l'API publique — les anciens QR codes avec lotNumber au lieu de lot ID continuent de fonctionner
+  2. refresh-all crée maintenant des QR codes pour les lots qui n'en ont pas — après un wipe DB, cliquer sur 'Régénérer tous les QR' reconstruit tout
+  3. Endpoint de diagnostic /api/debug/qr-check + bannière dashboard permettent de comprendre immédiatement pourquoi les QR 404
+- L'utilisateur peut maintenant:
+  a. Aller sur /dashboard/qr-codes → voir la bannière jaune avec le diagnostic
+  b. Cliquer sur 'Diagnostiquer' pour voir le détail (appUrl, env, headers, lots)
+  c. Cliquer sur 'Régénérer tous les QR' — l'URL encodée s'affiche dans le toast
+  d. Scanner le QR — si 404, la page affiche l'URL scannée + le lotId pour debug
+- Prochaine étape: redéployer sur Coolify (le build va recompiler avec ces changements).
