@@ -405,3 +405,228 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   100% { opacity: 0; }
 }
 .vs-fade-out { animation: vs-fade-out 1.8s ease-out forwards; }
+
+/* ============================================
+   Landing V5 — Hero refinements + new animations
+   ============================================ */
+
+/* Modern gradient tokens (per design spec) */
+:root {
+  --gradient-primary: linear-gradient(135deg, #2563EB 0%, #10B981 100%);
+  --gradient-secondary: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  --gradient-hero: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
+  --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 20px 25px -5px rgba(0,0,0,0.10), 0 10px 10px -5px rgba(0,0,0,0.04);
+  --shadow-popular: 0 25px 50px -12px rgba(37, 99, 235, 0.25);
+}
+
+/* Refined hero background: subtle blue → green → white */
+.vs-hero-bg {
+  background:
+    radial-gradient(ellipse 60% 50% at 10% 20%, rgba(37, 99, 235, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(16, 185, 129, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #EFF6FF 0%, #F0FDF4 60%, #FFFFFF 100%);
+}
+
+/* Animated particles (CSS-only) — light dots floating in hero */
+.vs-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.vs-particles::before,
+.vs-particles::after {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.18) 1px, transparent 2px),
+    radial-gradient(circle at 70% 60%, rgba(16, 185, 129, 0.18) 1px, transparent 2px),
+    radial-gradient(circle at 50% 80%, rgba(245, 158, 11, 0.12) 1px, transparent 2px);
+  background-size: 80px 80px, 120px 120px, 160px 160px;
+  animation: vs-particle-drift 30s linear infinite;
+}
+.vs-particles::after {
+  background-size: 100px 100px, 150px 150px, 200px 200px;
+  animation-duration: 45s;
+  animation-direction: reverse;
+  opacity: 0.6;
+}
+
+@keyframes vs-particle-drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-80px, -120px); }
+}
+
+/* 3D tilt for smartphone mockup (subtle, on hover) */
+.vs-phone-3d {
+  transform: perspective(1200px) rotateY(-8deg) rotateX(4deg);
+  transition: transform 0.5s ease;
+}
+.vs-phone-3d:hover {
+  transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
+}
+
+/* QR code pulse animation (every 3s) */
+@keyframes vs-qr-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+  }
+}
+.vs-qr-pulse {
+  animation: vs-qr-pulse 3s ease-in-out infinite;
+}
+
+/* "Nouveau" badge floating animation */
+@keyframes vs-badge-new {
+  0%, 100% { transform: rotate(-6deg) translateY(0); }
+  50% { transform: rotate(-6deg) translateY(-4px); }
+}
+.vs-badge-new {
+  animation: vs-badge-new 2.5s ease-in-out infinite;
+}
+
+/* Card hover lift (used in features, pricing, testimonials) */
+.vs-card-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.vs-card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Icon circle with gradient */
+.vs-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  color: white;
+  box-shadow: 0 8px 16px -4px rgba(0,0,0,0.15);
+}
+.vs-icon-circle-blue { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
+.vs-icon-circle-green { background: linear-gradient(135deg, #10B981 0%, #047857 100%); }
+.vs-icon-circle-orange { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+
+/* "En savoir plus" arrow slide */
+.vs-link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  transition: gap 0.2s ease;
+}
+.vs-link-arrow:hover {
+  gap: 0.7rem;
+}
+.vs-link-arrow svg {
+  transition: transform 0.2s ease;
+}
+.vs-link-arrow:hover svg {
+  transform: translateX(2px);
+}
+
+/* Animated timeline connector (how it works) */
+.vs-timeline-h {
+  position: absolute;
+  top: 32px;
+  left: 16.66%;
+  right: 16.66%;
+  height: 3px;
+  background: linear-gradient(90deg, #2563EB 0%, #10B981 50%, #F59E0B 100%);
+  border-radius: 2px;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 1.2s ease-out;
+}
+.vs-timeline-h.vs-revealed {
+  transform: scaleX(1);
+}
+
+/* Step circle (numbered, with gradient + ring) */
+.vs-step-circle {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #2563EB 0%, #10B981 100%);
+  box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.3);
+}
+.vs-step-circle::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(37, 99, 235, 0.2);
+}
+
+/* Pricing card "popular" gradient border */
+.vs-popular-card {
+  position: relative;
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--shadow-popular);
+}
+.vs-popular-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #2563EB 0%, #10B981 100%);
+  z-index: -1;
+}
+
+/* Testimonial quote mark */
+.vs-quote-mark {
+  font-family: Georgia, serif;
+  font-size: 5rem;
+  line-height: 0.6;
+  color: #2563EB;
+  opacity: 0.15;
+}
+
+/* Carousel smooth scroll */
+.vs-carousel {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.vs-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Count-up stat number with monospace tabular figures */
+.vs-stat-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* CTA pulse (final section) */
+@keyframes vs-cta-pulse {
+  0%, 100% { box-shadow: 0 10px 30px -8px rgba(37, 99, 235, 0.45); }
+  50% { box-shadow: 0 14px 40px -8px rgba(37, 99, 235, 0.65); }
+}
+.vs-cta-pulse {
+  animation: vs-cta-pulse 2.5s ease-in-out infinite;
+}
+
+/* Soft section background (gray-50) */
+.vs-section-soft {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+}
