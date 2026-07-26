@@ -19,9 +19,9 @@ import {
 } from "recharts";
 
 const CHART_COLORS = {
-  blue: "#2563EB",
+  blue: "#0f4382",
   blueLight: "#3B82F6",
-  green: "#10B981",
+  green: "#2ebd5a",
   orange: "#F59E0B",
   red: "#EF4444",
   gray: "#9CA3AF",

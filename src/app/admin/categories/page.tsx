@@ -149,7 +149,7 @@ export default function AdminCategoriesPage() {
             {categories.filter((c) => c.isActive).length} catégories actives sur {categories.length}
           </p>
         </div>
-        <Button onClick={openCreate} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+        <Button onClick={openCreate} className="bg-[#0f4382] hover:bg-[#0a3060]">
           <Plus className="mr-2 size-4" />
           Nouvelle catégorie
         </Button>
@@ -168,7 +168,7 @@ export default function AdminCategoriesPage() {
             <Tag className="mx-auto size-12 text-[#D1D5DB]" />
             <h3 className="mt-4 font-semibold text-[#111827]">Aucune catégorie</h3>
             <p className="text-sm text-[#6B7280] mt-1">Créez votre première catégorie pour commencer.</p>
-            <Button onClick={openCreate} className="mt-4 bg-[#2563EB] hover:bg-[#1D4ED8]">
+            <Button onClick={openCreate} className="mt-4 bg-[#0f4382] hover:bg-[#0a3060]">
               <Plus className="mr-2 size-4" />
               Créer
             </Button>
@@ -187,7 +187,7 @@ export default function AdminCategoriesPage() {
                   <Badge
                     className={
                       cat.isActive
-                        ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                        ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                         : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#F3F4F6]"
                     }
                   >
@@ -276,7 +276,7 @@ export default function AdminCategoriesPage() {
                     onClick={() => setForm({ ...form, icon: e })}
                     className={`size-8 rounded-lg text-lg transition-colors ${
                       form.icon === e
-                        ? "bg-[#2563EB]"
+                        ? "bg-[#0f4382]"
                         : "bg-white hover:bg-[#DBEAFE]"
                     }`}
                   >
@@ -291,7 +291,7 @@ export default function AdminCategoriesPage() {
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={onSave} disabled={saving} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+            <Button onClick={onSave} disabled={saving} className="bg-[#0f4382] hover:bg-[#0a3060]">
               <Save className="mr-2 size-4" />
               {saving ? "Enregistrement..." : "Enregistrer"}
             </Button>

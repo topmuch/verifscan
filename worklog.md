@@ -598,3 +598,74 @@ Stage Summary:
 - Layout: site élargi à 1440px (gain ~160px de largeur utile vs 1280px précédent)
 - Artéfacts: public/hero/hero-main.png (image), scripts/gen-hero-image.ts (script de regénération)
 - Tous les fichiers modifiés: 6 sections landing + header + footer
+
+---
+Task ID: landing-v7-color-harmony-product-redesign
+Agent: Super Z (main)
+Task: Régénérer l'image hero (scan sur produit), fonds colorés bleu/vert pour les 3 cards Features, harmoniser les couleurs du site en #0f4382 / #2ebd5a, supprimer la section tarifs, redessiner la page produit avec 10 sections style QRTags
+
+Work Log:
+- Régénéré l'image hero (1344x768, ~90 KB) → public/hero/hero-main.png
+  - Nouveau prompt: photo réaliste d'une main africaine scannant un QR code sur un pot de confiture avec smartphone, écran affichant un checkmark vert, palette #0f4382 + #2ebd5a, style commercial premium
+  - Script scripts/gen-hero-image.ts mis à jour avec le nouveau prompt
+- Harmonisé les couleurs du site dans globals.css:
+  - --vs-blue: #2563EB → #0f4382 (deep navy)
+  - --vs-blue-dark: #1D4ED8 → #0a3060
+  - --vs-green: #10B981 → #2ebd5a (fresh green)
+  - --vs-green-dark: #047857 → #1f8a42
+  - --vs-footer: #111827 → #0a3060 (cohérent avec le nouveau bleu)
+  - Tous les oklch() primary/ring/chart/sidebar mis à jour
+  - Gradients CSS (.vs-gradient-hero, .vs-gradient-text, .vs-gradient-blue, .vs-gradient-green) mis à jour
+  - Shadows et keyframes pulse mis à jour avec nouvelles teintes rgba
+- Appliqué la couleur harmonisée sur TOUS les fichiers source via sed:
+  - 25 fichiers modifiés (landing + admin + lib + components)
+  - Vérifié: plus aucun #2563EB/#10B981/#1D4ED8/#047857 dans src/
+- Refait la section Features (features-section.tsx):
+  - Card 1: fond solide bleu #0f4382, texte blanc
+  - Card 2: fond solide vert #2ebd5a, texte blanc
+  - Card 3: fond solide bleu #0f4382, texte blanc (alternance)
+  - Cercle d'icône en blanc translucide (rgba 0.15-0.18)
+  - Glow décoratif dans le coin supérieur droit (couleur alternée)
+  - Barre d'accent au survol (couleur alternée)
+  - Cartes supprimées de l'ancien fond blanc avec bordure grise
+- Supprimé la section Pricing du site:
+  - src/app/page.tsx: import et composant <PricingSection /> retirés
+  - src/components/public-header.tsx: lien "Prix" /#pricing retiré de la nav
+  - Le fichier pricing-section.tsx est conservé (au cas où on voudrait le réactiver)
+- Redessiné complètement la page produit /p/[lotId]/page.tsx (1255 → ~1100 lignes):
+  - Section 1 — Header authentification: bandeau gradient vert→blanc avec bordure 2px verte, icône ronde verte, animation pulse douce, message "PRODUIT AUTHENTIQUE ET VÉRIFIÉ" en majuscules
+  - Section 2 — Stats rapides (4 cards colorées style QRTags): alternance bleu/vert, icône ronde en fond solide, valeur en gras, libellé en majuscules
+  - Section 3 — Carte produit principale: layout 300px photo + info, photo dans gradient bleu→vert, badge "Nouveau" flottant, badges catégorie/poids/nouveau
+  - Section 4 — Informations de traçabilité (grille colorée):
+    * Numéro de lot: bloc jaune clair (ORANGE_LIGHT)
+    * Date fabrication: bloc vert (GREEN_LIGHT + GREEN_DARK)
+    * Date péremption: bloc orange (ORANGE_LIGHT + #92400E)
+    * Lieu fabrication: bloc bleu (BLUE_LIGHT + BLUE)
+    * Lieu transformation: bloc vert
+    * Pays de vente: bloc jaune, pleine largeur
+    * Chaque bloc a icône ronde colorée + label majuscule + valeur en gras
+  - Section 5 — Timeline historique: ligne verticale gradient vert→bleu→orange, cercles colorés 8px (vert/violet/bleu/orange/rouge selon étape), chaque étape dans une card pastel avec fond coloré léger
+  - Section 6 — Certifications: grille 3 colonnes, badges colorés avec icône 5xl, border-2 ton sur ton, hover -translate-y-1 + shadow
+  - Section 7 — Allergènes: bandeau jaune clair avec bordure 2px orange, badges allergènes colorés selon tone, avertissement sanitaire dans sous-bloc blanc/60
+  - Section 8 — QR + Contact: 2 colonnes, QR dans cadre blanc border-2, contact avec boutons WhatsApp vert (#25D366), Phone vert, Email bleu
+  - Section 9 — Avis & Notes: note moyenne 5xl, étoiles animées en cascade, barres de rating avec gradient bleu→vert (au lieu d'amber), avis dans cards gray-50
+  - Section 10 — Badge final "Vérifié par VerifScan": grand bloc gradient vert, icône shield blanche en cercle translucide, boutons Partager/WhatsApp/Facebook
+  - Constantes couleur en haut de fichier: BLUE, BLUE_DARK, BLUE_LIGHT, GREEN, GREEN_DARK, GREEN_LIGHT, ORANGE, ORANGE_LIGHT
+  - Composants internes: Reveal, QuickStat, ColorBlock, Timeline, RatingBar (tous utilisent les constantes couleur au lieu de classes Tailwind blue/emerald)
+  - Supprimé les imports Card/CardContent (plus utilisés) et Truck/FileText (plus utilisés)
+- Footer: bg #111827 → #0a3060, border #374151 → #1f3a5f (cohérent avec nouvelle palette)
+- Vérifié:
+  - tsc --noEmit: aucune erreur sur les fichiers modifiés
+  - next dev (Turbopack): HTTP 200 sur / et /p/test
+  - Hero image servie: HTTP 200, 89782 bytes
+  - Section pricing absente du HTML rendu (grep "id=\"pricing\"" → 0 occurrence)
+  - Couleurs harmonisées: plus aucun #2563EB/#10B981 dans src/
+
+Stage Summary:
+- Image hero: photo réaliste main+smartphone+QR (remplace l'illustration 3D précédente)
+- Couleurs harmonisées: #0f4382 (blue) + #2ebd5a (green) partout sur le site (25 fichiers)
+- Features: 3 cards fond solide alternées bleu/vert/bleu avec texte blanc
+- Pricing: section supprimée de la home + lien nav supprimé
+- Page produit: 10 sections QRTags-style avec blocs colorés (bleu/vert/jaune/orange), timeline avec cercles colorés, certifications en grille 3 col, allergènes en bandeau jaune, badge final gradient vert
+- Footer: palette alignée sur le bleu deep #0a3060
+- Artéfacts: public/hero/hero-main.png (régénérée), scripts/gen-hero-image.ts (prompt mis à jour)

@@ -62,7 +62,7 @@ export function AdminShell({
         <div className="px-5 h-[70px] flex items-center border-b border-[#E5E7EB]">
           <div className="flex items-center gap-2">
             <VerifScanLogo size="sm" />
-            <span className="ml-1 px-2 py-0.5 rounded-md bg-[#2563EB] text-white text-[10px] font-bold uppercase tracking-wide">
+            <span className="ml-1 px-2 py-0.5 rounded-md bg-[#0f4382] text-white text-[10px] font-bold uppercase tracking-wide">
               Admin
             </span>
           </div>
@@ -94,7 +94,7 @@ export function AdminShell({
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-[#2563EB] text-white shadow-sm"
+                        ? "bg-[#0f4382] text-white shadow-sm"
                         : "text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]"
                     )}
                   >
@@ -134,7 +134,7 @@ export function AdminShell({
         {/* Profil admin */}
         <div className="px-3 py-4 border-t border-[#E5E7EB]">
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#F9FAFB]">
-            <div className="size-9 rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white font-semibold">
+            <div className="size-9 rounded-full bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white font-semibold">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -176,7 +176,7 @@ export function AdminShell({
             <input
               type="text"
               placeholder="Rechercher un fabricant, produit, lot..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent"
+              className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-sm focus:outline-none focus:ring-2 focus:ring-[#0f4382] focus:border-transparent"
             />
           </div>
 
@@ -196,7 +196,7 @@ export function AdminShell({
               <Bell className="size-5" />
               <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500" />
             </button>
-            <div className="size-9 rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white font-semibold">
+            <div className="size-9 rounded-full bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white font-semibold">
               {user.name.charAt(0).toUpperCase()}
             </div>
           </div>

@@ -4,8 +4,8 @@ import { Smartphone, Building2, ShieldCheck, TrendingUp, Calendar, BarChart3, Gl
 import { useRevealCounter } from "@/lib/use-animations";
 
 const stats = [
-  { icon: Smartphone, value: 12458, suffix: "", label: "Produits scannés cette semaine", color: "#FFFFFF", bgTint: "from-[#2563EB] to-[#1D4ED8]" },
-  { icon: Building2, value: 250, suffix: "+", label: "Fabricants actifs", color: "#FCD34D", bgTint: "from-[#10B981] to-[#047857]" },
+  { icon: Smartphone, value: 12458, suffix: "", label: "Produits scannés cette semaine", color: "#FFFFFF", bgTint: "from-[#0f4382] to-[#0a3060]" },
+  { icon: Building2, value: 250, suffix: "+", label: "Fabricants actifs", color: "#FCD34D", bgTint: "from-[#2ebd5a] to-[#1f8a42]" },
   { icon: ShieldCheck, value: 98, suffix: "%", label: "De confiance accrue", color: "#6EE7B7", bgTint: "from-[#F59E0B] to-[#D97706]" },
   { icon: TrendingUp, value: 35, suffix: "%", label: "D'augmentation des ventes", color: "#FCD34D", bgTint: "from-[#7C3AED] to-[#5B21B6]" },
 ];
@@ -66,7 +66,7 @@ export function StatsSection() {
         />
       </div>
       <div className="absolute -top-20 -right-20 size-80 rounded-full bg-white/5 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 size-80 rounded-full bg-[#10B981]/10 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 size-80 rounded-full bg-[#2ebd5a]/10 blur-3xl pointer-events-none" />
 
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         <div className="text-center max-w-2xl mx-auto mb-16">

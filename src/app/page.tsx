@@ -4,7 +4,6 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { StatsSection } from "@/components/landing/stats-section";
-import { PricingSection } from "@/components/landing/pricing-section";
 import { FinalCTASection } from "@/components/landing/final-cta-section";
 
 export default function HomePage() {
@@ -16,7 +15,6 @@ export default function HomePage() {
         <HowItWorksSection />
         <TestimonialsSection />
         <StatsSection />
-        <PricingSection />
         <FinalCTASection />
       </main>
     </PublicShell>

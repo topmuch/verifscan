@@ -65,7 +65,7 @@ export default function AdminSettingsPage() {
                     onClick={() => setActiveSection(s.key)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       activeSection === s.key
-                        ? "bg-[#2563EB] text-white"
+                        ? "bg-[#0f4382] text-white"
                         : "text-[#4B5563] hover:bg-[#F9FAFB]"
                     }`}
                   >
@@ -123,14 +123,14 @@ function GeneralSection() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label>Logo</Label>
-            <div className="border-2 border-dashed border-[#E5E7EB] rounded-lg p-4 text-center hover:border-[#2563EB] cursor-pointer">
+            <div className="border-2 border-dashed border-[#E5E7EB] rounded-lg p-4 text-center hover:border-[#0f4382] cursor-pointer">
               <p className="text-xs text-[#6B7280]">PNG/SVG, max 2MB</p>
               <Button variant="outline" size="sm" className="mt-2 border-[#E5E7EB]">Choisir un fichier</Button>
             </div>
           </div>
           <div>
             <Label>Favicon</Label>
-            <div className="border-2 border-dashed border-[#E5E7EB] rounded-lg p-4 text-center hover:border-[#2563EB] cursor-pointer">
+            <div className="border-2 border-dashed border-[#E5E7EB] rounded-lg p-4 text-center hover:border-[#0f4382] cursor-pointer">
               <p className="text-xs text-[#6B7280]">ICO/PNG, 32x32</p>
               <Button variant="outline" size="sm" className="mt-2 border-[#E5E7EB]">Choisir un fichier</Button>
             </div>
@@ -455,7 +455,7 @@ function ApiSection() {
         <CardHeader>
           <CardTitle className="text-base font-display flex items-center justify-between">
             <span>Clés API générées</span>
-            <Button size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8]">+ Générer nouvelle clé</Button>
+            <Button size="sm" className="bg-[#0f4382] hover:bg-[#0a3060]">+ Générer nouvelle clé</Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -528,10 +528,10 @@ function AppearanceSection() {
           <div className="mt-2 flex items-center gap-3">
             <input
               type="color"
-              defaultValue="#2563EB"
+              defaultValue="#0f4382"
               className="size-12 rounded-lg border border-[#E5E7EB] cursor-pointer"
             />
-            <Input defaultValue="#2563EB" className="font-mono w-32" />
+            <Input defaultValue="#0f4382" className="font-mono w-32" />
           </div>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -645,7 +645,7 @@ function MaintenanceSection() {
 function SaveButton({ onClick }: { onClick?: () => void }) {
   return (
     <div className="pt-2 border-t border-[#F3F4F6]">
-      <Button onClick={onClick} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+      <Button onClick={onClick} className="bg-[#0f4382] hover:bg-[#0a3060]">
         <Save className="mr-2 size-4" />
         Enregistrer
       </Button>

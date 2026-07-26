@@ -26,8 +26,8 @@ export function HeroSection() {
       <div className="vs-particles" aria-hidden />
 
       {/* Decorative blobs (kept for depth) */}
-      <div className="absolute top-20 -left-20 size-72 rounded-full bg-[#2563EB]/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 -right-20 size-96 rounded-full bg-[#10B981]/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-20 -left-20 size-72 rounded-full bg-[#0f4382]/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 size-96 rounded-full bg-[#2ebd5a]/10 blur-3xl pointer-events-none" />
 
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -39,11 +39,11 @@ export function HeroSection() {
           >
             {/* Trust badge — blockchain secured */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#E5E7EB] shadow-sm">
-              <Lock className="size-3.5 text-[#10B981]" />
+              <Lock className="size-3.5 text-[#2ebd5a]" />
               <span className="text-sm font-medium text-[#374151]">
                 Sécurisé par blockchain
               </span>
-              <span className="size-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              <span className="size-1.5 rounded-full bg-[#2ebd5a] animate-pulse" />
             </div>
 
             {/* H1 — short, punchy */}
@@ -62,14 +62,14 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 h-14 px-8 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-base font-semibold shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] hover:shadow-xl"
+                className="inline-flex items-center gap-2 h-14 px-8 rounded-xl bg-[#0f4382] hover:bg-[#0a3060] text-white text-base font-semibold shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] hover:shadow-xl"
               >
                 Essai gratuit 14 jours
                 <ArrowRight className="size-5" />
               </Link>
               <Link
                 href="/produits"
-                className="inline-flex items-center gap-2 h-14 px-6 rounded-xl bg-white hover:bg-gray-50 text-[#2563EB] text-base font-semibold border-2 border-[#2563EB]/20 transition-all hover:border-[#2563EB]/40"
+                className="inline-flex items-center gap-2 h-14 px-6 rounded-xl bg-white hover:bg-gray-50 text-[#0f4382] text-base font-semibold border-2 border-[#0f4382]/20 transition-all hover:border-[#0f4382]/40"
               >
                 <PlayCircle className="size-5" />
                 Voir une démo
@@ -79,15 +79,15 @@ export function HeroSection() {
             {/* Reassurance row */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#6B7280]">
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-[#10B981]" />
+                <CheckCircle2 className="size-4 text-[#2ebd5a]" />
                 Sans carte bancaire
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-[#10B981]" />
+                <CheckCircle2 className="size-4 text-[#2ebd5a]" />
                 Annulation libre
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="size-4 text-[#10B981]" />
+                <CheckCircle2 className="size-4 text-[#2ebd5a]" />
                 Configuration en 5 min
               </span>
             </div>
@@ -118,8 +118,8 @@ export function HeroSection() {
               {/* Floating cards around the image */}
               <div className="absolute -top-6 -right-4 lg:-right-8 vs-animate-float">
                 <div className="bg-white rounded-2xl shadow-xl p-4 border border-[#E5E7EB] flex items-center gap-3 max-w-[220px]">
-                  <div className="size-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
-                    <ShieldCheck className="size-5 text-[#10B981]" />
+                  <div className="size-10 rounded-xl bg-[#2ebd5a]/10 flex items-center justify-center">
+                    <ShieldCheck className="size-5 text-[#2ebd5a]" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-[#111827]">Sécurisé blockchain</p>
@@ -130,8 +130,8 @@ export function HeroSection() {
 
               <div className="absolute -bottom-6 -left-4 lg:-left-8 vs-animate-float-delayed">
                 <div className="bg-white rounded-2xl shadow-xl p-4 border border-[#E5E7EB] flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-[#2563EB]/10 flex items-center justify-center">
-                    <Smartphone className="size-5 text-[#2563EB]" />
+                  <div className="size-10 rounded-xl bg-[#0f4382]/10 flex items-center justify-center">
+                    <Smartphone className="size-5 text-[#0f4382]" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-[#111827]">Scanné en 0.3s</p>
@@ -148,8 +148,8 @@ export function HeroSection() {
 
               <div className="absolute bottom-1/4 -right-4 lg:-right-10 vs-animate-float-delayed">
                 <div className="bg-white rounded-full shadow-xl px-3 py-2 border border-[#E5E7EB] flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#10B981]" />
-                  <span className="text-xs font-semibold text-[#047857]">Authentique</span>
+                  <CheckCircle2 className="size-4 text-[#2ebd5a]" />
+                  <span className="text-xs font-semibold text-[#1f8a42]">Authentique</span>
                 </div>
               </div>
             </div>
@@ -172,7 +172,7 @@ export function HeroSection() {
             ].map((brand) => (
               <span
                 key={brand.name}
-                className="inline-flex items-center gap-2 font-display font-semibold text-lg text-[#374151] hover:text-[#2563EB] transition-colors"
+                className="inline-flex items-center gap-2 font-display font-semibold text-lg text-[#374151] hover:text-[#0f4382] transition-colors"
               >
                 <span className="text-2xl" aria-hidden>{brand.icon}</span>
                 {brand.name}

@@ -134,7 +134,7 @@ export default function AdminPlansPage() {
             Modifiez les prix, quotas et fonctionnalités de chaque plan.
           </p>
         </div>
-        <Button onClick={saveAll} disabled={saving} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+        <Button onClick={saveAll} disabled={saving} className="bg-[#0f4382] hover:bg-[#0a3060]">
           <Save className="mr-2 size-4" />
           {saving ? "Enregistrement..." : "Enregistrer tout"}
         </Button>
@@ -146,7 +146,7 @@ export default function AdminPlansPage() {
           <Card
             key={plan.name}
             className={`border-2 ${
-              plan.popular ? "border-[#2563EB] vs-card-shadow-lg" : "border-[#E5E7EB]"
+              plan.popular ? "border-[#0f4382] vs-card-shadow-lg" : "border-[#E5E7EB]"
             } relative`}
           >
             {plan.popular && (
@@ -236,7 +236,7 @@ export default function AdminPlansPage() {
                     >
                       <span className="text-sm text-[#374151]">{f.label}</span>
                       {f.included ? (
-                        <span className="size-5 rounded-full bg-[#D1FAE5] flex items-center justify-center">
+                        <span className="size-5 rounded-full bg-[#DCFCE7] flex items-center justify-center">
                           <Check className="size-3 text-[#065F46]" strokeWidth={3} />
                         </span>
                       ) : (
@@ -295,7 +295,7 @@ export default function AdminPlansPage() {
               <Label className="text-sm">Carte bancaire requise pour l&apos;essai</Label>
             </div>
           </div>
-          <Button onClick={saveAll} disabled={saving} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+          <Button onClick={saveAll} disabled={saving} className="bg-[#0f4382] hover:bg-[#0a3060]">
             <Save className="mr-2 size-4" />
             Enregistrer les paramètres globaux
           </Button>

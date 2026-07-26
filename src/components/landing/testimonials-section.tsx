@@ -13,7 +13,7 @@ const testimonials = [
     testimonial:
       "Grâce à VerifScan, nos ventes ont augmenté de 35% en 3 mois ! Nos clients scannent le QR code et ont immédiatement confiance. C'est un vrai game-changer pour les petits producteurs comme nous.",
     photo: "👩🏾‍🦱",
-    color: "#2563EB",
+    color: "#0f4382",
     bg: "#DBEAFE",
     metric: "+35% de ventes en 3 mois",
   },
@@ -25,8 +25,8 @@ const testimonials = [
     testimonial:
       "Nous exportons maintenant vers 4 pays de la CEDEAO sans aucune difficulté douanière. Les documents générés par VerifScan sont acceptés partout. Un outil indispensable pour tout agro-industriel sérieux.",
     photo: "👨🏾",
-    color: "#10B981",
-    bg: "#D1FAE5",
+    color: "#2ebd5a",
+    bg: "#DCFCE7",
     metric: "4 pays CEDEAO couverts",
   },
   {
@@ -49,8 +49,8 @@ const testimonials = [
     testimonial:
       "VerifScan nous a permis de différencier nos produits bio des contrefaçons. Depuis que nous apposons le QR code VerifScan, plus aucun retour pour doute sur l'authenticité. Indispensable.",
     photo: "🧑🏾",
-    color: "#047857",
-    bg: "#D1FAE5",
+    color: "#1f8a42",
+    bg: "#DCFCE7",
     metric: "0 retour pour contrefaçon",
   },
   {
@@ -61,7 +61,7 @@ const testimonials = [
     testimonial:
       "Les statistiques de scans nous ont révélé des marchés insoupçonnés à Saint-Louis. Nous y avons ouvert un point de vente qui représente déjà 12% de notre chiffre d'affaires.",
     photo: "👩🏾‍💼",
-    color: "#1D4ED8",
+    color: "#0a3060",
     bg: "#DBEAFE",
     metric: "12% CA sur nouveau marché",
   },
@@ -187,7 +187,7 @@ export function TestimonialsSection() {
           <div className="flex items-center justify-center gap-3 mt-8">
             <button
               onClick={() => scrollBy(-1)}
-              className="size-11 rounded-full bg-white border border-[#E5E7EB] shadow-sm hover:bg-gray-50 hover:border-[#2563EB]/40 flex items-center justify-center transition-all"
+              className="size-11 rounded-full bg-white border border-[#E5E7EB] shadow-sm hover:bg-gray-50 hover:border-[#0f4382]/40 flex items-center justify-center transition-all"
               aria-label="Témoignage précédent"
             >
               <ChevronLeft className="size-5 text-[#374151]" />
@@ -207,7 +207,7 @@ export function TestimonialsSection() {
                   }}
                   className={`h-2 rounded-full transition-all ${
                     activeIdx === i
-                      ? "w-6 bg-[#2563EB]"
+                      ? "w-6 bg-[#0f4382]"
                       : "w-2 bg-[#D1D5DB] hover:bg-[#9CA3AF]"
                   }`}
                   aria-label={`Aller au témoignage ${i + 1}`}
@@ -216,7 +216,7 @@ export function TestimonialsSection() {
             </div>
             <button
               onClick={() => scrollBy(1)}
-              className="size-11 rounded-full bg-white border border-[#E5E7EB] shadow-sm hover:bg-gray-50 hover:border-[#2563EB]/40 flex items-center justify-center transition-all"
+              className="size-11 rounded-full bg-white border border-[#E5E7EB] shadow-sm hover:bg-gray-50 hover:border-[#0f4382]/40 flex items-center justify-center transition-all"
               aria-label="Témoignage suivant"
             >
               <ChevronRight className="size-5 text-[#374151]" />
@@ -228,11 +228,11 @@ export function TestimonialsSection() {
         <div className="mt-16 pt-10 border-t border-[#E5E7EB]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="font-mono text-3xl font-bold text-[#2563EB]">250+</div>
+              <div className="font-mono text-3xl font-bold text-[#0f4382]">250+</div>
               <div className="text-sm text-[#6B7280] mt-1">Fabricants actifs</div>
             </div>
             <div>
-              <div className="font-mono text-3xl font-bold text-[#10B981]">4.9/5</div>
+              <div className="font-mono text-3xl font-bold text-[#2ebd5a]">4.9/5</div>
               <div className="text-sm text-[#6B7280] mt-1">Note moyenne</div>
             </div>
             <div>
@@ -240,7 +240,7 @@ export function TestimonialsSection() {
               <div className="text-sm text-[#6B7280] mt-1">Scans / semaine</div>
             </div>
             <div>
-              <div className="font-mono text-3xl font-bold text-[#2563EB]">4 pays</div>
+              <div className="font-mono text-3xl font-bold text-[#0f4382]">4 pays</div>
               <div className="text-sm text-[#6B7280] mt-1">CEDEAO couverts</div>
             </div>
           </div>

@@ -47,8 +47,8 @@
 :root {
   --radius: 0.75rem;
   /* VerifScan — Blue trust + Green authenticity + Orange action
-     Primary: #2563EB (blue confiance)
-     Secondary: #10B981 (green authenticity)
+     Primary: #0f4382 (deep blue confiance)
+     Secondary: #2ebd5a (fresh green authenticity)
      Accent: #F59E0B (orange action) */
   --background: oklch(1 0 0);
   --foreground: oklch(0.18 0.02 260);
@@ -56,7 +56,7 @@
   --card-foreground: oklch(0.18 0.02 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 260);
-  --primary: oklch(0.546 0.215 262); /* #2563EB */
+  --primary: oklch(0.33 0.15 262); /* #0f4382 */
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.96 0.02 160);
   --secondary-foreground: oklch(0.25 0.05 160);
@@ -67,27 +67,27 @@
   --destructive: oklch(0.58 0.22 27);
   --border: oklch(0.92 0.005 260);
   --input: oklch(0.92 0.005 260);
-  --ring: oklch(0.546 0.215 262);
-  --chart-1: oklch(0.546 0.215 262);
-  --chart-2: oklch(0.715 0.165 162); /* #10B981 */
+  --ring: oklch(0.33 0.15 262);
+  --chart-1: oklch(0.33 0.15 262);
+  --chart-2: oklch(0.68 0.16 152); /* #2ebd5a */
   --chart-3: oklch(0.75 0.18 65);
   --chart-4: oklch(0.6 0.13 220);
   --chart-5: oklch(0.7 0.15 300);
   --sidebar: oklch(0.99 0.005 260);
   --sidebar-foreground: oklch(0.18 0.02 260);
-  --sidebar-primary: oklch(0.546 0.215 262);
+  --sidebar-primary: oklch(0.33 0.15 262);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.96 0.02 260);
   --sidebar-accent-foreground: oklch(0.25 0.05 260);
   --sidebar-border: oklch(0.92 0.01 260);
-  --sidebar-ring: oklch(0.546 0.215 262);
+  --sidebar-ring: oklch(0.33 0.15 262);
 
   /* Brand tokens for direct use */
-  --vs-blue: #2563EB;
-  --vs-blue-dark: #1D4ED8;
+  --vs-blue: #0f4382;
+  --vs-blue-dark: #0a3060;
   --vs-blue-light: #DBEAFE;
-  --vs-green: #10B981;
-  --vs-green-dark: #047857;
+  --vs-green: #2ebd5a;
+  --vs-green-dark: #1f8a42;
   --vs-green-light: #D1FAE5;
   --vs-orange: #F59E0B;
   --vs-orange-dark: #D97706;
@@ -98,8 +98,8 @@
   --vs-text: #111827;
   --vs-text-soft: #4B5563;
   --vs-text-muted: #6B7280;
-  --vs-footer: #111827;
-  --vs-footer-border: #374151;
+  --vs-footer: #0a3060;
+  --vs-footer-border: #1f3a5f;
 }
 
 @layer base {
@@ -122,25 +122,25 @@
 /* VerifScan landing page — design system helpers */
 .vs-gradient-hero {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(37, 99, 235, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 60% at 80% 70%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(15, 67, 130, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 60% at 80% 70%, rgba(46, 189, 90, 0.08) 0%, transparent 60%),
     radial-gradient(ellipse 40% 40% at 50% 100%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
     linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
 }
 
 .vs-gradient-text {
-  background: linear-gradient(135deg, #2563EB 0%, #10B981 100%);
+  background: linear-gradient(135deg, #0f4382 0%, #2ebd5a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .vs-gradient-blue {
-  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  background: linear-gradient(135deg, #0f4382 0%, #0a3060 100%);
 }
 
 .vs-gradient-green {
-  background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+  background: linear-gradient(135deg, #2ebd5a 0%, #1f8a42 100%);
 }
 
 .vs-gradient-orange {
@@ -152,11 +152,11 @@
 }
 
 .vs-card-shadow-hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(15, 67, 130, 0.08);
 }
 
 .vs-card-shadow-lg {
-  box-shadow: 0 20px 40px -12px rgba(37, 99, 235, 0.18), 0 8px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 40px -12px rgba(15, 67, 130, 0.18), 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .vs-shadow-soft {
@@ -181,8 +181,8 @@
 }
 
 @keyframes vs-pulse-soft {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-  50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 189, 90, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(46, 189, 90, 0); }
 }
 
 @keyframes vs-shimmer {

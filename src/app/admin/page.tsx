@@ -205,7 +205,7 @@ export default async function AdminHomePage() {
 
   const planDonutData = [
     { name: "Starter", value: stats.planDistribution.starter || 0, color: "#3B82F6" },
-    { name: "Pro", value: stats.planDistribution.pro || 0, color: "#2563EB" },
+    { name: "Pro", value: stats.planDistribution.pro || 0, color: "#0f4382" },
     { name: "Enterprise", value: stats.planDistribution.enterprise || 0, color: "#F59E0B" },
   ].filter((d) => d.value > 0);
 
@@ -245,7 +245,7 @@ export default async function AdminHomePage() {
           <Button asChild variant="outline" className="border-[#E5E7EB]">
             <Link href="/admin/statistiques">Voir statistiques</Link>
           </Button>
-          <Button asChild className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+          <Button asChild className="bg-[#0f4382] hover:bg-[#0a3060]">
             <Link href="/admin/fabricants">
               <Building2 className="mr-2 size-4" />
               Gérer les fabricants
@@ -259,7 +259,7 @@ export default async function AdminHomePage() {
         <KpiCard
           icon={Building2}
           iconBg="bg-[#DBEAFE]"
-          iconColor="text-[#2563EB]"
+          iconColor="text-[#0f4382]"
           title="Total Fabricants"
           value={stats.totals.totalFabricants}
           trend={{ value: "+12 ce mois", direction: "up" }}
@@ -267,8 +267,8 @@ export default async function AdminHomePage() {
         />
         <KpiCard
           icon={CreditCard}
-          iconBg="bg-[#D1FAE5]"
-          iconColor="text-[#10B981]"
+          iconBg="bg-[#DCFCE7]"
+          iconColor="text-[#2ebd5a]"
           title="Revenus MRR"
           value={formatFCFA(stats.totals.mrr)}
           suffix=" FCFA"
@@ -336,7 +336,7 @@ export default async function AdminHomePage() {
           <CardHeader>
             <CardTitle className="text-base font-display flex items-center justify-between">
               <span>Top 10 fabricants par scans</span>
-              <Link href="/admin/fabricants" className="text-xs font-medium text-[#2563EB] hover:underline">
+              <Link href="/admin/fabricants" className="text-xs font-medium text-[#0f4382] hover:underline">
                 Voir tout →
               </Link>
             </CardTitle>
@@ -373,7 +373,7 @@ export default async function AdminHomePage() {
         <CardHeader>
           <CardTitle className="text-base font-display flex items-center justify-between">
             <span>Activité récente</span>
-            <Link href="/admin/logs" className="text-xs font-medium text-[#2563EB] hover:underline">
+            <Link href="/admin/logs" className="text-xs font-medium text-[#0f4382] hover:underline">
               Voir tout →
             </Link>
           </CardTitle>
@@ -403,7 +403,7 @@ export default async function AdminHomePage() {
                         <Badge
                           className={
                             a.type === "inscription"
-                              ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                              ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                               : a.type === "paiement"
                               ? "bg-[#DBEAFE] text-[#1E40AF] hover:bg-[#DBEAFE]"
                               : "bg-[#F3F4F6] text-[#374151] hover:bg-[#F3F4F6]"
@@ -417,7 +417,7 @@ export default async function AdminHomePage() {
                       <td className="py-3 text-right">
                         <Link
                           href={`/admin/fabricants/${a.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:underline"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#0f4382] hover:underline"
                         >
                           Voir détails
                           <ArrowRight className="size-3" />

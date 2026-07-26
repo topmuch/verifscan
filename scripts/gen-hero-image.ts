@@ -5,13 +5,14 @@ async function main() {
   const zai = await ZAI.create();
 
   const prompt =
-    "Modern premium 3D illustration of food traceability concept for VerifScan brand. " +
-    "A sleek smartphone in the center scanning a QR code on a juice bottle. " +
-    "Floating UI cards around the phone: a green checkmark badge saying 'Authentic', a blue shield with blockchain icon, a small map pin showing 'Dakar, SN', a calendar card showing expiry date. " +
-    "Background: subtle blue to green gradient (#2563EB to #10B981) with soft particles and gentle glow. " +
-    "Style: clean minimal modern tech aesthetic, soft studio shadows, premium product render, high quality, octane render, 4k. " +
-    "Color palette: deep blue #2563EB, fresh green #10B981, warm orange accent #F59E0B, clean white. " +
-    "No text, no words, no letters in the image — purely visual.";
+    "Realistic photo of an African consumer's hand holding a smartphone scanning a QR code printed on a food product package (a glass jar of jam with a small QR code sticker on the label). " +
+    "The smartphone screen shows a green checkmark confirmation. " +
+    "Bright, fresh, modern food product photography style. " +
+    "Soft natural light, kitchen counter background slightly blurred. " +
+    "High-end commercial photography, sharp focus on the phone screen and QR code, shallow depth of field. " +
+    "Color palette: deep navy blue #0f4382, fresh green #2ebd5a, warm wood tones. " +
+    "Modern, premium, trustworthy mood. 4k, ultra realistic. " +
+    "No text, no words, no letters, no logos visible in the image — purely visual.";
 
   console.log("Generating hero image (1344x768)...");
   const response = await zai.images.generations.create({

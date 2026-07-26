@@ -316,7 +316,7 @@ export default function AdminLogsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Activity className="size-5 text-[#2563EB]" />
+              <Activity className="size-5 text-[#0f4382]" />
               Détails du log
             </DialogTitle>
           </DialogHeader>
@@ -375,7 +375,7 @@ export default function AdminLogsPage() {
                   <Badge
                     className={
                       selectedLog.responseStatus < 300
-                        ? "bg-[#D1FAE5] text-[#065F46]"
+                        ? "bg-[#DCFCE7] text-[#065F46]"
                         : selectedLog.responseStatus < 500
                         ? "bg-[#FEF3C7] text-[#92400E]"
                         : "bg-[#FEE2E2] text-[#991B1B]"

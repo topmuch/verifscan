@@ -12,7 +12,7 @@ const steps = [
     short: "Ajoutez les détails de vos produits",
     description:
       "Ajoutez les détails de vos produits : nom, ingrédients, dates de fabrication et péremption, logo, certifications. Tout est centralisé sur une fiche propre et professionnelle.",
-    color: "#2563EB",
+    color: "#0f4382",
     bg: "#DBEAFE",
   },
   {
@@ -22,8 +22,8 @@ const steps = [
     short: "Un QR code unique est créé pour chaque lot",
     description:
       "Un QR code unique est créé pour chaque lot, prêt à imprimer sur vos étiquettes. Chaque code est sécurisé et infalsifiable, lié à votre compte fabricant.",
-    color: "#10B981",
-    bg: "#D1FAE5",
+    color: "#2ebd5a",
+    bg: "#DCFCE7",
   },
   {
     step: 3,
@@ -45,7 +45,7 @@ export function HowItWorksSection() {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#D1FAE5] text-[#10B981] text-xs font-semibold uppercase tracking-wide mb-4">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#DCFCE7] text-[#2ebd5a] text-xs font-semibold uppercase tracking-wide mb-4">
             <Zap className="size-3.5" />
             Simple & rapide
           </span>
@@ -127,7 +127,7 @@ export function HowItWorksSection() {
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold shadow-md shadow-blue-200 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-[#0f4382] hover:bg-[#0a3060] text-white font-semibold shadow-md shadow-blue-200 transition-all hover:scale-[1.02]"
           >
             Démarrer maintenant
             <ArrowRight className="size-4" />
@@ -160,33 +160,33 @@ function ProcessIllustration() {
           </div>
 
           {/* Arrow */}
-          <div className="hidden md:block text-[#2563EB]">
+          <div className="hidden md:block text-[#0f4382]">
             <ArrowRight className="size-6" />
           </div>
-          <div className="md:hidden text-[#2563EB]">
+          <div className="md:hidden text-[#0f4382]">
             <ArrowRight className="size-6 rotate-90" />
           </div>
 
           {/* QR Code */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-white border-2 border-[#10B981] flex items-center justify-center shadow-lg mb-3 vs-qr-pulse">
-              <QrCode className="size-10 text-[#10B981]" />
+            <div className="size-20 rounded-2xl bg-white border-2 border-[#2ebd5a] flex items-center justify-center shadow-lg mb-3 vs-qr-pulse">
+              <QrCode className="size-10 text-[#2ebd5a]" />
             </div>
             <div className="text-sm font-semibold text-[#111827]">QR Code</div>
             <div className="text-xs text-[#6B7280]">Unique par lot</div>
           </div>
 
           {/* Arrow */}
-          <div className="hidden md:block text-[#10B981]">
+          <div className="hidden md:block text-[#2ebd5a]">
             <ArrowRight className="size-6" />
           </div>
-          <div className="md:hidden text-[#10B981]">
+          <div className="md:hidden text-[#2ebd5a]">
             <ArrowRight className="size-6 rotate-90" />
           </div>
 
           {/* Scan */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] flex items-center justify-center shadow-lg mb-3">
+            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#0f4382] to-[#0a3060] flex items-center justify-center shadow-lg mb-3">
               <ScanLine className="size-10 text-white" />
             </div>
             <div className="text-sm font-semibold text-[#111827]">Scan client</div>
@@ -203,7 +203,7 @@ function ProcessIllustration() {
 
           {/* Result */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#10B981] to-[#047857] flex items-center justify-center shadow-lg mb-3">
+            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#2ebd5a] to-[#1f8a42] flex items-center justify-center shadow-lg mb-3">
               <CheckCircle2 className="size-10 text-white" />
             </div>
             <div className="text-sm font-semibold text-[#111827]">Authentifié</div>
@@ -213,7 +213,7 @@ function ProcessIllustration() {
 
         {/* Geo track */}
         <div className="mt-6 pt-6 border-t border-[#E5E7EB] flex items-center justify-center gap-2 text-xs text-[#6B7280]">
-          <MapPin className="size-3.5 text-[#2563EB]" />
+          <MapPin className="size-3.5 text-[#0f4382]" />
           Géolocalisation des scans en temps réel · Dakar, Thiès, Saint-Louis, Abidjan...
         </div>
       </div>

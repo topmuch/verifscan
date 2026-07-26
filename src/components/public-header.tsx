@@ -20,7 +20,6 @@ const publicLinks = [
   { href: "/", label: "Accueil", anchor: "" },
   { href: "/produits", label: "Produits", anchor: "" },
   { href: "/#fonctionnalites", label: "Fonctionnalités", anchor: "fonctionnalites" },
-  { href: "/#pricing", label: "Prix", anchor: "pricing" },
   { href: "/contact", label: "Contact", anchor: "" },
 ];
 
@@ -65,7 +64,7 @@ export function PublicHeader() {
                 href={l.href}
                 className={cn(
                   "vs-nav-link text-[15px] font-medium transition-colors",
-                  isActive ? "text-[#2563EB] vs-active" : "text-[#374151] hover:text-[#2563EB]"
+                  isActive ? "text-[#0f4382] vs-active" : "text-[#374151] hover:text-[#0f4382]"
                 )}
               >
                 {l.label}
@@ -82,9 +81,9 @@ export function PublicHeader() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] hover:text-[#2563EB] rounded-lg"
+                  className="gap-2 border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] hover:text-[#0f4382] rounded-lg"
                 >
-                  <div className="size-7 rounded-full bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white text-xs font-semibold">
+                  <div className="size-7 rounded-full bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-xs font-semibold">
                     {(session.user?.name || session.user?.email || "U").charAt(0).toUpperCase()}
                   </div>
                   <span className="max-w-[120px] truncate font-medium">
@@ -120,14 +119,14 @@ export function PublicHeader() {
                 asChild
                 variant="ghost"
                 size="sm"
-                className="text-[#2563EB] hover:bg-[#DBEAFE]/50 hover:text-[#1D4ED8] font-semibold text-base px-4"
+                className="text-[#0f4382] hover:bg-[#DBEAFE]/50 hover:text-[#0a3060] font-semibold text-base px-4"
               >
                 <Link href="/login">Connexion</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-base px-5 py-2.5 rounded-lg shadow-md shadow-blue-200 transition-all hover:shadow-lg hover:scale-[1.02]"
+                className="bg-[#0f4382] hover:bg-[#0a3060] text-white font-semibold text-base px-5 py-2.5 rounded-lg shadow-md shadow-blue-200 transition-all hover:shadow-lg hover:scale-[1.02]"
               >
                 <Link href="/register">Essayer gratuitement</Link>
               </Button>
@@ -154,7 +153,7 @@ export function PublicHeader() {
               key={l.href + l.label}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-4 py-3 text-base font-medium text-[#374151] hover:bg-[#F9FAFB] hover:text-[#2563EB] transition-colors"
+              className="block rounded-lg px-4 py-3 text-base font-medium text-[#374151] hover:bg-[#F9FAFB] hover:text-[#0f4382] transition-colors"
             >
               {l.label}
             </Link>
@@ -188,14 +187,14 @@ export function PublicHeader() {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="w-full h-12 border-[#2563EB] text-[#2563EB] font-semibold"
+                  className="w-full h-12 border-[#0f4382] text-[#0f4382] font-semibold"
                 >
                   <Link href="/login">Connexion</Link>
                 </Button>
                 <Button
                   asChild
                   size="sm"
-                  className="w-full h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold"
+                  className="w-full h-12 bg-[#0f4382] hover:bg-[#0a3060] text-white font-semibold"
                 >
                   <Link href="/register">Essayer gratuitement</Link>
                 </Button>

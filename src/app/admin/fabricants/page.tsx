@@ -72,7 +72,7 @@ type Fabricant = {
 
 const PLAN_BADGE: Record<string, { bg: string; text: string }> = {
   starter: { bg: "bg-[#DBEAFE]", text: "text-[#1E40AF]" },
-  pro: { bg: "bg-[#2563EB]", text: "text-white" },
+  pro: { bg: "bg-[#0f4382]", text: "text-white" },
   enterprise: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]" },
 };
 
@@ -240,7 +240,7 @@ export default function AdminFabricantsPage() {
                       <tr key={f.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                         <td className="py-3 px-4">
                           <Link href={`/admin/fabricants/${f.id}`} className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                               {f.companyName?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">
@@ -276,7 +276,7 @@ export default function AdminFabricantsPage() {
                           <Badge
                             className={
                               f.isActive
-                                ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                                ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                                 : "bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]"
                             }
                           >
@@ -347,7 +347,7 @@ export default function AdminFabricantsPage() {
                                     <AlertDialogCancel>Annuler</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => toggleActive(f.id, f.isActive)}
-                                      className={f.isActive ? "bg-red-600 hover:bg-red-700" : "bg-[#2563EB] hover:bg-[#1D4ED8]"}
+                                      className={f.isActive ? "bg-red-600 hover:bg-red-700" : "bg-[#0f4382] hover:bg-[#0a3060]"}
                                     >
                                       Confirmer
                                     </AlertDialogAction>

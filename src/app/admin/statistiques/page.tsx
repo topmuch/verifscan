@@ -161,14 +161,14 @@ export default async function AdminStatsPage() {
           <KpiCard
             icon={Building2}
             iconBg="bg-[#DBEAFE]"
-            iconColor="text-[#2563EB]"
+            iconColor="text-[#0f4382]"
             title="Total fabricants"
             value={stats.totals.totalFabricants}
           />
           <KpiCard
             icon={Building2}
-            iconBg="bg-[#D1FAE5]"
-            iconColor="text-[#10B981]"
+            iconBg="bg-[#DCFCE7]"
+            iconColor="text-[#2ebd5a]"
             title="Fabricants actifs"
             value={stats.totals.activeFabricants}
           />
@@ -182,14 +182,14 @@ export default async function AdminStatsPage() {
           <KpiCard
             icon={Layers}
             iconBg="bg-[#DBEAFE]"
-            iconColor="text-[#2563EB]"
+            iconColor="text-[#0f4382]"
             title="Total lots"
             value={stats.totals.totalLots}
           />
           <KpiCard
             icon={QrCode}
-            iconBg="bg-[#D1FAE5]"
-            iconColor="text-[#10B981]"
+            iconBg="bg-[#DCFCE7]"
+            iconColor="text-[#2ebd5a]"
             title="Total QR codes"
             value={stats.totals.totalQrCodes}
           />
@@ -278,7 +278,7 @@ export default async function AdminStatsPage() {
                         </td>
                         <td className="py-3 px-4 text-[#4B5563]">{p.user.companyName || "—"}</td>
                         <td className="py-3 px-4 text-center font-mono">{p._count.lots}</td>
-                        <td className="py-3 px-4 text-center font-mono font-semibold text-[#2563EB]">{p._count.scans}</td>
+                        <td className="py-3 px-4 text-center font-mono font-semibold text-[#0f4382]">{p._count.scans}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -297,20 +297,20 @@ export default async function AdminStatsPage() {
             <CardContent className="p-6">
               <div className="text-xs text-[#6B7280]">Latence moyenne API</div>
               <div className="font-mono text-2xl font-bold text-[#111827] mt-1">245 ms</div>
-              <div className="text-xs text-[#10B981] mt-1">↓ -12ms vs hier</div>
+              <div className="text-xs text-[#2ebd5a] mt-1">↓ -12ms vs hier</div>
             </CardContent>
           </Card>
           <Card className="border-[#E5E7EB]">
             <CardContent className="p-6">
               <div className="text-xs text-[#6B7280]">Taux d&apos;erreur API</div>
               <div className="font-mono text-2xl font-bold text-[#111827] mt-1">0.12 %</div>
-              <div className="text-xs text-[#10B981] mt-1">↓ -0.05% vs hier</div>
+              <div className="text-xs text-[#2ebd5a] mt-1">↓ -0.05% vs hier</div>
             </CardContent>
           </Card>
           <Card className="border-[#E5E7EB]">
             <CardContent className="p-6">
               <div className="text-xs text-[#6B7280]">Uptime (30 jours)</div>
-              <div className="font-mono text-2xl font-bold text-[#10B981] mt-1">99.98 %</div>
+              <div className="font-mono text-2xl font-bold text-[#2ebd5a] mt-1">99.98 %</div>
               <div className="text-xs text-[#6B7280] mt-1">Objectif : 99.9%</div>
             </CardContent>
           </Card>

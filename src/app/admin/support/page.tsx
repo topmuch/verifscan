@@ -65,7 +65,7 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> 
   ouvert: { bg: "bg-[#DBEAFE]", text: "text-[#1E40AF]", label: "Ouvert" },
   en_cours: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", label: "En cours" },
   en_attente: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "En attente" },
-  resolu: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", label: "Résolu" },
+  resolu: { bg: "bg-[#DCFCE7]", text: "text-[#065F46]", label: "Résolu" },
 };
 
 const mockTickets: Ticket[] = [
@@ -231,7 +231,7 @@ export default function AdminSupportPage() {
             {tickets.filter((t) => t.status === "ouvert").length} tickets ouverts
           </p>
         </div>
-        <Button className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+        <Button className="bg-[#0f4382] hover:bg-[#0a3060]">
           <Plus className="mr-2 size-4" />
           Créer un ticket interne
         </Button>
@@ -250,7 +250,7 @@ export default function AdminSupportPage() {
             onClick={() => setActiveTab(t.key as any)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === t.key
-                ? "bg-[#2563EB] text-white"
+                ? "bg-[#0f4382] text-white"
                 : "bg-white text-[#4B5563] border border-[#E5E7EB] hover:bg-[#F9FAFB]"
             }`}
           >
@@ -289,7 +289,7 @@ export default function AdminSupportPage() {
                     key={t.id}
                     className={`border cursor-pointer transition-all ${
                       selectedId === t.id
-                        ? "border-[#2563EB] vs-card-shadow"
+                        ? "border-[#0f4382] vs-card-shadow"
                         : "border-[#E5E7EB] hover:border-[#9CA3AF]"
                     }`}
                     onClick={() => setSelectedId(t.id)}
@@ -384,8 +384,8 @@ export default function AdminSupportPage() {
                     <div
                       className={`size-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ${
                         m.author === "admin"
-                          ? "bg-[#2563EB]"
-                          : "bg-gradient-to-br from-[#10B981] to-[#2563EB]"
+                          ? "bg-[#0f4382]"
+                          : "bg-gradient-to-br from-[#2ebd5a] to-[#0f4382]"
                       }`}
                     >
                       {m.authorName.charAt(0)}
@@ -405,7 +405,7 @@ export default function AdminSupportPage() {
                       <div
                         className={`rounded-2xl p-3 text-sm ${
                           m.author === "admin"
-                            ? "bg-[#2563EB] text-white rounded-tr-sm"
+                            ? "bg-[#0f4382] text-white rounded-tr-sm"
                             : "bg-white border border-[#E5E7EB] text-[#111827] rounded-tl-sm"
                         }`}
                       >
@@ -448,7 +448,7 @@ export default function AdminSupportPage() {
                       size="sm"
                       onClick={sendReply}
                       disabled={!reply.trim()}
-                      className="bg-[#2563EB] hover:bg-[#1D4ED8]"
+                      className="bg-[#0f4382] hover:bg-[#0a3060]"
                     >
                       <Send className="mr-1 size-4" />
                       Envoyer

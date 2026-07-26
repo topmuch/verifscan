@@ -88,7 +88,7 @@ export function KpiCard({
             className={cn(
               "inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-semibold",
               trend.direction === "up"
-                ? "bg-[#D1FAE5] text-[#065F46]"
+                ? "bg-[#DCFCE7] text-[#065F46]"
                 : "bg-[#FEE2E2] text-[#991B1B]"
             )}
           >

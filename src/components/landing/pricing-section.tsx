@@ -32,7 +32,7 @@ const plans: Plan[] = [
     cta: "Choisir Starter",
     href: "/register?plan=starter",
     popular: false,
-    accentColor: "#2563EB",
+    accentColor: "#0f4382",
   },
   {
     name: "Pro",
@@ -51,7 +51,7 @@ const plans: Plan[] = [
     cta: "Choisir Pro",
     href: "/register?plan=pro",
     popular: true,
-    accentColor: "#10B981",
+    accentColor: "#2ebd5a",
   },
   {
     name: "Business",
@@ -94,7 +94,7 @@ export function PricingSection() {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#DBEAFE] text-[#2563EB] text-xs font-semibold uppercase tracking-wide mb-4">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#DBEAFE] text-[#0f4382] text-xs font-semibold uppercase tracking-wide mb-4">
             <Sparkles className="size-3.5" />
             Tarifs
           </span>
@@ -112,7 +112,7 @@ export function PricingSection() {
             onClick={() => setAnnual(false)}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
               !annual
-                ? "bg-[#2563EB] text-white shadow-md"
+                ? "bg-[#0f4382] text-white shadow-md"
                 : "bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-gray-50"
             }`}
           >
@@ -122,13 +122,13 @@ export function PricingSection() {
             onClick={() => setAnnual(true)}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all inline-flex items-center gap-2 ${
               annual
-                ? "bg-[#10B981] text-white shadow-md"
+                ? "bg-[#2ebd5a] text-white shadow-md"
                 : "bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-gray-50"
             }`}
           >
             Annuel
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-              annual ? "bg-white/20 text-white" : "bg-[#D1FAE5] text-[#047857]"
+              annual ? "bg-white/20 text-white" : "bg-[#DCFCE7] text-[#1f8a42]"
             }`}>
               -30%
             </span>
@@ -183,7 +183,7 @@ export function PricingSection() {
                       </span>
                     </div>
                     {annual && (
-                      <p className="text-xs mt-1 text-[#10B981] font-semibold">
+                      <p className="text-xs mt-1 text-[#2ebd5a] font-semibold">
                         Économie de {formatPrice(plan.monthlyPrice * 12 * 0.3)} FCFA/an
                       </p>
                     )}
@@ -197,7 +197,7 @@ export function PricingSection() {
                     href={plan.href}
                     className={`mt-6 block w-full text-center h-12 leading-[3rem] rounded-lg font-semibold transition-all hover:scale-[1.02] ${
                       plan.popular
-                        ? "bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] text-white shadow-lg vs-cta-pulse"
+                        ? "bg-gradient-to-r from-[#0f4382] to-[#0a3060] text-white shadow-lg vs-cta-pulse"
                         : "bg-white border-2 text-white"
                     }`}
                     style={!plan.popular ? { borderColor: plan.accentColor, color: plan.accentColor } : {}}
@@ -233,7 +233,7 @@ export function PricingSection() {
         <div className="mt-12 text-center">
           <Link
             href="/contact"
-            className="vs-link-arrow text-sm font-semibold text-[#2563EB]"
+            className="vs-link-arrow text-sm font-semibold text-[#0f4382]"
           >
             Besoin d&apos;une formule sur mesure ? Parlons-en
             <ArrowRight className="size-4" />

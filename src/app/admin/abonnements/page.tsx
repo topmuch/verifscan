@@ -69,12 +69,12 @@ type ApiResponse = {
 
 const PLAN_BADGE: Record<string, { bg: string; text: string }> = {
   starter: { bg: "bg-[#DBEAFE]", text: "text-[#1E40AF]" },
-  pro: { bg: "bg-[#2563EB]", text: "text-white" },
+  pro: { bg: "bg-[#0f4382]", text: "text-white" },
   enterprise: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]" },
 };
 
 const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  active: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", label: "Actif" },
+  active: { bg: "bg-[#DCFCE7]", text: "text-[#065F46]", label: "Actif" },
   trial: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", label: "Essai" },
   past_due: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", label: "En retard" },
   canceled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "Annulé" },
@@ -192,7 +192,7 @@ export default function AdminSubscriptionsPage() {
               }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 statusFilter === t.key
-                  ? "bg-[#2563EB] text-white"
+                  ? "bg-[#0f4382] text-white"
                   : "bg-white text-[#4B5563] border border-[#E5E7EB] hover:bg-[#F9FAFB]"
               }`}
             >
@@ -226,7 +226,7 @@ export default function AdminSubscriptionsPage() {
           <Card className="border-[#E5E7EB]">
             <CardContent className="p-4">
               <div className="text-xs text-[#6B7280]">Plan Pro</div>
-              <div className="font-mono text-xl font-bold text-[#2563EB] mt-1">
+              <div className="font-mono text-xl font-bold text-[#0f4382] mt-1">
                 {meta.planCounts.pro || 0}
               </div>
               <div className="text-xs text-[#9CA3AF]">abonnements</div>
@@ -317,7 +317,7 @@ export default function AdminSubscriptionsPage() {
                       <tr key={s.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                         <td className="py-3 px-4">
                           <Link href={`/admin/fabricants/${s.user.id}`} className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                               {s.user.companyName?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">

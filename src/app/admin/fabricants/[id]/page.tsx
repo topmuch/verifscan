@@ -137,7 +137,7 @@ export default function FabricantDetailPage() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="size-16 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#10B981] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+        <div className="size-16 rounded-2xl bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
           {user.companyName?.[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1">
@@ -148,7 +148,7 @@ export default function FabricantDetailPage() {
             <Badge
               className={
                 user.isActive
-                  ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                  ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                   : "bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]"
               }
             >
@@ -212,7 +212,7 @@ export default function FabricantDetailPage() {
                     <Badge
                       className={
                         user.subscription.status === "active"
-                          ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                          ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                           : user.subscription.status === "trial"
                           ? "bg-[#FEF3C7] text-[#92400E] hover:bg-[#FEF3C7]"
                           : "bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]"
@@ -239,7 +239,7 @@ export default function FabricantDetailPage() {
                     </div>
                     <div className="h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
                       <div
-                        className="h-full bg-[#2563EB]"
+                        className="h-full bg-[#0f4382]"
                         style={{
                           width: `${Math.min(100, (user.subscription.qrCodesUsed / user.subscription.qrCodesLimit) * 100)}%`,
                         }}
@@ -256,7 +256,7 @@ export default function FabricantDetailPage() {
                     {user.subscription.productsLimit !== -1 && (
                       <div className="h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
                         <div
-                          className="h-full bg-[#10B981]"
+                          className="h-full bg-[#2ebd5a]"
                           style={{
                             width: `${Math.min(100, (user._count.products / user.subscription.productsLimit) * 100)}%`,
                           }}
@@ -303,7 +303,7 @@ export default function FabricantDetailPage() {
                             <Badge
                               className={
                                 p.isVisible
-                                  ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                                  ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                                   : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#F3F4F6]"
                               }
                             >
@@ -335,8 +335,8 @@ export default function FabricantDetailPage() {
                   <AreaChart data={scansByDay} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                     <defs>
                       <linearGradient id="userScanGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563EB" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#0f4382" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#0f4382" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -364,7 +364,7 @@ export default function FabricantDetailPage() {
                     <Area
                       type="monotone"
                       dataKey="count"
-                      stroke="#2563EB"
+                      stroke="#0f4382"
                       strokeWidth={2}
                       fill="url(#userScanGrad)"
                       name="Scans"
@@ -390,7 +390,7 @@ export default function FabricantDetailPage() {
                 className="w-full justify-start border-[#E5E7EB]"
               >
                 <a href={`https://wa.me/${user.whatsapp?.replace(/[^0-9]/g, "") || ""}`} target="_blank" rel="noreferrer">
-                  <MessageCircle className="mr-2 size-4 text-[#10B981]" />
+                  <MessageCircle className="mr-2 size-4 text-[#2ebd5a]" />
                   Contacter WhatsApp
                 </a>
               </Button>
@@ -400,7 +400,7 @@ export default function FabricantDetailPage() {
                 className="w-full justify-start border-[#E5E7EB]"
               >
                 <a href={`mailto:${user.email}`}>
-                  <Mail className="mr-2 size-4 text-[#2563EB]" />
+                  <Mail className="mr-2 size-4 text-[#0f4382]" />
                   Envoyer email
                 </a>
               </Button>
@@ -423,10 +423,10 @@ export default function FabricantDetailPage() {
               <CardTitle className="text-base font-display">Statistiques</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <StatItem icon={Package} label="Produits" value={user._count.products} color="text-[#2563EB]" />
-              <StatItem icon={Eye} label="Scans totaux" value={user._count.scans} color="text-[#10B981]" />
+              <StatItem icon={Package} label="Produits" value={user._count.products} color="text-[#0f4382]" />
+              <StatItem icon={Eye} label="Scans totaux" value={user._count.scans} color="text-[#2ebd5a]" />
               <StatItem icon={CreditCard} label="Factures" value={user.subscription?.invoices.length || 0} color="text-[#F59E0B]" />
-              <StatItem icon={TrendingUp} label="Scans (30j)" value={totalScans30d} color="text-[#2563EB]" />
+              <StatItem icon={TrendingUp} label="Scans (30j)" value={totalScans30d} color="text-[#0f4382]" />
             </CardContent>
           </Card>
 
@@ -444,7 +444,7 @@ export default function FabricantDetailPage() {
                       <Badge
                         className={
                           inv.status === "paid"
-                            ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                            ? "bg-[#DCFCE7] text-[#065F46] hover:bg-[#DCFCE7]"
                             : inv.status === "pending"
                             ? "bg-[#FEF3C7] text-[#92400E] hover:bg-[#FEF3C7]"
                             : "bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]"

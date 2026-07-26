@@ -163,7 +163,7 @@ export default function StatistiquesPage() {
     },
   ];
 
-  const barColors = ["#059669", "#d97706", "#10b981", "#f59e0b", "#34d399"];
+  const barColors = ["#059669", "#d97706", "#2ebd5a", "#f59e0b", "#34d399"];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">

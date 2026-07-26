@@ -27,7 +27,7 @@ export function VerifScanLogo({
           width: dim,
           height: dim,
           background:
-            "linear-gradient(135deg, #2563EB 0%, #10B981 100%)",
+            "linear-gradient(135deg, #0f4382 0%, #2ebd5a 100%)",
         }}
       >
         <ScanLine
@@ -38,8 +38,8 @@ export function VerifScanLogo({
       </div>
       {showText && (
         <div className={cn("font-bold tracking-tight font-display", text)}>
-          <span style={{ color: variant === "light" ? "#FFFFFF" : "#2563EB" }}>Verif</span>
-          <span style={{ color: variant === "light" ? "#10B981" : "#10B981" }}>Scan</span>
+          <span style={{ color: variant === "light" ? "#FFFFFF" : "#0f4382" }}>Verif</span>
+          <span style={{ color: variant === "light" ? "#2ebd5a" : "#2ebd5a" }}>Scan</span>
         </div>
       )}
     </Link>
