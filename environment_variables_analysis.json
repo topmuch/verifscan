@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Based on the screenshot provided, here is the detailed extraction of all visible information:\n\n### 1. Page Header & Breadcrumb\n*   **Main Header:** Configuration\n*   **Breadcrumb/Path:** Verifscan > production > Verifscan (localhost)\n*   **Status Indicator:** Running (unknown) (with a green dot and a warning triangle icon)\n*   **Navigation Tabs:** Configuration, Deployments, Logs, Terminal, Links\n*   **Top Right Actions:** Advanced, Redeploy, Restart, Stop\n\n### 2. Environment Variables Section Header\n*   **Section Title:** Environment Variables\n*   **Buttons/Links in Header:**\n    *   `+ Add` (Add New Environment Variable)\n    *   `Developer view`\n*   **Helper Text:** \"Environment variables (secrets) for this resource.\"\n*   **Global Options:**\n    *   `Sort alphabetically` (Checkbox with info icon)\n    *   `Use Docker Build Secrets` (Checkbox with info icon)\n    *   **Search Input:** A search bar labeled \"Search\" is present.\n\n### 3. Sub-Section: Production Environment Variables\n*   **Sub-Header:** Production Environment Variables\n*   **Helper Text:** \"Environment (secrets) variables for Production.\"\n\n---\n\n### 4. Detailed Variable List (Rows)\n\n**Row 1**\n*   **Variable Name (Key):** `NEXT_PUBLIC_BASE_URL`\n*   **Value:** `https://verifscan.roomscan.pro` (Visible text)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 2**\n*   **Variable Name (Key):** `NEXTAUTH_URL`\n*   **Value:** `https://verifscan.roomscan.pro` (Visible text)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: **Checked**\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 3**\n*   **Variable Name (Key):** `UPLOADS_DIR`\n*   **Value:** `/app/uploads` (Visible text)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 4**\n*   **Variable Name (Key):** `NODE_ENV`\n*   **Value:** `production` (Visible text)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Warning Box (Yellow):**\n    *   **Title:** Caution\n    *   **Text:** \"Skips devDependencies installation which are often required for building (webpack, typescript, etc). Recommendation: Uncheck 'Available at Buildtime' or use 'development' during build\"\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 5**\n*   **Variable Name (Key):** `ENCRYPTION_KEY`\n*   **Value:** `sdefrt1RRHGJswXUy6zCchkBb2dn7DgBVhR/I478fredgy14fedh2q+w=` (Visible text - appears to be a long string/key)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 6**\n*   **Variable Name (Key):** `NEXTAUTH_SECRET`\n*   **Value:** `rmt0NbbR+ze9OqTz+rZcG+sltQueI5cD35L125897gtrdes4568jhg4158des=` (Visible text - appears to be a long string/key)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Action Buttons:** Update, Lock, Delete\n\n**Row 7**\n*   **Variable Name (Key):** `DATABASE_URL`\n*   **Value:** `file:/app/data/verifscan.db` (Visible text)\n*   **Comment Field:** Empty\n*   **Checkboxes:**\n    *   Available at Buildtime: **Checked**\n    *   Available at Runtime: **Checked**\n    *   Is Multiline?: Unchecked\n    *   Is Literal?: Unchecked\n*   **Action Buttons:** Update, Lock, Delete\n\n---\n\n### 5. Sidebar Navigation (Left Panel)\n*   **Header:** Coolify v4.1.2\n*   **Team Selector:** Root Team\n*   **Menu Items:**\n    *   Dashboard\n    *   Projects\n    *   Servers\n    *   Sources\n    *   Destinations\n    *   S3 Storages\n    *   Shared Variables\n    *   Notifications\n    *   Keys & Tokens\n    *   Tags\n    *   Terminal\n    *   Profile\n    *   Teams\n    *   Settings\n*   **Configuration Sub-menu (Active):**\n    *   General\n    *   Advanced\n    *   **Environment Variables** (Selected/Highlighted)\n    *   Persistent Storage\n    *   Servers\n    *   Scheduled Tasks\n    *   Webhooks\n    *   Healthcheck\n    *   Rollback\n    *   Resource Limits\n    *   Resource Operations\n    *   Metrics\n    *   Tags\n    *   Danger Zone\n\n### 6. Footer / Bottom Left\n*   What's New (with red notification badge)\n*   Theme\n*   Sponsor us\n*   Feedback\n*   Logout",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1785026460,
+  "id": "20260726084048d17d85fca6684b21",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "20260726084048d17d85fca6684b21",
+  "usage": {
+    "completion_tokens": 1388,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 5641,
+    "prompt_tokens_details": {
+      "cached_tokens": 5
+    },
+    "total_tokens": 7029
+  }
+}

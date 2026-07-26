@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Based on the screenshot provided, here is the detailed extraction of all visible information:\n\n### 1. Page URL Breadcrumb / Header Text\n*   **Main Header:** `Configuration`\n*   **Breadcrumb Path:** `Verifiscan > production > Verifiscan (localhost)`\n*   **Status Indicator:** `Running (unknown)` (with a green dot and a purple warning triangle icon)\n*   **Navigation Tabs:** `Configuration`, `Deployments`, `Logs`, `Terminal`, `Links`\n*   **Top Right Action Buttons:** `Advanced` (dropdown), `Redeploy`, `Restart`, `Stop`\n*   **Sidebar Active Section:** `Persistent Storage`\n\n### 2. Persistent Storage Volumes (Configured List)\nThe interface shows **2** configured volumes under the **Volumes (2)** tab.\n\n**Volume 1:**\n*   **Volume Name:** `hjwrl9wuc8kmk7sag7ho5pbr-yvzjl5po9xemksvr4hytg7l-poohx3l3s-`\n*   **Source Path:** `/var/lib/coolify/volumes/verifiscan-data`\n*   **Destination Path:** `/app/data`\n*   **Add suffix for PR deployments:** Checked (Enabled)\n*   **Action Buttons:** `Update`, `Delete`\n\n**Volume 2:**\n*   **Volume Name:** `hjwrl9wuc8kmk7sag7ho5pbr-yvzjl5458kiujsrvrw8lz67zl-poohx3l3s+`\n*   **Source Path:** `/var/lib/coolify/volumes/verifiscan-uploads`\n*   **Destination Path:** `/app/public/uploads`\n*   **Add suffix for PR deployments:** Checked (Enabled)\n*   **Action Buttons:** `Update`, `Delete`\n\n### 3. Section Headers & Helper Text\n*   **Section Title:** `Storages` (followed by an info icon `i`)\n*   **Description Text:** `Persistent storage to preserve data between deployments.`\n*   **Sub-tabs:** `Volumes (2)`, `Files (0)`, `Directories (0)`\n*   **Action Button (Top):** `+ Add` (with a dropdown arrow)\n\n### 4. Table Column Headers\n*   `Volume Name *`\n*   `Source Path` (with an info icon `i`)\n*   `Destination Path *` (with an info icon `i`)\n\n### 5. Notes, Warnings, and Labels\n*   **Row Label:** `Add suffix for PR deployments` (accompanied by an info icon `i`) — This label appears above the checkbox for both volumes.\n*   **Required Field Indicators:** Asterisks (`*`) next to \"Volume Name\" and \"Destination Path\".",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1785026448,
+  "id": "202607260840404eb5474879224059",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202607260840404eb5474879224059",
+  "usage": {
+    "completion_tokens": 600,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 2324,
+    "prompt_tokens_details": {
+      "cached_tokens": 4
+    },
+    "total_tokens": 2924
+  }
+}
