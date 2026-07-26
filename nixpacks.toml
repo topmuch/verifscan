@@ -22,10 +22,11 @@ cmds = [
 
 [start]
 # Start command — runs in the deployed container.
-# 1. Push Prisma schema to SQLite (idempotent — safe on every restart)
-# 2. Seed the SUPER_ADMIN + demo fabricant + categories (idempotent)
-# 3. Start the Next.js standalone server (NOT next start — standalone requires node server.js)
-cmd = "npx prisma db push --skip-generate --accept-data-loss && node scripts/create-admin.cjs && node .next/standalone/server.js"
+# 1. Ensure the SQLite data directory exists (DATABASE_URL points to /app/data/verifscan.db)
+# 2. Push Prisma schema to SQLite (idempotent — safe on every restart)
+# 3. Seed the SUPER_ADMIN + demo fabricant + categories (idempotent)
+# 4. Start the Next.js standalone server (NOT next start — standalone requires node server.js)
+cmd = "mkdir -p /app/data && npx prisma db push --skip-generate --accept-data-loss && node scripts/create-admin.cjs && node .next/standalone/server.js"
 
 [variables]
 NODE_ENV = "production"
