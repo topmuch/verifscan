@@ -100,16 +100,16 @@ export function HeroSection() {
             }`}
           >
             <div className="relative mx-auto max-w-2xl vs-card-shadow-lg">
-              {/* Main hero image */}
-              <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#EFF6FF] via-white to-[#ECFDF5] border border-white shadow-2xl shadow-blue-200/40">
+              {/* Main hero image — square 1:1, no stretching */}
+              <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#EFF6FF] via-white to-[#ECFDF5] border border-white shadow-2xl shadow-blue-200/40 aspect-square max-w-[520px] mx-auto">
                 <Image
                   src="/hero/hero-main.png"
                   alt="VerifScan — smartphone scannant un QR code sur un produit alimentaire avec vérification blockchain"
-                  width={1344}
-                  height={768}
+                  width={1024}
+                  height={1024}
                   priority
-                  className="w-full h-auto block"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="w-full h-full object-cover block"
+                  sizes="(max-width: 1024px) 100vw, 520px"
                 />
                 {/* Subtle inner glow */}
                 <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/40 rounded-[2rem]" />
