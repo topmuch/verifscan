@@ -141,7 +141,7 @@ export async function GET(
       }),
 
       // 5. Latest B2B reviews for this fabricant (max 6)
-      db.b2bReview.findMany({
+      db.b2BReview.findMany({
         where: { fabricantReviewedId: lot.product.userId },
         orderBy: { createdAt: "desc" },
         take: 6,
@@ -159,7 +159,7 @@ export async function GET(
       }),
 
       // 6. Review aggregates (averages + total count)
-      db.b2bReview.aggregate({
+      db.b2BReview.aggregate({
         where: { fabricantReviewedId: lot.product.userId },
         _avg: {
           reliabilityScore: true,
