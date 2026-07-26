@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { DashboardSidebar, MobileDashboardNav } from "@/components/dashboard-sidebar";
+import { AdminShell } from "@/components/admin/admin-shell";
 
 export default async function AdminLayout({
   children,
@@ -14,13 +14,11 @@ export default async function AdminLayout({
   const role = (session.user as any)?.role;
   if (role !== "superadmin") redirect("/dashboard");
 
-  return (
-    <div className="min-h-screen bg-emerald-50/30">
-      <DashboardSidebar role="superadmin" />
-      <MobileDashboardNav role="superadmin" />
-      <div className="md:pl-64">
-        <main className="min-h-screen">{children}</main>
-      </div>
-    </div>
-  );
+  const user = {
+    name: session.user?.name || "Super Admin",
+    email: session.user?.email || "",
+    role: "superadmin" as const,
+  };
+
+  return <AdminShell user={user}>{children}</AdminShell>;
 }

@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
 
 const createSchema = z.object({
-  name: z.string().min(2),
+  name: z.string().min(3).max(50),
   icon: z.string().optional(),
+  description: z.string().optional(),
 });
 
 /** List all categories (admin) */

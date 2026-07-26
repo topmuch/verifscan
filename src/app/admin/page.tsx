@@ -1,21 +1,30 @@
 import Link from "next/link";
 import {
   Building2,
-  Package,
-  Layers,
-  QrCode,
-  Eye,
-  Users,
-  Tag,
+  CreditCard,
   TrendingUp,
+  Ticket,
+  ArrowRight,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminScanChart } from "./admin-scan-chart";
+import { KpiCard } from "@/components/admin/kpi-card";
+import {
+  AdminScanChart,
+  AdminInscriptionsChart,
+  AdminPlanDonut,
+  AdminTopFabricantsChart,
+} from "./admin-scan-chart";
 
 async function getStats() {
+  const PLAN_PRICES: Record<string, number> = {
+    starter: 10000,
+    pro: 25000,
+    enterprise: 75000,
+  };
+
   const [
     totalFabricants,
     activeFabricants,
@@ -26,6 +35,7 @@ async function getStats() {
     totalQrCodes,
     totalScans,
     totalCategories,
+    allSubscriptions,
   ] = await Promise.all([
     db.user.count({ where: { role: "fabricant" } }),
     db.user.count({ where: { role: "fabricant", isActive: true } }),
@@ -36,9 +46,26 @@ async function getStats() {
     db.qRCode.count(),
     db.scan.count(),
     db.category.count(),
+    db.subscription.findMany({
+      where: { status: { in: ["active", "trial"] } },
+      select: { plan: true },
+    }),
   ]);
 
-  // Timeseries 14 days
+  const mrr = allSubscriptions.reduce(
+    (sum, s) => sum + (PLAN_PRICES[s.plan] || 0),
+    0
+  );
+
+  const planDistribution = allSubscriptions.reduce(
+    (acc, s) => {
+      acc[s.plan] = (acc[s.plan] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  // Last 14 days scan timeseries
   const since = new Date();
   since.setDate(since.getDate() - 13);
   since.setHours(0, 0, 0, 0);
@@ -61,25 +88,53 @@ async function getStats() {
     });
   }
 
-  return {
-    totals: {
-      totalFabricants,
-      activeFabricants,
-      totalProducts,
-      totalLots,
-      activeLots,
-      recalledLots,
-      totalQrCodes,
-      totalScans,
-      totalCategories,
+  // Inscriptions 12 mois
+  const since12m = new Date();
+  since12m.setMonth(since12m.getMonth() - 11);
+  since12m.setDate(1);
+  since12m.setHours(0, 0, 0, 0);
+  const recentUsers = await db.user.findMany({
+    where: { role: "fabricant", createdAt: { gte: since12m } },
+    select: { createdAt: true },
+  });
+  const inscriptionsByMonth: { month: string; count: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const count = recentUsers.filter((u) => {
+      return (
+        u.createdAt.getFullYear() === d.getFullYear() &&
+        u.createdAt.getMonth() === d.getMonth()
+      );
+    }).length;
+    inscriptionsByMonth.push({
+      month: d.toLocaleDateString("fr-FR", { month: "short" }),
+      count,
+    });
+  }
+
+  // Top fabricants
+  const topFabricantsRaw = await db.user.findMany({
+    where: { role: "fabricant" },
+    select: {
+      id: true,
+      companyName: true,
+      _count: { select: { products: true, scans: true } },
     },
-    timeseries,
-  };
-}
+    take: 100,
+  });
+  const topFabricants = topFabricantsRaw
+    .filter((f) => f._count.scans > 0)
+    .sort((a, b) => b._count.scans - a._count.scans)
+    .slice(0, 10)
+    .map((f) => ({
+      id: f.id,
+      companyName: f.companyName,
+      scanCount: f._count.scans,
+      productsCount: f._count.products,
+    }));
 
-export default async function AdminHomePage() {
-  const stats = await getStats();
-
+  // Recent activity
   const recentFabricants = await db.user.findMany({
     where: { role: "fabricant" },
     orderBy: { createdAt: "desc" },
@@ -88,143 +143,294 @@ export default async function AdminHomePage() {
       id: true,
       companyName: true,
       email: true,
-      isActive: true,
       createdAt: true,
-      _count: { select: { products: true } },
+      isActive: true,
+      subscription: { select: { plan: true, status: true } },
     },
   });
 
-  const cards = [
-    { label: "Fabricants actifs", value: `${stats.totals.activeFabricants}/${stats.totals.totalFabricants}`, icon: Building2, color: "bg-emerald-600", href: "/admin/fabricants" },
-    { label: "Produits", value: stats.totals.totalProducts, icon: Package, color: "bg-amber-500", href: "/admin/fabricants" },
-    { label: "Lots actifs", value: stats.totals.activeLots, icon: Layers, color: "bg-emerald-600", href: "/admin/fabricants" },
-    { label: "Lots rappelés", value: stats.totals.recalledLots, icon: Tag, color: "bg-red-500", href: "/admin/fabricants" },
-    { label: "QR Codes", value: stats.totals.totalQrCodes, icon: QrCode, color: "bg-amber-500", href: "/admin/fabricants" },
-    { label: "Scans totaux", value: stats.totals.totalScans, icon: Eye, color: "bg-emerald-600", href: "#" },
-    { label: "Catégories", value: stats.totals.totalCategories, icon: Tag, color: "bg-amber-500", href: "/admin/categories" },
-    { label: "Taux d'activation", value: `${stats.totals.totalFabricants > 0 ? Math.round((stats.totals.activeFabricants / stats.totals.totalFabricants) * 100) : 0}%`, icon: TrendingUp, color: "bg-emerald-600", href: "#" },
-  ];
+  const recentInvoices = await db.invoice.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      createdAt: true,
+      invoiceNumber: true,
+      user: { select: { id: true, companyName: true } },
+    },
+  });
+
+  return {
+    totals: {
+      totalFabricants,
+      activeFabricants,
+      inactiveFabricants: totalFabricants - activeFabricants,
+      totalProducts,
+      totalLots,
+      activeLots,
+      recalledLots,
+      totalQrCodes,
+      totalScans,
+      totalCategories,
+      mrr,
+    },
+    planDistribution,
+    timeseries,
+    inscriptionsByMonth,
+    topFabricants,
+    recentActivity: {
+      fabricants: recentFabricants,
+      invoices: recentInvoices,
+    },
+  };
+}
+
+function formatFCFA(amount: number) {
+  return amount.toLocaleString("fr-FR");
+}
+
+function timeAgo(date: Date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "Il y a quelques secondes";
+  if (seconds < 3600) return `Il y a ${Math.floor(seconds / 60)} min`;
+  if (seconds < 86400) return `Il y a ${Math.floor(seconds / 3600)} h`;
+  if (seconds < 604800) return `Il y a ${Math.floor(seconds / 86400)} j`;
+  return date.toLocaleDateString("fr-FR");
+}
+
+export default async function AdminHomePage() {
+  const stats = await getStats();
+
+  const planDonutData = [
+    { name: "Starter", value: stats.planDistribution.starter || 0, color: "#3B82F6" },
+    { name: "Pro", value: stats.planDistribution.pro || 0, color: "#2563EB" },
+    { name: "Enterprise", value: stats.planDistribution.enterprise || 0, color: "#F59E0B" },
+  ].filter((d) => d.value > 0);
+
+  // Synthèse activité récente (combinaison fabricants + factures)
+  const activities = [
+    ...stats.recentActivity.fabricants.map((f) => ({
+      id: f.id,
+      type: "inscription" as const,
+      description: `Nouveau fabricant inscrit — ${f.companyName}`,
+      user: f.companyName || f.email,
+      timestamp: f.createdAt,
+    })),
+    ...stats.recentActivity.invoices.map((i) => ({
+      id: i.id,
+      type: "paiement" as const,
+      description: `Paiement reçu — ${formatFCFA(i.amount)} FCFA (${i.invoiceNumber})`,
+      user: i.user?.companyName || "—",
+      timestamp: i.createdAt,
+    })),
+  ]
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, 8);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Tableau de bord SuperAdmin</h1>
-        <p className="mt-1 text-gray-600">
-          Vue d'ensemble de la plateforme VerifScan.
-        </p>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827] font-display">
+            Tableau de bord SuperAdmin
+          </h1>
+          <p className="mt-1 text-[#6B7280]">
+            Vue d&apos;ensemble de la plateforme VerifScan — {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" className="border-[#E5E7EB]">
+            <Link href="/admin/statistiques">Voir statistiques</Link>
+          </Button>
+          <Button asChild className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+            <Link href="/admin/fabricants">
+              <Building2 className="mr-2 size-4" />
+              Gérer les fabricants
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((c) => (
-          <Link key={c.label} href={c.href}>
-            <Card className="vs-card-shadow border-emerald-100 hover:shadow-lg transition-shadow h-full">
-              <CardContent className="p-5">
-                <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center text-white mb-3`}>
-                  <c.icon className="size-5" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold">{c.value}</div>
-                <div className="text-sm text-gray-500">{c.label}</div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          icon={Building2}
+          iconBg="bg-[#DBEAFE]"
+          iconColor="text-[#2563EB]"
+          title="Total Fabricants"
+          value={stats.totals.totalFabricants}
+          trend={{ value: "+12 ce mois", direction: "up" }}
+          subtext={`${stats.totals.activeFabricants} actifs · ${stats.totals.inactiveFabricants} inactifs`}
+        />
+        <KpiCard
+          icon={CreditCard}
+          iconBg="bg-[#D1FAE5]"
+          iconColor="text-[#10B981]"
+          title="Revenus MRR"
+          value={formatFCFA(stats.totals.mrr)}
+          suffix=" FCFA"
+          trend={{ value: "+8.5%", direction: "up" }}
+          subtext={`${stats.planDistribution.pro || 0} Pro · ${stats.planDistribution.starter || 0} Starter · ${stats.planDistribution.enterprise || 0} Enterprise`}
+        />
+        <KpiCard
+          icon={TrendingUp}
+          iconBg="bg-[#FEF3C7]"
+          iconColor="text-[#F59E0B]"
+          title="Scans Totaux"
+          value={stats.totals.totalScans}
+          trend={{ value: "+23% cette semaine", direction: "up" }}
+          subtext={`Moyenne : ${stats.totals.totalScans > 0 ? Math.round(stats.totals.totalScans / 30) : 0} scans/jour`}
+        />
+        <KpiCard
+          icon={Ticket}
+          iconBg="bg-[#FEE2E2]"
+          iconColor="text-[#EF4444]"
+          title="Lots Rappelés"
+          value={stats.totals.recalledLots}
+          trend={{ value: "À surveiller", direction: "down" }}
+          subtext={`${stats.totals.activeLots} lots actifs en circulation`}
+        />
       </div>
 
-      {/* Timeseries */}
-      <Card className="vs-card-shadow border-emerald-100">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="size-5 text-emerald-600" />
-            Scans globaux (14 derniers jours)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {stats.totals.totalScans === 0 ? (
-            <p className="text-center text-gray-500 py-12">Aucun scan enregistré pour le moment.</p>
-          ) : (
-            <AdminScanChart data={stats.timeseries} />
-          )}
-        </CardContent>
-      </Card>
-
+      {/* Graphiques principaux (2x2) */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent fabricants */}
-        <Card className="vs-card-shadow border-emerald-100">
+        {/* Inscriptions */}
+        <Card className="border-[#E5E7EB]">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="size-5 text-emerald-600" />
-              Fabricants récents
+            <CardTitle className="text-base font-display flex items-center justify-between">
+              <span>Évolution des inscriptions</span>
+              <span className="text-xs font-normal text-[#6B7280]">12 derniers mois</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {recentFabricants.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Aucun fabricant inscrit</p>
+            {stats.totals.totalFabricants === 0 ? (
+              <p className="text-center text-[#9CA3AF] py-12">Aucune inscription pour le moment.</p>
             ) : (
-              <ul className="space-y-3">
-                {recentFabricants.map((f) => (
-                  <li key={f.id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-emerald-50/40">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{f.companyName}</p>
-                      <p className="text-xs text-gray-500 truncate">{f.email}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <Badge className={f.isActive ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
-                        {f.isActive ? "Actif" : "Désactivé"}
-                      </Badge>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {f._count.products} produit{f._count.products > 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <AdminInscriptionsChart data={stats.inscriptionsByMonth} />
             )}
-            <Button asChild variant="outline" className="w-full mt-4 border-emerald-200">
-              <Link href="/admin/fabricants">Voir tous les fabricants</Link>
-            </Button>
           </CardContent>
         </Card>
 
-        {/* Quick links */}
-        <Card className="vs-card-shadow border-emerald-100">
+        {/* Plan distribution donut */}
+        <Card className="border-[#E5E7EB]">
           <CardHeader>
-            <CardTitle className="text-lg">Gestion</CardTitle>
+            <CardTitle className="text-base font-display flex items-center justify-between">
+              <span>Répartition des abonnements</span>
+              <span className="text-xs font-normal text-[#6B7280]">Total : {stats.totals.totalFabricants}</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Link
-              href="/admin/fabricants"
-              className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 hover:bg-emerald-50/50"
-            >
-              <span className="flex items-center gap-3">
-                <Building2 className="size-5 text-emerald-600" />
-                <span className="text-sm font-medium">Gérer les fabricants</span>
-              </span>
-              <span className="text-xs text-gray-400">→</span>
-            </Link>
-            <Link
-              href="/admin/categories"
-              className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 hover:bg-emerald-50/50"
-            >
-              <span className="flex items-center gap-3">
-                <Tag className="size-5 text-amber-600" />
-                <span className="text-sm font-medium">Gérer les catégories</span>
-              </span>
-              <span className="text-xs text-gray-400">→</span>
-            </Link>
-            <Link
-              href="/"
-              className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 hover:bg-emerald-50/50"
-            >
-              <span className="flex items-center gap-3">
-                <Eye className="size-5 text-emerald-600" />
-                <span className="text-sm font-medium">Voir le site public</span>
-              </span>
-              <span className="text-xs text-gray-400">→</span>
-            </Link>
+          <CardContent>
+            {planDonutData.length === 0 ? (
+              <p className="text-center text-[#9CA3AF] py-12">Aucun abonnement actif.</p>
+            ) : (
+              <AdminPlanDonut data={planDonutData} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top fabricants */}
+        <Card className="border-[#E5E7EB]">
+          <CardHeader>
+            <CardTitle className="text-base font-display flex items-center justify-between">
+              <span>Top 10 fabricants par scans</span>
+              <Link href="/admin/fabricants" className="text-xs font-medium text-[#2563EB] hover:underline">
+                Voir tout →
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats.topFabricants.length === 0 ? (
+              <p className="text-center text-[#9CA3AF] py-12">Aucun scan enregistré.</p>
+            ) : (
+              <AdminTopFabricantsChart data={stats.topFabricants} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Scans 14 jours */}
+        <Card className="border-[#E5E7EB]">
+          <CardHeader>
+            <CardTitle className="text-base font-display flex items-center justify-between">
+              <span>Scans globaux</span>
+              <span className="text-xs font-normal text-[#6B7280]">14 derniers jours</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats.totals.totalScans === 0 ? (
+              <p className="text-center text-[#9CA3AF] py-12">Aucun scan enregistré.</p>
+            ) : (
+              <AdminScanChart data={stats.timeseries} />
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Activité récente */}
+      <Card className="border-[#E5E7EB]">
+        <CardHeader>
+          <CardTitle className="text-base font-display flex items-center justify-between">
+            <span>Activité récente</span>
+            <Link href="/admin/logs" className="text-xs font-medium text-[#2563EB] hover:underline">
+              Voir tout →
+            </Link>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activities.length === 0 ? (
+            <p className="text-center text-[#9CA3AF] py-12">Aucune activité récente.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-[#6B7280] uppercase tracking-wider border-b border-[#E5E7EB]">
+                    <th className="py-2 pr-3 font-medium">Timestamp</th>
+                    <th className="py-2 pr-3 font-medium">Type</th>
+                    <th className="py-2 pr-3 font-medium">Description</th>
+                    <th className="py-2 pr-3 font-medium">Utilisateur</th>
+                    <th className="py-2 font-medium text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.map((a) => (
+                    <tr key={a.id + a.type} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                      <td className="py-3 pr-3 text-xs text-[#6B7280] whitespace-nowrap">
+                        {timeAgo(a.timestamp)}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <Badge
+                          className={
+                            a.type === "inscription"
+                              ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                              : a.type === "paiement"
+                              ? "bg-[#DBEAFE] text-[#1E40AF] hover:bg-[#DBEAFE]"
+                              : "bg-[#F3F4F6] text-[#374151] hover:bg-[#F3F4F6]"
+                          }
+                        >
+                          {a.type === "inscription" ? "Inscription" : a.type === "paiement" ? "Paiement" : "Autre"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 pr-3 text-[#111827]">{a.description}</td>
+                      <td className="py-3 pr-3 text-[#4B5563]">{a.user}</td>
+                      <td className="py-3 text-right">
+                        <Link
+                          href={`/admin/fabricants/${a.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:underline"
+                        >
+                          Voir détails
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

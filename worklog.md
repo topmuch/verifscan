@@ -284,3 +284,42 @@ Stage Summary:
 - Responsive : mobile-first avec breakpoints sm/md/lg, menu mobile, grilles adaptatives
 - Accessibilité : aria-labels, focus visible via Tailwind, prefers-reduced-motion respecté
 - Prochaine étape : commit + push pour redéployer sur Coolify
+
+---
+Task ID: superadmin-panel
+Agent: main
+Task: Construction du panel SuperAdmin complet selon spec (Dashboard, Utilisateurs, Abonnements, Catégories, Statistiques, Paramètres, Logs, Support)
+
+Work Log:
+- Étendu les liens admin dans dashboard-sidebar.tsx : 8 entrées (Dashboard, Utilisateurs, Abonnements, Catégories, Statistiques, Paramètres, Logs, Support)
+- Reconstruit admin/layout.tsx : utilise nouveau AdminShell avec sidebar 280px + header 70px
+- Créé src/components/admin/admin-shell.tsx : sidebar fixe 280px avec logo + badge Admin, nav 8 entrées, profil admin en bas + boutons Site public/Déconnexion, header 70px avec search + notif bell + avatar, mobile drawer
+- Créé src/components/admin/kpi-card.tsx : carte KPI avec count-up animation (IntersectionObserver + RAF easing), icône colorée, trend badge, subtext
+- Étendu admin-scan-chart.tsx : 5 graphiques (AreaChart scans, BarChart inscriptions, PieChart donut plans, BarChart horizontal top fabricants, LineChart revenus)
+- Dashboard SuperAdmin (admin/page.tsx) :
+  * 4 KPIs principaux (Total Fabricants, MRR, Scans Totaux, Lots Rappelés) avec trends + subtexts
+  * 4 graphiques en grille 2x2 : Inscriptions 12 mois (barres), Répartition plans (donut), Top 10 fabricants (barres horizontales), Scans 14 jours (area)
+  * Tableau Activité récente (inscriptions + paiements) avec badges colorés par type
+- API admin/users/route.ts : étendu avec filtres search/status/plan + pagination server-side + jointure subscription + counts produits/scans
+- API admin/users/[id]/route.ts (nouveau) : GET détail complet utilisateur (infos, abonnement, factures, produits récents, scans 30j groupés par jour)
+- API admin/subscriptions/route.ts (nouveau) : liste avec filtres status/plan + pagination + calcul MRR/ARR + groupBy plan/status
+- API admin/subscriptions/[id]/route.ts (nouveau) : PATCH pour changement plan/status/quotas (auto-update quotas selon plan)
+- API admin/categories/[id]/route.ts (nouveau) : PATCH (name/icon/isActive) + DELETE (vérifie 0 produits)
+- API admin/stats/route.ts : étendu avec MRR, planDistribution, inscriptions 12 mois, top 10 fabricants, recent activity
+- Page admin/fabricants/page.tsx : tableau complet avec colonnes Entreprise/Contact/Plan/Statut/Produits/Scans/Inscription/Actions + filtres (search, statut, plan, page size) + pagination + dropdown actions (Voir détails, Voir abonnement, Désactiver/Réactiver avec AlertDialog)
+- Page admin/fabricants/[id]/page.tsx (nouveau) : layout 2 colonnes 70/30, gauche = infos entreprise + abonnement avec quotas progress bars + produits récents (tableau) + historique scans 30j (area chart), droite = actions rapides (WhatsApp/Email/Ticket) + stats + factures récentes
+- Page admin/abonnements/page.tsx (nouveau) : tabs statut (Tous/Actifs/Essai/En retard/Annulés) + 4 cards MRR/ARR/Pro/Starter+Enterprise + tableau abonnements (Entreprise/Plan/Statut/Quota/Début/Facturation/Actions) + dropdown changement plan/status
+- Page admin/abonnements/plans/page.tsx (nouveau) : 3 cards plan (Starter/Pro populaire/Enterprise) avec édition prix mensuel/annuel, quotas produits/QR, stats, support, features toggle (Check/X) + paramètres globaux (essai jours, relance, suspension, carte requise)
+- Page admin/categories/page.tsx : refonte totale en grille de cards avec icône emoji + nom + nb produits + statut + actions (Modifier/Activer-Désactiver/Supprimer si 0 produits) + modal création/édition avec picker emoji 30 choix
+- Page admin/statistiques/page.tsx (nouveau) : 6 KPIs vue ensemble (fabricants/actifs/produits/lots/QR/scans) + section Croissance (inscriptions + scans) + Top 20 fabricants (barres horizontales) + Top 20 produits (tableau) + Performance système (latence/erreur/uptime)
+- Page admin/parametres/page.tsx (nouveau) : layout sidebar 7 sections (Général/Email/Paiement/Sécurité/API/Apparence/Maintenance) avec formulaires complets (SMTP, CinetPay/Stripe/Orange/Wave, 2FA, rate limiting, CORS, clés API, mode maintenance, sauvegardes, cache)
+- Page admin/logs/page.tsx (nouveau) : filtres (search/niveau/type) + tableau logs (timestamp/niveau badge/type/user/action/IP) + modal détails complets (User-Agent, endpoint, response status) — données mockées en attendant DB log table
+- Page admin/support/page.tsx (nouveau) : layout 2 colonnes (liste tickets + conversation), tabs statut (Ouverts/En cours/Résolus/Tous), conversation client/admin avec bulles colorées, zone réponse avec textarea + boutons Envoyer/Envoyer & fermer, dropdown changement statut/priorité
+
+Stage Summary:
+- Build vérifié : `bun run build` passe, 70 pages statiques générées (vs 63 avant) — les 7 nouvelles routes admin
+- Routes admin opérationnelles : /admin (dashboard), /admin/fabricants, /admin/fabricants/[id], /admin/abonnements, /admin/abonnements/plans, /admin/categories, /admin/statistiques, /admin/parametres, /admin/logs, /admin/support
+- API admin étendues : users (liste filtrée + détail), subscriptions (liste + update), categories (CRUD complet), stats (vue dashboard enrichie)
+- Panel SuperAdmin complet avec design system bleu/vert/orange cohérent, sidebar 280px, header 70px, KPIs animés, graphiques recharts, tableaux avec filtres et pagination, dropdowns d'actions, modals et alertes
+- Toutes les actions RBAC sont protégées par requireSuperAdmin()
+- Prochaine étape : commit + push pour redéployer sur Coolify

@@ -41,9 +41,14 @@ const fabricantLinks = [
 ];
 
 const adminLinks = [
-  { href: "/admin", label: "Accueil", icon: LayoutDashboard, exact: true },
-  { href: "/admin/fabricants", label: "Fabricants", icon: Package },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/fabricants", label: "Utilisateurs", icon: Users },
+  { href: "/admin/abonnements", label: "Abonnements", icon: CreditCard },
   { href: "/admin/categories", label: "Catégories", icon: Layers },
+  { href: "/admin/statistiques", label: "Statistiques", icon: BarChart3 },
+  { href: "/admin/parametres", label: "Paramètres", icon: Settings },
+  { href: "/admin/logs", label: "Logs & Audit", icon: ShieldCheck },
+  { href: "/admin/support", label: "Support", icon: Bell },
 ];
 
 export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" }) {

@@ -1,13 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tag, Plus, Trash2, Pencil, Eye, EyeOff, X, Save } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 type Category = {
@@ -18,13 +35,19 @@ type Category = {
   _count: { products: number };
 };
 
-const EMOJI_CHOICES = ["🥤", "🍞", "🌶️", "🥫", "🌾", "🥛", "🥜", "🫒", "🍯", "🥖", "🧂", "🐟", "🍖", "🧀", "🥗", "🍪", "🍫", "☕", "🍬", "🌰"];
+const EMOJI_CHOICES = [
+  "🥤", "🍞", "🌶️", "🥫", "🌾", "🥛", "🥜", "🫒", "🍯", "🥖",
+  "🧂", "🐟", "🍖", "🧀", "🥗", "🍪", "🍫", "☕", "🍬", "🌰",
+  "🧴", "📦", "🍷", "🥃", "🍵", "🧊", "🥥", "🍍", "🥭", "🍋",
+];
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", icon: "📦" });
 
   useEffect(() => {
@@ -33,144 +56,269 @@ export default function AdminCategoriesPage() {
 
   async function fetchCategories() {
     setLoading(true);
-    const res = await fetch("/api/admin/categories");
-    const data = await res.json();
-    setCategories(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch {
+      toast.error("Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setCreating(true);
-    const res = await fetch("/api/admin/categories", {
-      method: "POST",
+  function openCreate() {
+    setForm({ name: "", icon: "📦" });
+    setEditingId(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(cat: Category) {
+    setForm({ name: cat.name, icon: cat.icon || "📦" });
+    setEditingId(cat.id);
+    setModalOpen(true);
+  }
+
+  async function onSave() {
+    if (!form.name.trim() || form.name.length < 3) {
+      toast.error("Le nom doit faire au moins 3 caractères");
+      return;
+    }
+    setSaving(true);
+    try {
+      const url = editingId
+        ? `/api/admin/categories/${editingId}`
+        : "/api/admin/categories";
+      const method = editingId ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Erreur");
+        return;
+      }
+      toast.success(editingId ? "Catégorie modifiée" : "Catégorie créée");
+      setModalOpen(false);
+      fetchCategories();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleActive(cat: Category) {
+    const res = await fetch(`/api/admin/categories/${cat.id}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ isActive: !cat.isActive }),
+    });
+    if (!res.ok) {
+      toast.error("Erreur");
+      return;
+    }
+    toast.success(cat.isActive ? "Catégorie désactivée" : "Catégorie activée");
+    fetchCategories();
+  }
+
+  async function confirmDelete() {
+    if (!deleteId) return;
+    const res = await fetch(`/api/admin/categories/${deleteId}`, {
+      method: "DELETE",
     });
     const data = await res.json();
-    setCreating(false);
     if (!res.ok) {
       toast.error(data.error || "Erreur");
       return;
     }
-    toast.success("Catégorie créée");
-    setForm({ name: "", icon: "📦" });
+    toast.success("Catégorie supprimée");
+    setDeleteId(null);
     fetchCategories();
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Catégories</h1>
-        <p className="mt-1 text-gray-600">
-          Gérez les catégories de produits proposées aux fabricants.
-        </p>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827] font-display">
+            Gestion des Catégories
+          </h1>
+          <p className="mt-1 text-[#6B7280]">
+            {categories.filter((c) => c.isActive).length} catégories actives sur {categories.length}
+          </p>
+        </div>
+        <Button onClick={openCreate} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+          <Plus className="mr-2 size-4" />
+          Nouvelle catégorie
+        </Button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Create form */}
-        <Card className="vs-card-shadow border-emerald-100">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Plus className="size-5 text-emerald-600" />
-              Nouvelle catégorie
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={onCreate} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom de la catégorie *</Label>
-                <Input
-                  id="name"
-                  placeholder="Ex: Confiseries"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                  className="border-emerald-200 focus-visible:ring-emerald-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Icône (emoji)</Label>
-                <div className="flex flex-wrap gap-1.5 p-3 rounded-lg border border-emerald-100 bg-emerald-50/30 max-h-32 overflow-y-auto vs-scroll">
-                  {EMOJI_CHOICES.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => setForm({ ...form, icon: e })}
-                      className={`w-9 h-9 rounded-lg text-xl transition-colors ${
-                        form.icon === e
-                          ? "bg-emerald-600"
-                          : "bg-white hover:bg-emerald-100"
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500">Sélection actuelle : {form.icon}</p>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={creating || !form.name.trim()}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Plus className="mr-2 size-4" />
-                {creating ? "Création..." : "Créer la catégorie"}
-              </Button>
-            </form>
+      {/* Grille de cards */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
+      ) : categories.length === 0 ? (
+        <Card className="border-[#E5E7EB]">
+          <CardContent className="p-12 text-center">
+            <Tag className="mx-auto size-12 text-[#D1D5DB]" />
+            <h3 className="mt-4 font-semibold text-[#111827]">Aucune catégorie</h3>
+            <p className="text-sm text-[#6B7280] mt-1">Créez votre première catégorie pour commencer.</p>
+            <Button onClick={openCreate} className="mt-4 bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Plus className="mr-2 size-4" />
+              Créer
+            </Button>
           </CardContent>
         </Card>
-
-        {/* List */}
-        <Card className="vs-card-shadow border-emerald-100">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Tag className="size-5 text-amber-600" />
-              Catégories existantes ({categories.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
-              </div>
-            ) : categories.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Aucune catégorie</p>
-            ) : (
-              <ul className="space-y-2 max-h-96 overflow-y-auto vs-scroll">
-                {categories.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-emerald-50/40 hover:bg-emerald-50 transition-colors"
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {categories.map((cat) => (
+            <Card
+              key={cat.id}
+              className="border-[#E5E7EB] group hover:vs-card-shadow-hover transition-all hover:-translate-y-1"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl">{cat.icon || "📦"}</div>
+                  <Badge
+                    className={
+                      cat.isActive
+                        ? "bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5]"
+                        : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#F3F4F6]"
+                    }
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-2xl flex-shrink-0">{c.icon}</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{c.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {c._count.products} produit{c._count.products > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={c.isActive
-                        ? "border-emerald-200 text-emerald-700"
-                        : "border-gray-200 text-gray-500"}
-                    >
-                      {c.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </li>
+                    {cat.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <h3 className="font-display text-lg font-semibold text-[#111827]">
+                  {cat.name}
+                </h3>
+                <p className="text-sm text-[#6B7280] mt-1">
+                  {cat._count.products} produit{cat._count.products > 1 ? "s" : ""}
+                </p>
+
+                {/* Actions */}
+                <div className="mt-4 pt-4 border-t border-[#F3F4F6] flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openEdit(cat)}
+                    className="border-[#E5E7EB] flex-1"
+                  >
+                    <Pencil className="mr-1 size-3.5" />
+                    Modifier
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggleActive(cat)}
+                    className="border-[#E5E7EB] size-8 p-0"
+                    title={cat.isActive ? "Désactiver" : "Activer"}
+                  >
+                    {cat.isActive ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setDeleteId(cat.id)}
+                    disabled={cat._count.products > 0}
+                    className="border-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2] size-8 p-0"
+                    title={cat._count.products > 0 ? "Suppression impossible (produits liés)" : "Supprimer"}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Modal create/edit */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId ? "Modifier la catégorie" : "Nouvelle catégorie"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom de la catégorie *</Label>
+              <Input
+                id="name"
+                placeholder="Ex : Boissons, Épices..."
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                maxLength={50}
+              />
+              <p className="text-xs text-[#9CA3AF]">{form.name.length}/50 caractères</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Icône / Emoji</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="size-12 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center text-2xl">
+                  {form.icon}
+                </div>
+                <span className="text-sm text-[#6B7280]">Aperçu</span>
+              </div>
+              <div className="grid grid-cols-10 gap-1 p-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] max-h-32 overflow-y-auto vs-scroll">
+                {EMOJI_CHOICES.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => setForm({ ...form, icon: e })}
+                    className={`size-8 rounded-lg text-lg transition-colors ${
+                      form.icon === e
+                        ? "bg-[#2563EB]"
+                        : "bg-white hover:bg-[#DBEAFE]"
+                    }`}
+                  >
+                    {e}
+                  </button>
                 ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={onSave} disabled={saving} className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+              <Save className="mr-2 size-4" />
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette catégorie ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La catégorie sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
