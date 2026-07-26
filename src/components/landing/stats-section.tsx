@@ -68,7 +68,7 @@ export function StatsSection() {
       <div className="absolute -top-20 -right-20 size-80 rounded-full bg-white/5 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 size-80 rounded-full bg-[#10B981]/10 blur-3xl pointer-events-none" />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/15 text-white text-xs font-semibold uppercase tracking-wide mb-4 backdrop-blur-sm">
             <Zap className="size-3.5" />

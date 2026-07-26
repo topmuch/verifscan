@@ -91,7 +91,7 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-24 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#DBEAFE] text-[#2563EB] text-xs font-semibold uppercase tracking-wide mb-4">

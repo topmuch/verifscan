@@ -566,3 +566,35 @@ Stage Summary:
 - Toutes les animations respectent prefers-reduced-motion
 - Build passe sans erreur, 70 pages statiques
 - Prochaine étape: redéployer sur Coolify pour voir le résultat en production
+
+---
+Task ID: landing-v6-wider-hero-image
+Agent: Super Z (main)
+Task: Changer l'image du hero et mettre le site en version large
+
+Work Log:
+- Généré une nouvelle illustration hero 3D via z-ai-web-dev-sdk (1344x768, ~94 KB) → public/hero/hero-main.png
+  - Prompt: smartphone scannant un QR code sur une bouteille de jus, UI cards flottantes (checkmark authentique, shield blockchain, map pin Dakar, calendrier), gradient bleu→vert, style 3D premium moderne
+  - Script persisté: scripts/gen-hero-image.ts (re-exécutable pour régénérer l'image)
+- Remplacé la maquette smartphone CSS dans hero-section.tsx par:
+  - Composant <Image> Next.js (prioritaire, srcset responsive 384w→3840w via /_next/image)
+  - Cadre arrondi 2rem avec bordure blanche + ombre douce
+  - Conservation des cartes flottantes (ShieldCheck blockchain, Smartphone 0.3s, ScanLine orange, badge "Authentique")
+  - Suppression des icônes Calendar/ListChecks/MapPin/QrCode/Sparkles (n'était plus utilisées après suppression du mockup)
+- Élargi le conteneur du site de max-w-7xl (1280px) → max-w-[1440px] sur:
+  - public-header.tsx
+  - public-footer.tsx
+  - hero-section.tsx, features-section.tsx, how-it-works-section.tsx, testimonials-section.tsx, stats-section.tsx, pricing-section.tsx
+  - Padding desktop passé de lg:px-8 → lg:px-10
+- Section final-cta conservée à max-w-5xl (intentionnel — CTA focalisé fonctionne mieux avec largeur contenue)
+- Vérifié:
+  - tsc --noEmit: aucune nouvelle erreur (erreurs pré-existantes dans admin/examples/scripts uniquement)
+  - next dev: HTTP 200 sur / en 3.3s compile
+  - Image servie: HTTP 200, 94452 bytes sur /hero/hero-main.png
+  - Homepage référence bien l'image via /_next/image (responsive srcset)
+
+Stage Summary:
+- Hero visuel: maquette smartphone CSS remplacée par illustration 3D générée par IA
+- Layout: site élargi à 1440px (gain ~160px de largeur utile vs 1280px précédent)
+- Artéfacts: public/hero/hero-main.png (image), scripts/gen-hero-image.ts (script de regénération)
+- Tous les fichiers modifiés: 6 sections landing + header + footer

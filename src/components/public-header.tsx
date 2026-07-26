@@ -50,7 +50,7 @@ export function PublicHeader() {
       )}
       style={{ height: 80 }}
     >
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
         {/* Logo */}
         <VerifScanLogo size="md" />
 

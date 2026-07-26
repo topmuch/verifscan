@@ -42,7 +42,7 @@ export function HowItWorksSection() {
 
   return (
     <section id="comment-ca-marche" className="py-24 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#D1FAE5] text-[#10B981] text-xs font-semibold uppercase tracking-wide mb-4">

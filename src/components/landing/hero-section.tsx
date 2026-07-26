@@ -1,19 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   ShieldCheck,
   Smartphone,
   Lock,
   CheckCircle2,
-  Calendar,
-  ListChecks,
-  ScanLine,
-  MapPin,
   PlayCircle,
+  ScanLine,
   Sparkles,
-  QrCode,
 } from "lucide-react";
 import { useReveal } from "@/lib/use-animations";
 
@@ -32,7 +29,7 @@ export function HeroSection() {
       <div className="absolute top-20 -left-20 size-72 rounded-full bg-[#2563EB]/10 blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -right-20 size-96 rounded-full bg-[#10B981]/10 blur-3xl pointer-events-none" />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text column */}
           <div
@@ -96,92 +93,31 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Visual column — 3D smartphone mockup */}
+          {/* Visual column — AI-generated hero illustration with floating cards */}
           <div
             className={`relative transition-all duration-1000 delay-150 ${
               revealed ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"
             }`}
           >
-            <div className="relative mx-auto max-w-sm vs-phone-3d">
-              {/* Smartphone body */}
-              <div className="relative rounded-[2.5rem] bg-gray-900 shadow-2xl shadow-blue-200/60 border-8 border-gray-900 overflow-hidden vs-card-shadow-lg">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-10" />
-
-                {/* Status bar */}
-                <div className="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] px-6 pt-8 pb-3 flex items-center justify-between text-white text-xs">
-                  <span className="font-medium">verifscan.roomscan.pro</span>
-                  <span className="opacity-80 font-mono">9:41</span>
-                </div>
-
-                {/* Body */}
-                <div className="bg-white p-6 space-y-5">
-                  {/* Verified badge — appears with pulse */}
-                  <div className="flex items-center justify-center gap-2 py-2 px-4 bg-[#D1FAE5] rounded-full vs-animate-pulse-soft">
-                    <CheckCircle2 className="size-5 text-[#10B981]" />
-                    <span className="text-sm font-semibold text-[#047857]">Produit authentique — Vérifié</span>
-                  </div>
-
-                  {/* Product illustration — rotating gradient + "Nouveau" badge */}
-                  <div className="flex justify-center">
-                    <div className="relative size-32 rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#F59E0B] flex items-center justify-center shadow-lg">
-                      <span className="text-5xl select-none">🧃</span>
-                      {/* BIO badge */}
-                      <div className="absolute -top-2 -right-2 size-8 rounded-full bg-[#F59E0B] flex items-center justify-center text-white text-xs font-bold shadow">
-                        BIO
-                      </div>
-                      {/* "Nouveau" floating badge */}
-                      <div className="vs-badge-new absolute -top-3 -left-3 px-2 py-1 rounded-md bg-[#2563EB] text-white text-[10px] font-bold shadow-md">
-                        Nouveau
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center space-y-1">
-                    <h3 className="font-display font-bold text-xl text-[#111827]">Jus de Bissap</h3>
-                    <p className="text-xs text-[#6B7280]">Sarine Bio · 500ml · Lot #BSC-2026-0142</p>
-                  </div>
-
-                  {/* Product details grid */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-xl bg-[#F9FAFB] p-3 border border-[#E5E7EB]">
-                      <div className="flex items-center gap-1.5 text-[#6B7280] mb-1">
-                        <Calendar className="size-3.5" />
-                        <span className="font-medium">Période</span>
-                      </div>
-                      <p className="font-semibold text-[#111827] font-mono">15/07 → 30/09/2026</p>
-                    </div>
-                    <div className="rounded-xl bg-[#F9FAFB] p-3 border border-[#E5E7EB]">
-                      <div className="flex items-center gap-1.5 text-[#6B7280] mb-1">
-                        <MapPin className="size-3.5" />
-                        <span className="font-medium">Origine</span>
-                      </div>
-                      <p className="font-semibold text-[#111827]">Dakar, SN</p>
-                    </div>
-                  </div>
-
-                  {/* Ingredients */}
-                  <div className="rounded-xl bg-[#FEF3C7] p-3 border border-[#F59E0B]/30">
-                    <div className="flex items-center gap-1.5 text-[#92400E] mb-1.5">
-                      <ListChecks className="size-3.5" />
-                      <span className="text-xs font-semibold">Ingrédients</span>
-                    </div>
-                    <p className="text-xs text-[#78350F] leading-relaxed">
-                      Bissap bio, sucre de canne, eau filtrée, citron naturel — sans conservateurs
-                    </p>
-                  </div>
-
-                  {/* QR mini — pulsing every 3s */}
-                  <div className="flex items-center justify-center gap-2 pt-1">
-                    <div className="size-10 rounded-md vs-qr-pattern bg-[#111827] vs-qr-pulse" />
-                    <span className="text-[10px] text-[#6B7280] font-mono">SCAN OK · 0.3s</span>
-                  </div>
-                </div>
+            <div className="relative mx-auto max-w-2xl vs-card-shadow-lg">
+              {/* Main hero image */}
+              <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#EFF6FF] via-white to-[#ECFDF5] border border-white shadow-2xl shadow-blue-200/40">
+                <Image
+                  src="/hero/hero-main.png"
+                  alt="VerifScan — smartphone scannant un QR code sur un produit alimentaire avec vérification blockchain"
+                  width={1344}
+                  height={768}
+                  priority
+                  className="w-full h-auto block"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+                {/* Subtle inner glow */}
+                <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/40 rounded-[2rem]" />
               </div>
 
-              {/* Floating cards around the phone */}
-              <div className="absolute -top-6 -right-6 vs-animate-float">
-                <div className="bg-white rounded-2xl shadow-xl p-4 border border-[#E5E7EB] flex items-center gap-3 max-w-[200px]">
+              {/* Floating cards around the image */}
+              <div className="absolute -top-6 -right-4 lg:-right-8 vs-animate-float">
+                <div className="bg-white rounded-2xl shadow-xl p-4 border border-[#E5E7EB] flex items-center gap-3 max-w-[220px]">
                   <div className="size-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
                     <ShieldCheck className="size-5 text-[#10B981]" />
                   </div>
@@ -192,7 +128,7 @@ export function HeroSection() {
                 </div>
               </div>
 
-              <div className="absolute -bottom-6 -left-6 vs-animate-float-delayed">
+              <div className="absolute -bottom-6 -left-4 lg:-left-8 vs-animate-float-delayed">
                 <div className="bg-white rounded-2xl shadow-xl p-4 border border-[#E5E7EB] flex items-center gap-3">
                   <div className="size-10 rounded-xl bg-[#2563EB]/10 flex items-center justify-center">
                     <Smartphone className="size-5 text-[#2563EB]" />
@@ -204,9 +140,16 @@ export function HeroSection() {
                 </div>
               </div>
 
-              <div className="absolute top-1/3 -left-10 vs-animate-float">
+              <div className="absolute top-1/3 -left-6 lg:-left-12 vs-animate-float">
                 <div className="bg-[#F59E0B] rounded-2xl shadow-xl p-3 border border-[#F59E0B]">
                   <ScanLine className="size-6 text-white" />
+                </div>
+              </div>
+
+              <div className="absolute bottom-1/4 -right-4 lg:-right-10 vs-animate-float-delayed">
+                <div className="bg-white rounded-full shadow-xl px-3 py-2 border border-[#E5E7EB] flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#10B981]" />
+                  <span className="text-xs font-semibold text-[#047857]">Authentique</span>
                 </div>
               </div>
             </div>
