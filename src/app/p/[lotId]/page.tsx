@@ -212,6 +212,32 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               location = [ipData.city, ipData.country_name].filter(Boolean).join(", ");
             }
           } catch {}
+
+          // V4 — geolocation (ask permission) + anonymous fingerprint for rewards
+          let latitude: number | undefined;
+          let longitude: number | undefined;
+          try {
+            const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+              if (!navigator.geolocation) return resolve(null);
+              navigator.geolocation.getCurrentPosition(
+                (p) => resolve(p),
+                () => resolve(null),
+                { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
+              );
+            });
+            if (pos) {
+              latitude = pos.coords.latitude;
+              longitude = pos.coords.longitude;
+            }
+          } catch {}
+
+          // V4 — device fingerprint (anonymous, stored in localStorage)
+          let deviceFingerprint: string | undefined;
+          try {
+            const { getDeviceFingerprint } = await import("@/lib/offline");
+            deviceFingerprint = getDeviceFingerprint();
+          } catch {}
+
           fetch("/api/scans", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -220,8 +246,32 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               location,
               deviceType: isMobile ? "mobile" : "desktop",
               userAgent: ua,
+              latitude,
+              longitude,
+              deviceFingerprint,
             }),
-          }).catch(() => {});
+          })
+            .then((r) => r.json())
+            .then((scanData) => {
+              // V4 — show points earned / recall alert
+              if (scanData.pointsAwarded > 0) {
+                toast.success(`+${scanData.pointsAwarded} points VerifScan`, {
+                  description: "Voir mes récompenses",
+                  action: {
+                    label: "Voir",
+                    onClick: () => window.location.href = "/mes-recompenses",
+                  },
+                  duration: 6000,
+                });
+              }
+              if (scanData.recallAlert) {
+                toast.error(scanData.recallAlert.title, {
+                  description: scanData.recallAlert.reason,
+                  duration: 10000,
+                });
+              }
+            })
+            .catch(() => {});
         }
 
         setLoading(false);

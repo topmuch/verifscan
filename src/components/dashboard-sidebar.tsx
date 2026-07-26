@@ -19,6 +19,11 @@ import {
   Store,
   ShieldCheck,
   Users,
+  TrendingUp,
+  Trophy,
+  FlaskConical,
+  Leaf,
+  Award,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -32,8 +37,13 @@ const fabricantLinks = [
   { href: "/dashboard/qr-codes", label: "QR Codes", icon: QrCode },
   { href: "/dashboard/qr-codes/masse", label: "Génération en masse", icon: Layers3 },
   { href: "/dashboard/ia", label: "Intelligence IA", icon: Brain },
+  { href: "/dashboard/insights", label: "Insights marché", icon: TrendingUp },
+  { href: "/dashboard/concurrents", label: "Concurrents", icon: Trophy },
+  { href: "/dashboard/ab-tests", label: "A/B Testing", icon: FlaskConical },
+  { href: "/dashboard/nutrition", label: "Nutrition & Éco", icon: Leaf },
+  { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/dashboard/b2b", label: "Marketplace B2B", icon: Store },
-  { href: "/dashboard/blockchain", label: "Blockchain", icon: ShieldCheck },
+  { href: "/dashboard/blockchain", label: "Blockchain", icon: Award },
   { href: "/dashboard/statistiques", label: "Statistiques", icon: BarChart3 },
   { href: "/dashboard/abonnement", label: "Abonnement", icon: CreditCard },
   { href: "/dashboard/export", label: "Exports", icon: Download },

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, LayoutDashboard, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, History, Award, MapPin } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -76,6 +76,42 @@ export function PublicHeader() {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
+          {/* Consumer menu — Mon espace */}
+          {status !== "authenticated" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#374151] hover:bg-[#F9FAFB] hover:text-[#0f4382] font-medium gap-1.5"
+                >
+                  <UserIcon className="size-4" />
+                  Mon espace
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href="/mon-historique" className="cursor-pointer">
+                    <History className="mr-2 size-4" />
+                    Mon historique
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/mes-recompenses" className="cursor-pointer">
+                    <Award className="mr-2 size-4" />
+                    Mes récompenses
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/carte" className="cursor-pointer">
+                    <MapPin className="mr-2 size-4" />
+                    Carte des scans
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {status === "authenticated" ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -159,6 +195,31 @@ export function PublicHeader() {
               {l.label}
             </Link>
           ))}
+
+          {/* Consumer links — mobile */}
+          {status !== "authenticated" && (
+            <>
+              <div className="pt-3 mt-3 border-t border-[#E5E7EB] text-xs font-semibold text-[#6B7280] uppercase tracking-wider px-4">
+                Mon espace
+              </div>
+              {[
+                { href: "/mon-historique", label: "Mon historique", icon: History },
+                { href: "/mes-recompenses", label: "Mes récompenses", icon: Award },
+                { href: "/carte", label: "Carte des scans", icon: MapPin },
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-[#374151] hover:bg-[#F9FAFB] hover:text-[#0f4382] transition-colors"
+                >
+                  <l.icon className="size-4" />
+                  {l.label}
+                </Link>
+              ))}
+            </>
+          )}
+
           <div className="pt-3 mt-3 border-t border-[#E5E7EB] flex flex-col gap-2">
             {status === "authenticated" ? (
               <>

@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { ServiceWorkerRegister } from "@/components/sw-register";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -40,11 +41,22 @@ export const metadata: Metadata = {
     "Afrique de l'Ouest",
   ],
   authors: [{ name: "VerifScan" }],
+  manifest: "/manifest.json",
+  applicationName: "VerifScan",
+  appleWebApp: {
+    capable: true,
+    title: "VerifScan",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png", sizes: "192x192" },
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: [{ url: "/logo.png", type: "image/png" }],
+    apple: [{ url: "/logo.png", type: "image/png", sizes: "192x192" }],
   },
   openGraph: {
     title: "VerifScan — La vérité au bout du scan",
@@ -55,6 +67,13 @@ export const metadata: Metadata = {
     locale: "fr_SN",
     images: [{ url: "/logo.png", width: 272, height: 66, alt: "VerifScan" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f4382",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
@@ -70,6 +89,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <ServiceWorkerRegister />
         <Toaster />
         <SonnerToaster position="top-right" richColors />
       </body>

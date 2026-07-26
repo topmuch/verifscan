@@ -7,13 +7,18 @@ const footerLinks = {
     { label: "Produits", href: "/produits" },
     { label: "Le concept", href: "/concept" },
     { label: "Fonctionnalités", href: "/#fonctionnalites" },
-    { label: "Marketplace B2B", href: "/marketplace" },
+    { label: "Carte de chaleur", href: "/carte" },
   ],
   entreprise: [
     { label: "À propos", href: "/a-propos" },
     { label: "Devenir partenaire", href: "/devenir-partenaire" },
     { label: "Contact", href: "/contact" },
     { label: "Connexion", href: "/login" },
+  ],
+  consommateur: [
+    { label: "Mon historique", href: "/mon-historique" },
+    { label: "Mes récompenses", href: "/mes-recompenses" },
+    { label: "Carte des scans", href: "/carte" },
   ],
   legal: [
     { label: "Mentions légales", href: "/mentions-legales" },
@@ -34,9 +39,9 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#0a3060] text-white">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-10">
           {/* Brand */}
-          <div className="md:col-span-4 space-y-5">
+          <div className="lg:col-span-2 space-y-5">
             <VerifScanLogo size="lg" variant="light" />
             <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
               La vérité au bout du scan. VerifScan offre aux fabricants un passeport
@@ -66,7 +71,7 @@ export function PublicFooter() {
           </div>
 
           {/* Links */}
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Produit</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.produit.map((l) => (
@@ -79,7 +84,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Entreprise</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.entreprise.map((l) => (
@@ -92,7 +97,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Légal</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.legal.map((l) => (
@@ -105,7 +110,20 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
+            <h3 className="font-semibold text-sm text-white mb-4 font-display">Consommateur</h3>
+            <ul className="space-y-3 text-sm">
+              {footerLinks.consommateur.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-gray-400 hover:text-[#2ebd5a] transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Contact</h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-start gap-2">
