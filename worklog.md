@@ -410,3 +410,50 @@ Stage Summary:
   c. Cliquer sur 'Régénérer tous les QR' — l'URL encodée s'affiche dans le toast
   d. Scanner le QR — si 404, la page affiche l'URL scannée + le lotId pour debug
 - Prochaine étape: redéployer sur Coolify (le build va recompiler avec ces changements).
+
+---
+Task ID: fix-b2BReview-casing
+Agent: main (Super Z)
+Task: User reports "les produits affiche sur le qrcode et la page produit Produit introuvable" avec URL scannée https://verifscan.roomscan.pro/p/cms24ba7q0003rn01uq808ihk
+
+Work Log:
+- Diagnostic production via GET /api/debug/qr-check (déployé au commit précédent):
+  * appUrl: https://verifscan.roomscan.pro ✓
+  * env: NEXT_PUBLIC_APP_URL + NEXTAUTH_URL tous deux définis ✓
+  * DB: 1 lot (cms24gf7j0009rn018u8skmo0 — Confiture Bonne Maman), 1 QR actif, 0 scans
+  * Le lot scanné par l'utilisateur (cms24ba7q0003rn01uq808ihk) N'EXISTE PAS en DB
+
+- Testé /api/lots/cms24gf7j0009rn018u8skmo0 (le lot qui EXISTE) → HTTP 500!
+- Testé /api/lots/cms24ba7q0003rn01uq808ihk (lot utilisateur) → HTTP 404 (normal, n'existe pas)
+
+- Bug 500 identifié: dans src/app/api/lots/[id]/route.ts, les requêtes d'enrichissement
+  utilisaient db.b2bReview (lowercase b) au lieu de db.b2BReview (capital B après '2').
+  Prisma génère les accessors en camelCase selon la règle PascalCase → camelCase:
+    B2BReview → b2BReview (PAS b2bReview)
+  Du coup Promise.all rejetait avec 'Cannot read properties of undefined (reading findMany)',
+  l'API retournait 500, et la page /p/[lotId] catchait l'erreur et affichait 'Produit introuvable'.
+
+- Repro local: créé scripts/test-enrichment.cjs qui exécute le même Promise.all sur un lot local.
+  Avant fix: ✗ ERROR 'Cannot read properties of undefined'.
+  Après fix: ✓ All enrichment queries succeeded (certifications: 0, scanAgg: 98 scans,
+  similarProducts: 3, reviews: 0, anomalies: 0).
+
+- Vérifié que tous les autres fichiers du codebase utilisent déjà la bonne casse:
+  db.b2BProduct, db.b2BOrder, db.b2BReview, db.b2BMessage — partout ailleurs c'est correct.
+  Seul /api/lots/[id]/route.ts avait le bug.
+
+- Fix appliqué: 2 occurrences db.b2bReview → db.b2BReview dans src/app/api/lots/[id]/route.ts.
+
+- Build vérifié: npx next build → 21.9s, 70 pages, 0 errors.
+- Commit d249f90 poussé sur origin/main.
+
+Stage Summary:
+- Bug critique résolu: la page produit publique /p/[lotId] marchait pour AUCUN lot parce que
+  l'API /api/lots/[id] crashait en 500 à cause de la mauvaise casse Prisma.
+- Après redéploiement Coolify, le lot existant (cms24gf7j0009rn018u8skmo0) sera consultable.
+- L'URL scannée par l'utilisateur (cms24ba7q0003rn01uq808ihk) pointe vers un lot qui n'existe
+  plus en DB — probablement un lot créé avant un wipe DB. Solutions:
+  1. Si l'utilisateur a le lotNumber (01022), l'API le trouvera via le fallback lotNumber
+     ajouté au commit précédent.
+  2. Sinon, l'utilisateur doit recréer le lot et reimprimer le QR code.
+- Prochaine étape: attendre le redéploiement Coolify puis tester à nouveau.
