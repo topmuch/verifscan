@@ -40,6 +40,12 @@ export const metadata: Metadata = {
     "Afrique de l'Ouest",
   ],
   authors: [{ name: "VerifScan" }],
+  icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+    ],
+    apple: [{ url: "/logo.png", type: "image/png" }],
+  },
   openGraph: {
     title: "VerifScan — La vérité au bout du scan",
     description:
@@ -47,6 +53,7 @@ export const metadata: Metadata = {
     siteName: "VerifScan",
     type: "website",
     locale: "fr_SN",
+    images: [{ url: "/logo.png", width: 272, height: 66, alt: "VerifScan" }],
   },
 };
 

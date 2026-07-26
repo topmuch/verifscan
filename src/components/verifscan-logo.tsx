@@ -1,10 +1,19 @@
 import Link from "next/link";
-import { ScanLine } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
+/**
+ * VerifScan logo component.
+ *
+ * Uses the brand PNG asset at `/public/logo.png` (272×66, transparent background,
+ * already contains the "VerifScan" wordmark in the brand palette #0f4382 + #2ebd5a).
+ *
+ * Because the wordmark is baked into the image, the `showText` prop is kept only
+ * for API backward-compatibility and has no visual effect.
+ */
 export function VerifScanLogo({
   className,
-  showText = true,
+  showText = true, // kept for backward compat — wordmark is part of the image
   size = "md",
   variant = "color",
 }: {
@@ -13,35 +22,37 @@ export function VerifScanLogo({
   size?: "sm" | "md" | "lg" | "xl";
   variant?: "color" | "light";
 }) {
-  const dim = size === "sm" ? 32 : size === "lg" ? 48 : size === "xl" ? 64 : 40;
-  const text = size === "sm" ? "text-lg" : size === "lg" ? "text-2xl" : size === "xl" ? "text-3xl" : "text-xl";
+  // Size by height — logo aspect ratio is ~4.12:1 (272×66)
+  const heights: Record<"sm" | "md" | "lg" | "xl", number> = {
+    sm: 28,
+    md: 36,
+    lg: 48,
+    xl: 64,
+  };
+  const h = heights[size];
+  const w = Math.round(h * (272 / 66));
+
   return (
     <Link
       href="/"
-      className={cn("flex items-center gap-2 group", className)}
+      className={cn(
+        "flex items-center group transition-opacity hover:opacity-90",
+        className
+      )}
       aria-label="VerifScan - Accueil"
     >
-      <div
-        className="rounded-xl flex items-center justify-center shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3"
-        style={{
-          width: dim,
-          height: dim,
-          background:
-            "linear-gradient(135deg, #0f4382 0%, #2ebd5a 100%)",
-        }}
-      >
-        <ScanLine
-          className="text-white"
-          style={{ width: dim * 0.55, height: dim * 0.55 }}
-          strokeWidth={2.5}
-        />
-      </div>
-      {showText && (
-        <div className={cn("font-bold tracking-tight font-display", text)}>
-          <span style={{ color: variant === "light" ? "#FFFFFF" : "#0f4382" }}>Verif</span>
-          <span style={{ color: variant === "light" ? "#2ebd5a" : "#2ebd5a" }}>Scan</span>
-        </div>
-      )}
+      <Image
+        src="/logo.png"
+        alt="VerifScan"
+        width={w}
+        height={h}
+        priority
+        className={cn(
+          "h-auto w-auto transition-transform duration-300 group-hover:scale-[1.03]",
+          variant === "light" && "drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+        )}
+        style={{ height: h, width: "auto" }}
+      />
     </Link>
   );
 }
