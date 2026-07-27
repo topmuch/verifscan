@@ -578,11 +578,21 @@ export function ExportProduceView({ lot }: { lot: ExportLot }) {
             )}
           </div>
           <div className="space-y-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 font-medium">Entreprise</p>
-              <p className="text-xl font-display font-bold" style={{ color: GREEN_DARK }}>
-                {producer.companyName}
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-wide text-gray-500 font-medium">Entreprise</p>
+                <p className="text-xl font-display font-bold" style={{ color: GREEN_DARK }}>
+                  {producer.companyName}
+                </p>
+              </div>
+              <a
+                href={`/producteur/${producer.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white shadow-sm hover:shadow-md transition-all flex-shrink-0"
+                style={{ backgroundColor: BLUE }}
+              >
+                <ExternalLink className="size-3.5" />
+                Voir la fiche producteur
+              </a>
             </div>
             {product.producerStory && (
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 whitespace-pre-line">

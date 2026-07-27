@@ -27,6 +27,8 @@ import {
   Plus,
   CheckCircle2,
   CloudUpload,
+  Wand2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -99,6 +101,7 @@ export default function CertificationsPage() {
   const [syncing, setSyncing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Form state
@@ -179,6 +182,60 @@ export default function CertificationsPage() {
       return null;
     } finally {
       setUploadingPdf(false);
+    }
+  }
+
+  /* ----- Run OCR on the selected PDF to pre-fill the form ----- */
+  async function runOcr() {
+    if (!pdfFile) {
+      toast.error("Sélectionnez d'abord un PDF à analyser");
+      return;
+    }
+    setOcrLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", pdfFile);
+      const res = await fetch("/api/certifications/ocr", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Échec de l'analyse");
+
+      const f = data.fields || {};
+      const filled: string[] = [];
+      const next: typeof form = { ...form };
+
+      if (f.issuer && !form.issuer) {
+        next.issuer = f.issuer;
+        filled.push("émetteur");
+      }
+      if (f.certificateNumber && !form.certificateNumber) {
+        next.certificateNumber = f.certificateNumber;
+        filled.push("n° certificat");
+      }
+      if (f.issuedAt && !form.issuedAt) {
+        next.issuedAt = f.issuedAt;
+        filled.push("date d'émission");
+      }
+      if (f.expiresAt && !form.expiresAt) {
+        next.expiresAt = f.expiresAt;
+        filled.push("date d'expiration");
+      }
+
+      setForm(next);
+
+      if (filled.length === 0) {
+        toast.info(
+          "Aucun champ n'a pu être extrait automatiquement. Le PDF est peut-être une image scannée. Remplissez les champs manuellement."
+        );
+      } else {
+        const conf = f.confidence === "high" ? "haute" : f.confidence === "medium" ? "moyenne" : "basse";
+        toast.success(
+          `${filled.length} champ(s) pré-rempli(s) : ${filled.join(", ")} (confiance ${conf}). Vérifiez avant d'enregistrer.`
+        );
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de l'analyse OCR");
+    } finally {
+      setOcrLoading(false);
     }
   }
 
@@ -440,6 +497,46 @@ export default function CertificationsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* === OCR auto-fill button === */}
+                {pdfFile && (
+                  <div className="mt-2 p-3 rounded-md bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200">
+                    <div className="flex items-start gap-3">
+                      <div className="size-9 rounded-md bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="size-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-purple-900">
+                          Auto-remplir depuis le PDF
+                        </p>
+                        <p className="text-xs text-purple-700 mt-0.5">
+                          Analyse le texte du PDF et pré-remplit l&apos;émetteur, le n° de certificat
+                          et les dates. Fonctionne sur les PDF textuels (pas les scans d&apos;images).
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={ocrLoading || uploadingPdf}
+                          onClick={runOcr}
+                          className="mt-2 bg-purple-600 hover:bg-purple-700"
+                        >
+                          {ocrLoading ? (
+                            <>
+                              <Loader2 className="mr-2 size-3.5 animate-spin" />
+                              Analyse en cours...
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 className="mr-2 size-3.5" />
+                              Analyser le PDF
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-gray-500">
                   Ou collez une URL externe si le PDF est déjà hébergé :
                 </p>
