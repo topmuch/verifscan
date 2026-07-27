@@ -52,3 +52,10 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Local agent tool outputs (debug artifacts)
+/tool-results/
+
+# Local SQLite database (dev only)
+/db/*.db
+/db/*.db-journal
