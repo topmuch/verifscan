@@ -20,6 +20,11 @@ const footerLinks = {
     { label: "Mes récompenses", href: "/mes-recompenses" },
     { label: "Carte des scans", href: "/carte" },
   ],
+  developpeurs: [
+    { label: "API REST", href: "/developers" },
+    { label: "Webhooks", href: "/developers#webhooks" },
+    { label: "Créer une clé API", href: "/dashboard/api-keys" },
+  ],
   legal: [
     { label: "Mentions légales", href: "/mentions-legales" },
     { label: "CGU", href: "/cgu" },
@@ -39,7 +44,7 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#0a3060] text-white">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-10">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-5">
             {/* Logo sur pastille blanche pour lisibilité sur fond bleu foncé */}
@@ -104,6 +109,19 @@ export function PublicFooter() {
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Légal</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.legal.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-gray-400 hover:text-[#2ebd5a] transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-1">
+            <h3 className="font-semibold text-sm text-white mb-4 font-display">Développeurs</h3>
+            <ul className="space-y-3 text-sm">
+              {footerLinks.developpeurs.map((l) => (
                 <li key={l.label}>
                   <Link href={l.href} className="text-gray-400 hover:text-[#2ebd5a] transition-colors">
                     {l.label}

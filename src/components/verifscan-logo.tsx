@@ -1,23 +1,23 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
  * VerifScan logo component.
  *
- * Uses brand SVG assets under /public/ :
- *   - logo-light.svg  : version blanche pour fonds sombres (sidebar dashboard, header admin)
- *   - logo-color.svg  : version colorée pour fonds clairs (header public, footer)
- *   - logo-icon.svg   : icône bouclier seule (favicon, version compacte)
+ * Uses the brand PNG asset at `/public/logo.png` (272×66, transparent background,
+ * already contains the "VerifScan" wordmark in the brand palette #0f4382 + #2ebd5a).
  *
- * SVGs are inline-rendered via <img> (no Next/Image optimization needed for SVG).
- * Aspect ratio : 280/80 = 3.5:1.
+ * Because the wordmark is baked into the image, the `showText` prop is kept only
+ * for API backward-compatibility and has no visual effect.
  *
- * The legacy public/logo.png (272×66) is kept for backward compat in metadata
- * (OG tags, manifest) but is NOT used by this component.
+ * The SVG assets (logo-light.svg, logo-color.svg, logo-icon.svg) are still
+ * available for specific use cases but the main <VerifScanLogo /> uses PNG
+ * for maximum visual fidelity across all pages.
  */
 export function VerifScanLogo({
   className,
-  showText = true, // kept for backward compat — SVG already includes wordmark
+  showText = true, // kept for backward compat — wordmark is part of the image
   size = "md",
   variant = "color",
 }: {
@@ -26,17 +26,15 @@ export function VerifScanLogo({
   size?: "sm" | "md" | "lg" | "xl";
   variant?: "color" | "light";
 }) {
-  // Size by height — SVG aspect ratio is 280/80 = 3.5:1
+  // Size by height — logo aspect ratio is ~4.12:1 (272×66)
   const heights: Record<"sm" | "md" | "lg" | "xl", number> = {
-    sm: 36,
-    md: 44,
-    lg: 56,
-    xl: 72,
+    sm: 28,
+    md: 36,
+    lg: 48,
+    xl: 64,
   };
   const h = heights[size];
-  const w = Math.round(h * (280 / 80));
-
-  const src = variant === "light" ? "/logo-light.svg" : "/logo-color.svg";
+  const w = Math.round(h * (272 / 66));
 
   return (
     <Link
@@ -47,12 +45,12 @@ export function VerifScanLogo({
       )}
       aria-label="VerifScan - Accueil"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
+      <Image
+        src="/logo.png"
         alt="VerifScan"
         width={w}
         height={h}
+        priority
         className={cn(
           "h-auto w-auto transition-transform duration-300 group-hover:scale-[1.03]",
           variant === "light" && "drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
@@ -66,6 +64,7 @@ export function VerifScanLogo({
 /**
  * Compact icon-only logo (just the shield + checkmark, no wordmark).
  * Useful in mobile headers, favicons, narrow spaces.
+ * Uses the SVG icon asset for crisp rendering at small sizes.
  */
 export function VerifScanIcon({
   className,
