@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="VerifScan">
+  <!--
+    Logo VerifScan — version icône seule (favicon, mobile, header compact).
+    Juste le bouclier + coche, sans le wordmark.
+  -->
+  <defs>
+    <linearGradient id="iconShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2ebd5a"/>
+      <stop offset="100%" stop-color="#1d9c46"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M 32 4 L 56 14 L 56 36 C 56 54 44 64 32 70 C 20 64 8 54 8 36 L 8 14 Z"
+        fill="url(#iconShieldGrad)" stroke="#0f4382" stroke-opacity="0.1" stroke-width="1.5"/>
+  <path d="M 20 36 L 30 47 L 46 26"
+        fill="none" stroke="#ffffff" stroke-width="6"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -45,6 +45,8 @@ const updateSchema = z.object({
   weight: z.string().optional().or(z.literal("")),
   categoryId: z.string().min(1).optional(),
   isVisible: z.boolean().optional(),
+  // Code-barres produit (EAN-13, EAN-8, UPC-A, Code 128...)
+  barcode: z.string().optional().or(z.literal("")),
   // Champs spécifiques au template export_produce
   variety: z.string().optional().or(z.literal("")),
   regionOfProduction: z.string().optional().or(z.literal("")),
@@ -119,6 +121,7 @@ export async function PUT(
   if ("description" in cleanData && cleanData.description === "") cleanData.description = null;
   if ("photoUrl" in cleanData && cleanData.photoUrl === "") cleanData.photoUrl = null;
   if ("weight" in cleanData && cleanData.weight === "") cleanData.weight = null;
+  if ("barcode" in cleanData && cleanData.barcode === "") cleanData.barcode = null;
   if ("variety" in cleanData && cleanData.variety === "") cleanData.variety = null;
   if ("regionOfProduction" in cleanData && cleanData.regionOfProduction === "")
     cleanData.regionOfProduction = null;

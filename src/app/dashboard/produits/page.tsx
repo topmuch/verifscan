@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Package, Edit, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Plus, Package, Edit, Eye, EyeOff, Trash2, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,12 +29,20 @@ export default async function DashboardProduitsPage() {
             Gérez votre catalogue de produits traçables.
           </p>
         </div>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-          <Link href="/dashboard/produits/nouveau">
-            <Plus className="mr-2 size-4" />
-            Nouveau produit
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/dashboard/produits/importer">
+              <Upload className="mr-2 size-4" />
+              Importer (CSV/Excel)
+            </Link>
+          </Button>
+          <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+            <Link href="/dashboard/produits/nouveau">
+              <Plus className="mr-2 size-4" />
+              Nouveau produit
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {products.length === 0 ? (

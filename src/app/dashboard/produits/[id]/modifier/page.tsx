@@ -48,6 +48,8 @@ export default function ModifierProduitPage({
     weight: "",
     categoryId: "",
     isVisible: true,
+    // Code-barres produit
+    barcode: "",
     // Champs export_produce
     variety: "",
     regionOfProduction: "",
@@ -72,6 +74,7 @@ export default function ModifierProduitPage({
           weight: product.weight || "",
           categoryId: product.categoryId || "",
           isVisible: product.isVisible ?? true,
+          barcode: product.barcode || "",
           variety: product.variety || "",
           regionOfProduction: product.regionOfProduction || "",
           producerStory: product.producerStory || "",
@@ -151,6 +154,7 @@ export default function ModifierProduitPage({
       photoUrl: form.photoUrl,
       weight: form.weight,
       categoryId: form.categoryId,
+      barcode: form.barcode,
       isVisible: form.isVisible,
     };
 
@@ -241,6 +245,19 @@ export default function ModifierProduitPage({
                   onChange={(e) => setForm({ ...form, weight: e.target.value })}
                   className="border-emerald-200 focus-visible:ring-emerald-500"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Code-barres (EAN / UPC)</Label>
+                <Input
+                  id="barcode"
+                  placeholder="Ex : 6112345678905"
+                  value={form.barcode}
+                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  className="border-emerald-200 focus-visible:ring-emerald-500 font-mono"
+                />
+                <p className="text-xs text-gray-500">
+                  Affiché à côté du QR code sur la page produit. Optionnel.
+                </p>
               </div>
             </div>
 

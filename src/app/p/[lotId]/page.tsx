@@ -60,6 +60,7 @@ import {
   starArray,
 } from "../_lib/product-helpers";
 import { useDarkMode } from "../_lib/use-dark-mode";
+import { Barcode } from "@/components/barcode";
 
 /* ============ Types ============ */
 
@@ -148,6 +149,7 @@ type Lot = {
     description: string | null;
     photoUrl: string | null;
     weight: string | null;
+    barcode?: string | null;
     // Champs export_produce
     variety?: string | null;
     regionOfProduction?: string | null;
@@ -1144,25 +1146,40 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         </Reveal>
 
-        {/* === 7. QR CODE & CONTACT === */}
+        {/* === 7. QR CODE & BARCODE & CONTACT === */}
         <div className="grid sm:grid-cols-2 gap-4">
           {lot.qrCodes[0]?.qrCodeImageUrl && (
             <Reveal>
               <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 text-center shadow-md h-full">
                 <h3 className="font-display font-semibold mb-4 flex items-center justify-center gap-2 text-gray-900 dark:text-gray-100">
                   <QrCode className="size-5" style={{ color: BLUE }} />
-                  QR code officiel
+                  QR code &amp; Code-barres
                 </h3>
-                <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={lot.qrCodes[0].qrCodeImageUrl}
-                    alt="QR code"
-                    className="w-40 h-40"
-                  />
+                {/* QR + Barcode côte à côte sur desktop, empilés sur mobile */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={lot.qrCodes[0].qrCodeImageUrl}
+                      alt="QR code"
+                      className="w-32 h-32 sm:w-36 sm:h-36"
+                    />
+                  </div>
+                  {lot.product.barcode && (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+                        <Barcode value={lot.product.barcode} width={2} height={56} />
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        EAN / UPC
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                  Scannez ce code pour vérifier l&apos;authenticité à tout moment
+                  {lot.product.barcode
+                    ? "Scannez le QR code pour la traçabilité, le code-barres pour la caisse."
+                    : "Scannez ce code pour vérifier l'authenticité à tout moment."}
                 </p>
               </div>
             </Reveal>

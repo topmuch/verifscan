@@ -46,6 +46,7 @@ model User {
   b2bReviewsReceived      B2BReview[]   @relation("FabricantReviews")
   productReviewsReceived  ProductReview[] @relation("ProductReviewFabricant")
   conversations           Conversation[]
+  apiKeys                 ApiKey[]
 }
 
 model Category {
@@ -70,6 +71,8 @@ model Product {
   photoUrl           String?
   weight             String?
   isVisible          Boolean  @default(true)
+  // Code-barres produit (EAN-13, EAN-8, UPC-A, Code 128...) pour affichage à côté du QR code
+  barcode            String?
   // Champs spécifiques au template 'export_produce' (ignorés sinon)
   variety            String?   // ex: "Kent", "Keitt" pour les mangues
   regionOfProduction String?   // ex: "Casamance", "Vallée du fleuve Sénégal"
@@ -785,4 +788,27 @@ model NutritionInfo {
   updatedAt       DateTime @updatedAt
 
   @@index([productId])
+}
+
+// ============================================================
+// API Keys — pour intégration avec systèmes externes (ERP, CRM,
+// marketplaces, applications tierces). Permet à un fabricant ou
+// admin de générer des clés d'API persistantes qui s'authentifient
+// via l'en-tête Authorization: Bearer <key>.
+// ============================================================
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String    // propriétaire de la clé
+  name        String    // libellé (ex: "ERP Sage", "Marketplace Jumia")
+  hashedKey   String    @unique // hash bcrypt de la clé brute
+  prefix      String    // 8 premiers caractères affichables (ex: "vsk_abc1...")
+  permissions String    @default("read") // 'read' | 'readwrite' | 'admin'
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime? // null = active, non-null = révoquée
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hashedKey])
 }

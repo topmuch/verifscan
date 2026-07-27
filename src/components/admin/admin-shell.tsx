@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Search,
+  Code2,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -28,6 +29,7 @@ const adminLinks = [
   { href: "/admin/abonnements", label: "Abonnements", icon: CreditCard },
   { href: "/admin/categories", label: "Catégories", icon: Layers },
   { href: "/admin/statistiques", label: "Statistiques", icon: BarChart3 },
+  { href: "/admin/api-keys", label: "API Keys", icon: Code2, badge: "NEW" },
   { href: "/admin/parametres", label: "Paramètres", icon: Settings },
   { href: "/admin/logs", label: "Logs & Audit", icon: ShieldCheck },
   { href: "/admin/support", label: "Support", icon: Bell },
@@ -86,6 +88,7 @@ export function AdminShell({
                 ? pathname === l.href
                 : pathname.startsWith(l.href);
               const Icon = l.icon;
+              const badge = (l as any).badge;
               return (
                 <li key={l.href}>
                   <Link
@@ -99,7 +102,12 @@ export function AdminShell({
                     )}
                   >
                     <Icon className="size-4" />
-                    {l.label}
+                    <span className="flex-1">{l.label}</span>
+                    {badge && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-white">
+                        {badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

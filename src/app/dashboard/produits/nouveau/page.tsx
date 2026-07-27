@@ -37,6 +37,8 @@ export default function NouveauProduitPage() {
     weight: "",
     categoryId: "",
     isVisible: true,
+    // Code-barres produit (EAN-13, UPC-A...)
+    barcode: "",
     // Champs export_produce
     variety: "",
     regionOfProduction: "",
@@ -118,6 +120,7 @@ export default function NouveauProduitPage() {
         weight: form.weight,
         categoryId: form.categoryId,
         isVisible: form.isVisible,
+        barcode: form.barcode || undefined,
         // Champs export_produce (envoyés seulement si pertinent)
         ...(isExportProduce
           ? {
@@ -199,6 +202,19 @@ export default function NouveauProduitPage() {
                   onChange={(e) => setForm({ ...form, weight: e.target.value })}
                   className="border-emerald-200 focus-visible:ring-emerald-500"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Code-barres (EAN / UPC)</Label>
+                <Input
+                  id="barcode"
+                  placeholder="Ex : 6112345678905 (EAN-13)"
+                  value={form.barcode}
+                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  className="border-emerald-200 focus-visible:ring-emerald-500 font-mono"
+                />
+                <p className="text-xs text-gray-500">
+                  Affiché à côté du QR code sur la page produit. Optionnel.
+                </p>
               </div>
             </div>
 

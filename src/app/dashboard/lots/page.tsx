@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Layers, Eye, AlertOctagon, CheckCircle2, Film } from "lucide-react";
+import { Plus, Layers, Eye, AlertOctagon, CheckCircle2, Film, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +33,12 @@ export default async function DashboardLotsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {lots.length > 0 && <RegenerateAllQrButton />}
+          <Button asChild variant="outline">
+            <Link href="/dashboard/lots/importer">
+              <Upload className="mr-2 size-4" />
+              Importer (CSV/Excel)
+            </Link>
+          </Button>
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
             <Link href="/dashboard/lots/nouveau">
               <Plus className="mr-2 size-4" />
