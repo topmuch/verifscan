@@ -862,3 +862,113 @@ Stage Summary:
 - 9 fichiers modifiés/créés, +1272 lignes / -7 lignes
 - Dépendance: pdfjs-dist@4.10.38 (workerless Node SSR)
 - Artéfacts: src/lib/pdf-extract.ts, src/app/api/certifications/ocr/route.ts, src/app/api/producers/[id]/route.ts, src/app/producteur/[id]/page.tsx
+
+---
+Task ID: phase6-api-write-and-webhooks
+Agent: Super Z (main)
+Task: Ajouter endpoints POST/PUT/DELETE sur /api/v1/* (création produits/lots via API externe) + webhooks pour prévenir un système externe quand un scan se produit
+
+Work Log:
+- Répondu OUI à la question d'ajustement posée en fin de Phase 5
+
+=== Endpoints CRUD API v1 ===
+- POST /api/v1/products (src/app/api/v1/products/route.ts étendu)
+  * Auth: Bearer vsk_live_xxx + permission 'readwrite' ou 'admin'
+  * Zod validation: name, brand, categoryId, description?, photoUrl?, weight?, barcode?, isVisible?, + champs export_produce
+  * Vérifie que la catégorie existe
+  * Crée le produit + déclenche webhook 'product_created'
+  * Retourne 201 + produit créé avec catégorie
+
+- PUT /api/v1/products/[id] + DELETE (nouveau fichier [id]/route.ts)
+  * GET: récupère 1 produit (vérif ownership)
+  * PUT: mise à jour partielle (Zod optionnel), déclenche 'product_updated'
+  * DELETE: cascade (b2bProduct, aiPrediction, aiAnomaly, puis product → lots → QR → scans)
+
+- POST /api/v1/lots (route.ts étendu)
+  * Vérifie que le produit appartient au fabricant
+  * Valide manufacturingDate < expirationDate
+  * Génère lotNumber auto si absent (LOT-YYYYMMDD-XXXX)
+  * Vérifie unicité lotNumber
+  * Crée le lot + génère QR code automatiquement (generateQrCode=true par défaut)
+  * Déclenche webhook 'lot_created' avec QR code info
+  * Retourne 201 + { lot, qrCode }
+
+- PUT /api/v1/lots/[id] + DELETE (nouveau fichier [id]/route.ts)
+  * PUT: mise à jour avec gestion spéciale du statut recalled (recallAt + recallReason)
+    - Si status passe à 'recalled' → déclenche aussi l'événement 'recall'
+  * DELETE: cascade sur QR codes + scans
+
+=== Système de webhooks ===
+- Nouveaux modèles Prisma (prisma/schema.prisma):
+  * Webhook: id, userId, url, secret, events (CSV), description?, isActive, timestamps
+  * WebhookDelivery: id, webhookId, event, payload, status (pending/success/failed/retry),
+    statusCode?, response?, attempts, maxAttempts=3, lastError?, deliveredAt?, nextRetryAt?
+  * Relation User.webhooks ajoutée
+
+- src/lib/webhooks.ts (nouveau, ~200 lignes):
+  * dispatchWebhookEvent(userId, event, payload) — fonction principale non-bloquante
+    1. Liste webhooks actifs du user qui écoutent cet event
+    2. Crée un WebhookDelivery en BDD pour chaque match
+    3. Lance l'envoi HTTP en parallèle (fire-and-forget)
+  * signPayload(payload, secret) — HMAC SHA-256 avec le secret du webhook
+  * generateWebhookSecret() — produit whsec_<32 hex>
+  * attemptDelivery() — POST avec timeout 10s, headers X-VerifScan-Signature/Event/Delivery,
+    met à jour le delivery (status, statusCode, response tronqué 2KB, lastError, nextRetryAt)
+  * getRetryDelayMs() — exponentiel: 1min, 5min, 15min, 60min
+  * processPendingRetries() — pour cron futur (récupère deliveries en 'retry' avec nextRetryAt <= now)
+
+- Hook dans /api/scans POST (src/app/api/scans/route.ts):
+  * Nouvelle fonction triggerScanWebhook() appelée après insertion du scan
+  * Non bloquant (.catch(() => {}))
+  * Payload envoyé: scanId, qrCodeId, lotId, product{name,brand}, scannedAt, location{country,city,region,lat,lng}, device{type}
+
+- API CRUD /api/webhooks:
+  * GET /api/webhooks — liste + stats 7 derniers jours (group by status) + lastDelivery
+  * POST /api/webhooks — crée avec secret auto-généré (retourné UNE SEULE FOIS), max 10/user
+  * PUT /api/webhooks/[id] — met à jour url/events/description/isActive
+  * DELETE /api/webhooks/[id] — supprime (cascade deliveries)
+  * GET /api/webhooks/events — liste les 7 événements disponibles avec libellés
+  * GET /api/webhooks/[id]/deliveries — 50 dernières livraisons (sans payload pour rester léger)
+
+- Dashboard /dashboard/webhooks (nouveau, ~500 lignes):
+  * Header avec bouton "Nouveau webhook" + lien doc
+  * Bannière info "Comment ça marche ?" (POST signé HMAC, X-VerifScan-Signature, timeout 10s, 3 retries)
+  * Bannière verte de succès après création avec secret affiché (toggle visibility + bouton copier)
+  * Formulaire création: URL + description + checkboxes pour 7 événements (grille 3 col)
+  * Liste webhooks: badge Actif/Désactivé, URL, description, events badges, secretHint, dates
+  * Boutons: toggle activer/désactiver, supprimer
+  * Stats 7j par webhook: Succès (vert), Échecs (rouge), Retries (orange), Dernière livraison (badge + statusCode + event + date + erreur)
+  * Snippet Node.js complet pour vérifier la signature (express.raw + crypto.createHmac)
+
+- Entrée sidebar: "Webhooks" (icône Webhook lucide-react) avec badge NEW, positionnée juste après "API & Intégrations"
+
+- Documentation /developers mise à jour:
+  * 6 nouveaux <Endpoint> cards: POST/PUT/DELETE products + POST/PUT/DELETE lots
+    avec exemples curl complets
+  * Nouvelle section <section id="webhooks">:
+    - Liste des 7 événements avec description
+    - Format de la requête (headers + body exemple scan)
+    - Snippet Node.js vérification signature (express.raw + crypto.createHmac)
+    - Note sur les retries (3 tentatives, 1/5/15 min)
+    - CTA "Configurer mes webhooks" → /dashboard/webhooks
+  * Bouton "Webhooks" ajouté dans le hero (à côté de "Voir les endpoints")
+
+- Schéma DB synchronisé: npx prisma db push → Webhook + WebhookDelivery tables créées
+- Prisma client régénéré (npx prisma generate)
+
+Vérifications:
+- tsc --noEmit sur les nouveaux fichiers: 0 erreur (erreurs pré-existantes ailleurs non touchées)
+- next build: ✓ Compiled successfully in 27.7s, 110 pages statiques
+- 4 nouvelles routes API v1 + 5 nouvelles routes /api/webhooks = 9 nouveaux endpoints
+- 1 nouvelle page dashboard (/dashboard/webhooks)
+- 1 nouvelle lib (src/lib/webhooks.ts, ~200 lignes)
+
+Stage Summary:
+- API v1 maintenant complète CRUD: un système externe peut créer/lire/modifier/supprimer
+  produits et lots via /api/v1/* avec une clé API 'readwrite' ou 'admin'
+- Système de webhooks operationnel: à chaque scan d'un QR code, VerifScan notifie
+  en temps réel (HTTP POST signé HMAC) tous les webhooks actifs du fabricant
+- 7 événements disponibles: scan, recall, review, lot_created, lot_updated,
+  product_created, product_updated
+- Documentation publique /developers complète avec exemples curl + snippets Node.js
+- Commit 85d7527 poussé sur origin/main — Coolify va redéployer automatiquement
