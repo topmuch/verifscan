@@ -7,7 +7,7 @@
  *  - POST /api/scans: background sync queue (saved locally, retried when back online)
  */
 
-const CACHE_VERSION = "v4-20260727";
+const CACHE_VERSION = "v5-20260728";
 const STATIC_CACHE = `vs-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `vs-runtime-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -17,6 +17,8 @@ const PRECACHE_URLS = [
   "/produits",
   "/offline.html",
   "/logo.png",
+  "/icon-192.png",
+  "/icon-512.png",
   "/manifest.json",
 ];
 
@@ -52,16 +54,6 @@ function isStaticAsset(url) {
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/hero/") ||
     /\.(?:png|jpg|jpeg|svg|webp|gif|woff2?|ttf|ico)$/i.test(url.pathname)
-  );
-}
-
-function isApiGet(request) {
-  return (
-    request.method === "GET" &&
-    url.pathname.startsWith("/api/") &&
-    (url.pathname.startsWith("/api/products/featured") ||
-      url.pathname.startsWith("/api/scans/") ||
-      url.pathname.startsWith("/api/scan/"))
   );
 }
 
@@ -125,7 +117,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy));
           return resp;
         })
-        .catch(() => caches.match(request).then((c) => c || Response.error())))
+        .catch(() => caches.match(request).then((c) => c || Response.error()))
     );
     return;
   }

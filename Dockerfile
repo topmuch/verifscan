@@ -87,8 +87,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 # --- Copy bcryptjs (needed by create-admin.cjs but not bundled by Next.js standalone trace) ---
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
-# --- Copy admin-seeding script ---
+# --- Copy admin-seeding + password reset scripts ---
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/create-admin.cjs ./scripts/create-admin.cjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/reset-admin.cjs ./scripts/reset-admin.cjs
 
 # --- Copy package.json (needed by create-admin.cjs to resolve bcryptjs/prisma) ---
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json

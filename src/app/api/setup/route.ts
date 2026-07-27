@@ -1,14 +1,16 @@
 // POST /api/setup
 // Triggers the production seed (admin + demo fabricant + categories) on demand.
 //
-// Security: this endpoint is intentionally UNAUTHENTICATED so it can bootstrap
-// a fresh deployment. It is safe because:
-//   1. The seeder is idempotent — running it twice is a no-op.
-//   2. It does NOT overwrite existing passwords.
-//   3. After the first admin exists, calling this endpoint just confirms
-//      the existing state.
+// Security model:
+//   - Without ?force=true: idempotent no-op (just reports current state). Safe to call.
+//   - With ?force=true: resets admin & demo fabricant passwords. This is DANGEROUS
+//     and is therefore gated by the SETUP_TOKEN env var when set.
+//       * If process.env.SETUP_TOKEN is set, callers MUST pass ?token=<same value>.
+//       * If process.env.SETUP_TOKEN is NOT set (dev/initial bootstrap), the call
+//         is allowed but logged — production deployments should always set SETUP_TOKEN.
 //
-// In production you may want to remove this route once setup is complete.
+// This endpoint remains unauthenticated so it can bootstrap a fresh deployment
+// where no admin exists yet. After bootstrap, set SETUP_TOKEN in Coolify env.
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -32,6 +34,28 @@ export async function POST(req: Request) {
   try {
     const url = new URL(req.url);
     const force = url.searchParams.get("force") === "true";
+    const suppliedToken = url.searchParams.get("token");
+
+    // Gate ?force=true behind SETUP_TOKEN env var when set
+    if (force) {
+      const expectedToken = process.env.SETUP_TOKEN;
+      if (expectedToken) {
+        if (!suppliedToken || suppliedToken !== expectedToken) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error:
+                "FORCE_RESET_FORBIDDEN: SETUP_TOKEN is configured on this server — pass ?token=<SETUP_TOKEN> to reset passwords.",
+            },
+            { status: 403 }
+          );
+        }
+      } else {
+        log.push(
+          "WARNING: SETUP_TOKEN env var is NOT set. Anyone with network access can reset the admin password. Set SETUP_TOKEN in Coolify env to lock this down."
+        );
+      }
+    }
 
     const db = new PrismaClient();
 
