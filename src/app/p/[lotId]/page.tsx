@@ -657,7 +657,7 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                     <img
                       src={lot.product.user.logoUrl}
                       alt={`Logo ${lot.product.user.companyName}`}
-                      className="size-10 rounded-lg object-contain bg-white border border-gray-200 p-0.5"
+                      className="size-20 rounded-lg object-contain bg-white border border-gray-200 p-1"
                     />
                   )}
                   <div className="text-sm text-gray-600 dark:text-gray-300">
