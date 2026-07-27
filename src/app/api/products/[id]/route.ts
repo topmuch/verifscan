@@ -1,6 +1,149 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireFabricant } from "@/lib/session";
+
+/**
+ * GET /api/products/[id]
+ * Récupère un produit appartenant au fabricant connecté.
+ * Inclut la catégorie (pour détecter pageTemplate export_produce) et les
+ * champs spécifiques à l'export (variety, regionOfProduction, producerStory...).
+ */
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireFabricant();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const product = await db.product.findUnique({
+    where: { id },
+    include: {
+      category: { select: { id: true, name: true, icon: true, pageTemplate: true } },
+    },
+  });
+
+  if (!product) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+  }
+  if (product.userId !== user.id) {
+    return NextResponse.json({ error: "Vous ne possédez pas ce produit" }, { status: 403 });
+  }
+
+  return NextResponse.json(product);
+}
+
+const updateSchema = z.object({
+  name: z.string().min(2).optional(),
+  brand: z.string().min(1).optional(),
+  description: z.string().optional().or(z.literal("")),
+  photoUrl: z.string().optional().or(z.literal("")),
+  weight: z.string().optional().or(z.literal("")),
+  categoryId: z.string().min(1).optional(),
+  isVisible: z.boolean().optional(),
+  // Champs spécifiques au template export_produce
+  variety: z.string().optional().or(z.literal("")),
+  regionOfProduction: z.string().optional().or(z.literal("")),
+  producerStory: z.string().optional().or(z.literal("")),
+  producerPhotoUrl: z.string().optional().or(z.literal("")),
+  gpsLat: z.number().optional().nullable(),
+  gpsLng: z.number().optional().nullable(),
+});
+
+/**
+ * PUT /api/products/[id]
+ * Met à jour un produit appartenant au fabricant connecté.
+ * Si la catégorie change pour une catégorie `export_produce`, les champs
+ * spécifiques (variety, etc.) deviennent visibles côté UI mais restent
+ * optionnels côté API.
+ */
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireFabricant();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  // Verify ownership
+  const product = await db.product.findUnique({
+    where: { id },
+    select: { id: true, userId: true },
+  });
+
+  if (!product) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+  }
+  if (product.userId !== user.id) {
+    return NextResponse.json({ error: "Vous ne possédez pas ce produit" }, { status: 403 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
+  }
+
+  const parsed = updateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Données invalides" },
+      { status: 400 }
+    );
+  }
+
+  const data = parsed.data;
+
+  // Si la catégorie change, vérifier qu'elle existe
+  if (data.categoryId) {
+    const cat = await db.category.findUnique({
+      where: { id: data.categoryId },
+      select: { id: true },
+    });
+    if (!cat) {
+      return NextResponse.json({ error: "Catégorie introuvable" }, { status: 400 });
+    }
+  }
+
+  // Pour les champs texte vides, on convertit "" en null/undefined pour
+  // éviter d'écraser une valeur existante avec une chaîne vide.
+  const cleanData: Record<string, unknown> = { ...data };
+  if ("description" in cleanData && cleanData.description === "") cleanData.description = null;
+  if ("photoUrl" in cleanData && cleanData.photoUrl === "") cleanData.photoUrl = null;
+  if ("weight" in cleanData && cleanData.weight === "") cleanData.weight = null;
+  if ("variety" in cleanData && cleanData.variety === "") cleanData.variety = null;
+  if ("regionOfProduction" in cleanData && cleanData.regionOfProduction === "")
+    cleanData.regionOfProduction = null;
+  if ("producerStory" in cleanData && cleanData.producerStory === "")
+    cleanData.producerStory = null;
+  if ("producerPhotoUrl" in cleanData && cleanData.producerPhotoUrl === "")
+    cleanData.producerPhotoUrl = null;
+
+  try {
+    const updated = await db.product.update({
+      where: { id },
+      data: cleanData as any,
+      include: {
+        category: { select: { id: true, name: true, icon: true, pageTemplate: true } },
+      },
+    });
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error("[products PUT] error:", err);
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour du produit" },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * DELETE /api/products/[id]
