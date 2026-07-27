@@ -1104,3 +1104,63 @@ Note sur les erreurs F12:
   - L'erreur SW "ServiceWorker script evaluation failed" disparaîtra après
     redéploiement + hard refresh navigateur (Ctrl+Shift+R) pour libérer
     l'ancien SW cassé. Le nouveau SW v5-20260728 s'enregistrera proprement.
+
+---
+Task ID: fix-app-error-87140449-admin-dashboard
+Agent: Super Z (main)
+Task: Corriger l'erreur "Application error: a server-side exception has occurred (Digest: 87140449)" qui touchait TOUTES les pages authentifiées (/admin, /dashboard, /admin/statistiques, etc.)
+
+Work Log:
+
+- diagnostic:
+  * Login admin réussi (session valide, 200 OK sur /api/auth/session)
+  * Toutes les pages sous /admin et /dashboard retournaient HTTP 500
+  * Pages publiques (/, /login, /produits) → 200 OK
+  * RSC payload contenait 4 erreurs digest '871404497' (e, f, 10, 11)
+  * Re-production en local via 'next dev' a révélé l'erreur exacte:
+    "Error: Functions cannot be passed directly to Client Components
+     unless you explicitly expose it by marking it with 'use server'.
+     {$$typeof: ..., render: function Building2}"
+
+- cause racine:
+  * src/app/admin/page.tsx (Server Component) passait des icônes
+    lucide-react (Building2, CreditCard, TrendingUp, Ticket) comme
+    prop 'icon={...}' au composant <KpiCard>
+  * KpiCard est marqué "use client" → donc c'est un Client Component
+  * Next.js 16 / React 19 interdit de passer des fonctions/composants
+    d'un Server Component à un Client Component (le sérialiseur RSC
+    ne peut pas sérialiser la propriété 'render' d'un forward_ref)
+  * 4 KpiCards × 1 fonction render = 4 erreurs digest 871404497
+  * Même bug dans src/app/admin/statistiques/page.tsx (6 KpiCards)
+
+- correction:
+  * src/components/admin/kpi-card.tsx:
+    - Prop 'icon' change de type React.ComponentType → string (KpiIconName)
+    - Ajout d'un lookup table ICONS: Record<string, LucideIcon> côté client
+    - Le composant résout le nom → icône via ICONS[iconName] (fallback Building2)
+  * src/app/admin/page.tsx: icon={Building2} → icon="Building2" (4 cards)
+  * src/app/admin/statistiques/page.tsx: icon={...} → icon="..." (6 cards)
+  * Imports lucide inutilisés retirés des 2 pages
+
+- vérification que ce pattern n'existe pas ailleurs:
+  * InfoItem, StatItem (src/app/admin/fabricants/[id]/page.tsx):
+    fichier "use client" → pas de boundary server→client → OK
+  * StatCard (src/components/landing/stats-section.tsx):
+    fichier "use client" → OK
+  * StatCard, SocialLink (src/app/producteur/[id]/page.tsx):
+    fichier server component, mais StatCard/SocialLink sont définis
+    DANS le même fichier → pas de boundary → OK
+  * SectionCard, InfoRow (src/app/p/_components/export-produce-view.tsx):
+    fichier "use client" → OK
+
+- vérifications:
+  * next build: ✓ Compiled successfully in 26.7s, 110 pages statiques
+  * next start + curl /admin: ✓ HTTP 307 (redirect login, normal)
+  * Logs serveur: aucune erreur Prisma/RSC, tous les COUNT() passent
+  * Commit cf17c42 poussé sur origin/main
+
+Stage Summary:
+- L'erreur 'Application error (Digest: 87140449)' sur /admin, /dashboard
+  et /admin/statistiques est corrigée à la racine
+- Coolify va redéployer automatiquement dans 2-3 minutes
+- Après redéploiement: hard refresh navigateur (Ctrl+Shift+R) puis login
