@@ -802,6 +802,111 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               />
             </div>
 
+            {/* === Statut de consommation (calcul automatique) === */}
+            {!isRecalled && (() => {
+              // États possibles :
+              //   - expired        : périmé depuis N jours  (rouge)
+              //   - remainingDays<=5  : expire dans N jours  (rouge clair)
+              //   - remainingDays<=10 : expire dans N jours  (orange)
+              //   - sinon           : conforme               (vert)
+              const expiredSinceDays = expired ? Math.abs(remainingDays) : 0;
+              const isGreen = !expired && remainingDays > 10;
+              const isOrange = !expired && remainingDays > 5 && remainingDays <= 10;
+              const isRedLight = !expired && remainingDays > 0 && remainingDays <= 5;
+
+              const cfg = expired
+                ? {
+                    bg: "linear-gradient(135deg, #FEE2E2 0%, #FFFFFF 100%)",
+                    border: "#B91C1C",
+                    chipBg: "#991B1B",
+                    title: "Produit expiré",
+                    titleColor: "#7F1D1D",
+                    textColor: "#991B1B",
+                    emoji: "🚫",
+                  }
+                : isRedLight
+                  ? {
+                      bg: "linear-gradient(135deg, #FECACA 0%, #FFFFFF 100%)",
+                      border: "#DC2626",
+                      chipBg: "#DC2626",
+                      title: "À consommer urgemment",
+                      titleColor: "#991B1B",
+                      textColor: "#991B1B",
+                      emoji: "⚠️",
+                    }
+                  : isOrange
+                    ? {
+                        bg: "linear-gradient(135deg, #FED7AA 0%, #FFFFFF 100%)",
+                        border: "#F59E0B",
+                        chipBg: "#F59E0B",
+                        title: "À consommer prochainement",
+                        titleColor: "#92400E",
+                        textColor: "#92400E",
+                        emoji: "⏳",
+                      }
+                  : {
+                      bg: "linear-gradient(135deg, #D1FAE5 0%, #FFFFFF 100%)",
+                      border: "#2EBD5A",
+                      chipBg: "#2EBD5A",
+                      title: "Conforme à la consommation",
+                      titleColor: "#065F46",
+                      textColor: "#065F46",
+                      emoji: "🟢",
+                    };
+
+              const conseil = expired
+                ? `Produit expiré depuis ${expiredSinceDays} jour${expiredSinceDays > 1 ? "s" : ""}. Nous déconseillons sa consommation. Contactez le fabricant en cas de doute.`
+                : isRedLight
+                  ? `Ce produit expire dans ${remainingDays} jour${remainingDays > 1 ? "s" : ""}. Vérifiez l'emballage et consommez-le rapidement. Au-delà de cette date, ne le consommez plus.`
+                  : isOrange
+                    ? `Ce produit expire dans ${remainingDays} jours. Pensez à le consommer avant cette date pour une qualité optimale.`
+                    : `Produit authentifié et conforme. À consommer avant le ${formatDate(lot.expirationDate)} pour une qualité optimale.`;
+
+              return (
+                <div
+                  className="rounded-xl p-4 mb-4 flex items-start gap-4 shadow-sm"
+                  style={{ background: cfg.bg, border: `2px solid ${cfg.border}` }}
+                  role="status"
+                >
+                  <div
+                    className="flex-shrink-0 size-12 rounded-xl flex items-center justify-center text-2xl shadow-md"
+                    style={{ backgroundColor: cfg.chipBg }}
+                    aria-hidden="true"
+                  >
+                    <span className="text-white">{cfg.emoji}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p
+                      className="font-display text-lg font-bold uppercase tracking-wide"
+                      style={{ color: cfg.titleColor }}
+                    >
+                      {cfg.emoji} {cfg.title}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed" style={{ color: cfg.textColor }}>
+                      {conseil}
+                    </p>
+                    <div className="mt-3 grid sm:grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Fabriqué le :</span>{" "}
+                        <strong>{formatDate(lot.manufacturingDate)}</strong>
+                      </div>
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Péremption :</span>{" "}
+                        <strong>{formatDate(lot.expirationDate)}</strong>
+                      </div>
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Temps restant :</span>{" "}
+                        <strong>
+                          {expired
+                            ? `Expiré (${expiredSinceDays} j)`
+                            : `${remainingDays} jour${remainingDays > 1 ? "s" : ""}`}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {/* Lieux — fabrication (bleu) / transformation (vert) */}
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {lot.manufacturingLocation && (
