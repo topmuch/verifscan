@@ -972,3 +972,37 @@ Stage Summary:
   product_created, product_updated
 - Documentation publique /developers complète avec exemples curl + snippets Node.js
 - Commit 85d7527 poussé sur origin/main — Coolify va redéployer automatiquement
+
+---
+Task ID: footer-dev-link-and-logo-restore
+Agent: Super Z (main)
+Task: Ajouter onglet Développeurs au footer + restaurer l'ancien logo PNG sur toutes les pages
+
+Work Log:
+- Footer (src/components/public-footer.tsx):
+  * Ajout d'une nouvelle section 'developpeurs' dans footerLinks avec 3 liens:
+    - API REST → /developers
+    - Webhooks → /developers#webhooks
+    - Créer une clé API → /dashboard/api-keys
+  * Ajout du bloc <h3>Développeurs</h3> + <ul> dans le rendu
+  * Grille footer passée de lg:grid-cols-7 → lg:grid-cols-8 pour accueillir
+    la nouvelle colonne sans rétrécir les autres
+
+- Logo (src/components/verifscan-logo.tsx):
+  * Restauré l'ancienne version PNG-based du composant
+  * <Image src='/logo.png'> avec priority + optimization Next.js
+  * Tailles restaurées: sm=28, md=36, lg=48, xl=64 (hauteur px)
+  * Aspect ratio 272/66 (vs 280/80 des SVG)
+  * variant='light' conserve drop-shadow pour fonds sombres (footer, sidebar)
+  * VerifScanIcon (compact, sans wordmark) continue d'utiliser /logo-icon.svg
+    pour le rendu crisp à petite taille
+  * Les SVG (logo-color.svg, logo-light.svg) ne sont plus utilisés par le
+    composant principal mais restent disponibles pour usages futurs
+
+Vérifications:
+- next build: ✓ Compiled successfully in 26.7s, 110 pages statiques
+- Commit d9e5ea9 poussé sur origin/main
+
+Stage Summary:
+- Le footer affiche maintenant 6 colonnes: Produit, Entreprise, Légal, Développeurs, Consommateur, Contact (+ bloc brand 2 cols)
+- Toutes les pages utilisent à nouveau le logo PNG original (couleurs brand #0f4382 + #2ebd5a avec wordmark VerifScan) au lieu des SVG blancs/colorés
