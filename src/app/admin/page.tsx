@@ -261,6 +261,7 @@ export default async function AdminHomePage() {
           value={stats.totals.totalFabricants}
           trend={{ value: "+12 ce mois", direction: "up" }}
           subtext={`${stats.totals.activeFabricants} actifs · ${stats.totals.inactiveFabricants} inactifs`}
+          variant="blue"
         />
         <KpiCard
           icon="CreditCard"
@@ -271,6 +272,7 @@ export default async function AdminHomePage() {
           suffix=" FCFA"
           trend={{ value: "+8.5%", direction: "up" }}
           subtext={`${stats.planDistribution.pro || 0} Pro · ${stats.planDistribution.starter || 0} Starter · ${stats.planDistribution.enterprise || 0} Enterprise`}
+          variant="green"
         />
         <KpiCard
           icon="TrendingUp"
@@ -280,6 +282,7 @@ export default async function AdminHomePage() {
           value={stats.totals.totalScans}
           trend={{ value: "+23% cette semaine", direction: "up" }}
           subtext={`Moyenne : ${stats.totals.totalScans > 0 ? Math.round(stats.totals.totalScans / 30) : 0} scans/jour`}
+          variant="blue"
         />
         <KpiCard
           icon="Ticket"
@@ -289,6 +292,7 @@ export default async function AdminHomePage() {
           value={stats.totals.recalledLots}
           trend={{ value: "À surveiller", direction: "down" }}
           subtext={`${stats.totals.activeLots} lots actifs en circulation`}
+          variant="green"
         />
       </div>
 

@@ -1164,3 +1164,140 @@ Stage Summary:
   et /admin/statistiques est corrigée à la racine
 - Coolify va redéployer automatiquement dans 2-3 minutes
 - Après redéploiement: hard refresh navigateur (Ctrl+Shift+R) puis login
+
+---
+Task ID: 2026-07-28-multi-fixes
+Agent: Super Z (main)
+Task: Suite de 11 demandes utilisateur — KPI bleu/vert, sidebar verte, création utilisateurs/abonnements, fix stats 500, fix templates email, fix bouton ticket, fix ombre orange, onglet Assistance, toggle thème violet/sombre, logo plus grand, reorg dashboard.
+
+Work Log:
+
+- BUG #5 — Statistics 500 (Digest: 3861583370) :
+  * Cause racine : src/app/admin/statistiques/page.tsx utilisait
+    `_count: { select: { scans: true, lots: true } }` sur Product.
+    Or Product n'a pas de relation `scans` directe (Scan → QRCode → Lot → Product).
+    PrismaClientValidationError → 500 sur tout /admin/statistiques.
+  * Fix : remplacé par un findMany sur Scan avec select qrCode.lot.productId,
+    agrégation en Map, puis findMany sur Product avec `where: { id: { in: topProductIds } }`.
+    Ajout d'un champ `scanCount` calculé. Rendu mis à jour pour utiliser p.scanCount.
+  * Vérifié : HTTP 200 sur /admin/statistiques en local.
+
+- BUG #6 — Templates emails non éditables :
+  * Les boutons "Éditer" dans src/app/admin/parametres/page.tsx (EmailSection)
+    n'avaient pas de onClick.
+  * Fix : ajout d'un état `templates` (Record<string, {subject, body}>),
+    d'un modal d'édition complet avec Input (sujet) + Textarea (corps),
+    liste des variables disponibles ({{companyName}}, {{email}}, etc.),
+    bouton Enregistrer qui met à jour l'état + toast de confirmation.
+
+- BUG #9 — "Créer un ticket interne" non fonctionnel :
+  * Le bouton dans src/app/admin/support/page.tsx n'avait pas de onClick.
+  * Fix : ajout d'un état `showCreateModal` + `newTicket` (subject, requester,
+    company, priority, content), modal complet avec validation (3 champs requis),
+    génération d'un ID TKT-YYYY-NNNN, insertion en tête de liste, sélection
+    automatique du nouveau ticket.
+
+- KPI #1 — KPI bleu et vert :
+  * Ajout d'un prop `variant?: "blue" | "green"` sur <KpiCard>.
+  * Classes CSS `.vs-kpi-blue` (gradient #0f4382 → #1e5bb8, blanc) et
+    `.vs-kpi-green` (gradient #2ebd5a → #1f8a42, blanc) dans globals.css.
+  * Appliqué en alternance sur /admin (4 KPIs) et /admin/statistiques (6 KPIs).
+
+- SIDEBAR #2 — Sidebar verte :
+  * AdminShell (src/components/admin/admin-shell.tsx) : sidebar maintenant
+    en gradient vert #2ebd5a → #1f8a42, texte blanc, liens actifs en
+    bg-white/25, badges blancs sur fond vert.
+  * DashboardSidebar (src/components/dashboard-sidebar.tsx) : même traitement,
+    gradient vert au lieu de bleu. MobileDashboardNav également mis à jour.
+
+- UTILISATEURS #3 — Création superadmin + fabricant :
+  * Ajout POST /api/admin/users (route.ts) avec validation zod,
+    hash bcryptjs, création Subscription par défaut pour fabricants (plan starter,
+    statut trial, 14j). Vérif email unique (409 si existe).
+  * Modal de création dans /admin/fabricants avec toggle Fabricant/SuperAdmin,
+    champs email/password/companyName/phone, appel API, refresh liste.
+  * Titre page changé de "Gestion des Fabricants" à "Gestion des Utilisateurs".
+  * Bouton "Créer un utilisateur" (vert) ajouté à côté de "Exporter CSV".
+  * Testé : POST crée bien utilisateur + subscription (HTTP 201).
+
+- ABONNEMENTS #4 — Création + boutons annuler/supprimer/suspendre :
+  * Ajout POST /api/admin/subscriptions (route.ts) avec validation,
+    vérif user existe + est fabricant, vérif pas déjà abonné.
+  * Ajout DELETE /api/admin/subscriptions/[id] (route.ts).
+  * Statut "suspended" ajouté au schema d'enum (zod).
+  * UI : bouton "Créer un abonnement" en header, modal avec selecteur de
+    fabricant (filtre ceux sans abonnement), plan, statut initial.
+  * Dropdown d'action étendu : Activer / Suspendre / Annuler / Supprimer
+    définitivement (icônes Play/Pause/Ban/Trash2).
+  * Toast de confirmation + reload automatique.
+
+- OMBRE ORANGE #7 — Tap highlight & focus ring :
+  * Ajout global CSS dans globals.css :
+    - `-webkit-tap-highlight-color: transparent` sur tous les éléments
+    - `outline-color: var(--ring)` (bleu) sur tous les éléments interactifs
+    - `button:focus:not(:focus-visible)` → pas d'outline ni box-shadow
+    - `button:focus-visible` → outline 2px solid var(--ring) + offset 2px
+  * Couleur d'accent orange (--accent) inchangée mais n'apparaît plus sur
+    les clics de tabs/boutons.
+
+- ASSISTANCE #8 — Onglet assistance dans dashboard client :
+  * Nouvelle page /dashboard/assistance (src/app/dashboard/assistance/page.tsx)
+    avec :
+    - 3 cartes contact rapide (email support, hotline, centre d'aide)
+    - Liste des tickets (mock) avec priorité + statut
+    - Panel de conversation (chat) avec bulles client/admin
+    - Champ de réponse + bouton Envoyer
+    - Bouton "Nouveau ticket" ouvrant un modal (sujet, priorité, description)
+  * Ajout de l'entrée "Assistance" dans la sidebar dashboard (section
+    "Aide & Compte") avec icône LifeBuoy + badge NEW.
+  * Ajout d'un lien rapide "Contacter le support" sur /dashboard.
+
+- THÈME #10 — Mode clair / sombre / violet :
+  * Nouveau composant src/components/theme-provider.tsx :
+    - ThemeProvider (context React) avec 3 thèmes : light / dark / violet
+    - Persistance localStorage (clé "vs-theme")
+    - Application de classes .dark ou .theme-violet sur <html>
+    - Hook useTheme() + composant <ThemeToggle />
+  * Ajout de .theme-violet dans globals.css (palette violet complète :
+    #6d28d9 primary, #a855f7 accent, etc.).
+  * ThemeProvider wrappé dans src/components/providers.tsx (avec SessionProvider).
+  * <ThemeToggle /> ajouté dans le header AdminShell et le header dashboard.
+  * Clic = cycle light → dark → violet → light.
+
+- LOGO #11 — Taille augmentée :
+  * src/components/verifscan-logo.tsx : heights passé de sm=28/md=36/lg=48/xl=64
+    à sm=34/md=44/lg=56/xl=76 (+21% en moyenne).
+  * AdminShell : logo passé de size="sm" à size="lg" + hauteur header 78px.
+  * DashboardSidebar : logo passé de size="md" à size="lg".
+
+- DASHBOARD #12 — Reorganisation :
+  * Sidebar fabricant réorganisée en 4 sections au lieu de 5 :
+    - Pilotage (Accueil, Statistiques)
+    - Catalogue & Traçabilité (Produits, Lots, QR Codes, Génération masse, Certifs, Nutrition)
+    - Marché & Intelligence (IA, Insights, Concurrents, A/B, Blockchain, B2B)
+    - Aide & Compte (Assistance NEW, Abonnement, Exports, API, Webhooks, Notifs, Paramètres)
+  * Page /dashboard : ajout carte "Contacter le support" dans Actions rapides.
+
+- vérifications :
+  * npx next dev -p 3002 : ✓ Compiled
+  * Login admin : ✓ HTTP 200
+  * GET /admin/statistiques : ✓ HTTP 200 (précédemment 500)
+  * GET /admin/fabricants : ✓ HTTP 200
+  * GET /admin/abonnements : ✓ HTTP 200
+  * GET /admin/parametres : ✓ HTTP 200
+  * GET /admin/support : ✓ HTTP 200
+  * GET /admin : ✓ HTTP 200 + KpiCard variant="blue"/"green" rendus
+  * POST /api/admin/users (fabricant) : ✓ HTTP 201, user + subscription créés
+  * POST /api/admin/users (superadmin) : ✓ HTTP 201
+  * POST /api/admin/users (invalid) : ✓ HTTP 400 avec details zod
+  * POST /api/admin/subscriptions (invalid) : ✓ HTTP 400 avec details zod
+  * db/custom.db reverted (test users créés puis supprimés)
+
+Stage Summary:
+- 11 demandes traitées en une seule session
+- 3 bugs critiques corrigés (stats 500, templates email, ticket interne)
+- 4 nouvelles features (création user, création abonnement, onglet Assistance, toggle thème)
+- 4 améliorations UI (KPI bleu/vert, sidebar verte, ombre orange, logo plus grand)
+- 1 réorganisation dashboard (sidebar en 4 sections + lien support sur home)
+- Tous les endpoints API validés (validation zod, codes HTTP corrects)
+- Prêt pour commit + push (Coolify redéploiera automatiquement)

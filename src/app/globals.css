@@ -381,6 +381,125 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ============================================
+   Orange tap-highlight / focus ring removal
+   ============================================
+   On some browsers, clicking a button or link briefly
+   shows an orange-tinted tap-highlight or focus ring
+   before the active styles apply. This rule forces
+   every interactive element to use the brand blue
+   ring color and removes the default orange tap
+   highlight, so the "orange ombrer" the user sees
+   on tab clicks is gone.
+*/
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+a,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+input,
+select,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+  outline-color: var(--ring);
+}
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+button:focus-visible,
+a:focus-visible,
+[role="tab"]:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Violet theme — applied when <html> has .theme-violet
+   ============================================ */
+.theme-violet {
+  --background: oklch(0.99 0.005 300);
+  --foreground: oklch(0.18 0.04 300);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.04 300);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.04 300);
+  --primary: oklch(0.45 0.25 300);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.03 300);
+  --secondary-foreground: oklch(0.3 0.1 300);
+  --muted: oklch(0.96 0.01 300);
+  --muted-foreground: oklch(0.45 0.03 300);
+  --accent: oklch(0.7 0.18 300);
+  --accent-foreground: oklch(0.2 0.08 300);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.9 0.02 300);
+  --input: oklch(0.9 0.02 300);
+  --ring: oklch(0.45 0.25 300);
+  --sidebar: oklch(0.97 0.02 300);
+  --sidebar-foreground: oklch(0.2 0.05 300);
+  --sidebar-primary: oklch(0.45 0.25 300);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.03 300);
+  --sidebar-accent-foreground: oklch(0.3 0.1 300);
+  --sidebar-border: oklch(0.9 0.02 300);
+  --sidebar-ring: oklch(0.45 0.25 300);
+
+  --vs-blue: #6d28d9;
+  --vs-blue-dark: #5b21b6;
+  --vs-blue-light: #EDE9FE;
+  --vs-green: #a855f7;
+  --vs-green-dark: #9333ea;
+  --vs-green-light: #F3E8FF;
+  --vs-orange: #c026d3;
+  --vs-orange-dark: #a21caf;
+  --vs-orange-light: #FAE8FF;
+  --vs-bg: #FFFFFF;
+  --vs-bg-soft: #FAF5FF;
+  --vs-border: #E9D5FF;
+  --vs-text: #1E1033;
+  --vs-text-soft: #4B3A66;
+  --vs-text-muted: #6B5B85;
+  --vs-footer: #4C1D95;
+  --vs-footer-border: #5B21B6;
+  color-scheme: light;
+}
+
+/* KPI card variants — solid blue and solid green backgrounds */
+.vs-kpi-blue {
+  background: linear-gradient(135deg, #0f4382 0%, #1e5bb8 100%);
+  color: #ffffff;
+}
+.vs-kpi-blue .vs-kpi-value,
+.vs-kpi-blue .vs-kpi-title,
+.vs-kpi-blue .vs-kpi-subtext {
+  color: #ffffff;
+}
+.vs-kpi-blue .vs-kpi-icon {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.vs-kpi-green {
+  background: linear-gradient(135deg, #2ebd5a 0%, #1f8a42 100%);
+  color: #ffffff;
+}
+.vs-kpi-green .vs-kpi-value,
+.vs-kpi-green .vs-kpi-title,
+.vs-kpi-green .vs-kpi-subtext {
+  color: #ffffff;
+}
+.vs-kpi-green .vs-kpi-icon {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
 /* V4 page-section reveal on scroll */
 .vs-section-reveal {
   opacity: 0;

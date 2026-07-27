@@ -7,6 +7,7 @@ import {
   Plus,
   ArrowRight,
   TrendingUp,
+  LifeBuoy,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
@@ -147,6 +148,16 @@ export default async function DashboardHome() {
               <div className="flex items-center gap-3">
                 <TrendingUp className="size-5 text-amber-600" />
                 <span className="text-sm font-medium">Voir les statistiques</span>
+              </div>
+              <ArrowRight className="size-4 text-gray-400" />
+            </Link>
+            <Link
+              href="/dashboard/assistance"
+              className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 hover:bg-emerald-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <LifeBuoy className="size-5 text-[#2ebd5a]" />
+                <span className="text-sm font-medium">Contacter le support</span>
               </div>
               <ArrowRight className="size-4 text-gray-400" />
             </Link>

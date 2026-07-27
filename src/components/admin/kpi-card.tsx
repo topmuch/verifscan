@@ -55,6 +55,12 @@ type KpiCardProps = {
   suffix?: string;
   trend?: { value: string; direction: "up" | "down" };
   subtext?: string;
+  /** Solid color variant — overrides iconBg/iconColor with a full-bleed gradient.
+   *  - "blue":  brand blue gradient (#0f4382 → #1e5bb8), white text
+   *  - "green": brand green gradient (#2ebd5a → #1f8a42), white text
+   *  - undefined: default white card with colored icon chip
+   */
+  variant?: "blue" | "green";
 };
 
 function useCountUp(end: number, duration = 1200) {
@@ -102,6 +108,7 @@ export function KpiCard({
   suffix = "",
   trend,
   subtext,
+  variant,
 }: KpiCardProps) {
   const Icon = ICONS[iconName] ?? Building2; // safe fallback
   const numericValue = typeof value === "number" ? value : 0;
@@ -110,17 +117,25 @@ export function KpiCard({
     ? `${prefix}${count.toLocaleString("fr-FR")}${suffix}`
     : value;
 
+  const cardClassName = variant === "blue"
+    ? "vs-kpi-blue"
+    : variant === "green"
+    ? "vs-kpi-green"
+    : "bg-white";
+
   return (
     <div
       ref={elRef}
-      className="bg-white rounded-2xl border border-[#E5E7EB] p-6 vs-card-shadow transition-all hover:vs-card-shadow-hover"
+      className={cn(
+        "rounded-2xl border p-6 vs-card-shadow transition-all hover:vs-card-shadow-hover",
+        variant ? cn(cardClassName, "border-transparent") : cn(cardClassName, "border-[#E5E7EB]")
+      )}
     >
       <div className="flex items-start justify-between mb-4">
         <div
           className={cn(
-            "size-12 rounded-xl flex items-center justify-center",
-            iconBg,
-            iconColor
+            "vs-kpi-icon size-12 rounded-xl flex items-center justify-center",
+            variant ? "" : cn(iconBg, iconColor)
           )}
         >
           <Icon className="size-6" />
@@ -130,7 +145,11 @@ export function KpiCard({
             className={cn(
               "inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-semibold",
               trend.direction === "up"
-                ? "bg-[#DCFCE7] text-[#065F46]"
+                ? variant
+                  ? "bg-white/20 text-white"
+                  : "bg-[#DCFCE7] text-[#065F46]"
+                : variant
+                ? "bg-white/20 text-white"
                 : "bg-[#FEE2E2] text-[#991B1B]"
             )}
           >
@@ -143,12 +162,12 @@ export function KpiCard({
           </span>
         )}
       </div>
-      <div className="font-mono text-2xl sm:text-3xl font-bold text-[#111827]">
+      <div className={cn("vs-kpi-value font-mono text-2xl sm:text-3xl font-bold", variant ? "" : "text-[#111827]")}>
         {display}
       </div>
-      <div className="text-sm text-[#6B7280] mt-1">{title}</div>
+      <div className={cn("vs-kpi-title text-sm mt-1", variant ? "" : "text-[#6B7280]")}>{title}</div>
       {subtext && (
-        <div className="text-xs text-[#9CA3AF] mt-1">{subtext}</div>
+        <div className={cn("vs-kpi-subtext text-xs mt-1", variant ? "" : "text-[#9CA3AF]")}>{subtext}</div>
       )}
     </div>
   );

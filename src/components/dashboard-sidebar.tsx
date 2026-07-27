@@ -27,6 +27,7 @@ import {
   Code2,
   Webhook,
   Upload,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
@@ -48,8 +49,9 @@ type NavSection = {
 };
 
 /* ===================================================================
-   Navigation fabricant — organisée en 5 sections thématiques
-   au lieu d'une liste plate de 18 items.
+   Navigation fabricant — organisée en 4 sections thématiques
+   (réorganisé pour mettre en avant les actions à haute valeur :
+   Pilotage, Catalogue, Marché, Aide & Compte)
    =================================================================== */
 const fabricantSections: NavSection[] = [
   {
@@ -71,7 +73,7 @@ const fabricantSections: NavSection[] = [
     ],
   },
   {
-    title: "Intelligence & Marché",
+    title: "Marché & Intelligence",
     links: [
       { href: "/dashboard/ia", label: "Intelligence IA", icon: Brain },
       { href: "/dashboard/insights", label: "Insights marché", icon: TrendingUp },
@@ -82,12 +84,13 @@ const fabricantSections: NavSection[] = [
     ],
   },
   {
-    title: "Compte & Intégrations",
+    title: "Aide & Compte",
     links: [
+      { href: "/dashboard/assistance", label: "Assistance", icon: LifeBuoy, badge: "NEW" },
       { href: "/dashboard/abonnement", label: "Abonnement", icon: CreditCard },
       { href: "/dashboard/export", label: "Exports", icon: Download },
-      { href: "/dashboard/api-keys", label: "API & Intégrations", icon: Code2, badge: "NEW" },
-      { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook, badge: "NEW" },
+      { href: "/dashboard/api-keys", label: "API & Intégrations", icon: Code2 },
+      { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
       { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
       { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
     ],
@@ -116,11 +119,12 @@ const adminSections: NavSection[] = [
   },
 ];
 
-// Brand palette
-const SIDEBAR_BG = "#0f4382"; // brand blue (deeper than #124685 for better contrast)
-const SIDEBAR_ACTIVE_BG = "rgba(255,255,255,0.16)";
-const SIDEBAR_HOVER_BG = "rgba(255,255,255,0.08)";
-const SECTION_TITLE_COLOR = "rgba(255,255,255,0.55)";
+// Brand palette — green sidebar
+const SIDEBAR_BG = "#2ebd5a"; // brand green
+const SIDEBAR_BG_GRADIENT = "linear-gradient(180deg, #2ebd5a 0%, #1f8a42 100%)";
+const SIDEBAR_ACTIVE_BG = "rgba(255,255,255,0.25)";
+const SIDEBAR_HOVER_BG = "rgba(255,255,255,0.10)";
+const SECTION_TITLE_COLOR = "rgba(255,255,255,0.70)";
 
 export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" }) {
   const pathname = usePathname();
@@ -129,13 +133,13 @@ export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" })
 
   return (
     <aside
-      className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-white/10"
-      style={{ backgroundColor: SIDEBAR_BG }}
+      className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-white/15"
+      style={{ background: SIDEBAR_BG_GRADIENT }}
     >
       <div className="flex-1 flex flex-col overflow-y-auto vs-scroll">
-        {/* Logo — version claire sur fond bleu */}
-        <div className="px-4 py-3 border-b border-white/10 bg-white/[0.04]">
-          <VerifScanLogo size="md" variant="light" />
+        {/* Logo — version claire sur fond vert */}
+        <div className="px-4 py-3 border-b border-white/15 bg-white/[0.06]">
+          <VerifScanLogo size="lg" variant="light" />
         </div>
 
         {/* Navigation par sections */}
@@ -233,8 +237,8 @@ export function MobileDashboardNav({ role }: { role: "fabricant" | "superadmin" 
 
   return (
     <div
-      className="md:hidden sticky top-0 z-40 border-b border-white/10"
-      style={{ backgroundColor: SIDEBAR_BG }}
+      className="md:hidden sticky top-0 z-40 border-b border-white/15"
+      style={{ background: SIDEBAR_BG_GRADIENT }}
     >
       <div className="px-4 py-2.5 flex items-center justify-between">
         <VerifScanLogo size="sm" variant="light" />

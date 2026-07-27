@@ -9,6 +9,12 @@ import {
   MoreVertical,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  X,
+  Ban,
+  Trash2,
+  Pause,
+  Play,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,6 +84,7 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> 
   trial: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", label: "Essai" },
   past_due: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", label: "En retard" },
   canceled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "Annulé" },
+  suspended: { bg: "bg-[#FFEDD5]", text: "text-[#9A3412]", label: "Suspendu" },
 };
 
 export default function AdminSubscriptionsPage() {
@@ -89,6 +96,61 @@ export default function AdminSubscriptionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [meta, setMeta] = useState<ApiResponse | null>(null);
+
+  // "Create subscription" modal state.
+  // We need to fetch the list of fabricants who don't yet have a subscription
+  // so the superadmin can pick from them.
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; email: string; companyName: string | null }>>([]);
+  const [createForm, setCreateForm] = useState({
+    userId: "",
+    plan: "starter" as "starter" | "pro" | "enterprise",
+    status: "trial" as "trial" | "active" | "past_due" | "suspended" | "canceled",
+  });
+  const [creating, setCreating] = useState(false);
+
+  async function openCreateModal() {
+    setCreateForm({ userId: "", plan: "starter", status: "trial" });
+    setShowCreateModal(true);
+    try {
+      // Fetch all fabricants — the API doesn't yet have a "no-subscription" filter,
+      // so we filter client-side against existing subscriptions.
+      const res = await fetch("/api/admin/users?pageSize=100");
+      const data = await res.json();
+      const allSubs = subscriptions.map((s) => s.user.id);
+      const available = (data.data || []).filter((u: any) => !allSubs.includes(u.id));
+      setAvailableUsers(available);
+    } catch {
+      setAvailableUsers([]);
+    }
+  }
+
+  async function submitCreateSubscription() {
+    if (!createForm.userId) {
+      toast.error("Veuillez sélectionner un utilisateur");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Erreur lors de la création");
+        return;
+      }
+      toast.success("Abonnement créé avec succès");
+      setShowCreateModal(false);
+      load();
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -147,7 +209,29 @@ export default function AdminSubscriptionsPage() {
       toast.error("Erreur lors du changement de statut");
       return;
     }
-    toast.success(`Statut changé vers ${status}`);
+    const labels: Record<string, string> = {
+      active: "Activé",
+      canceled: "Annulé",
+      suspended: "Suspendu",
+      trial: "En essai",
+      past_due: "En retard",
+    };
+    toast.success(`Abonnement ${labels[status] || status}`);
+    load();
+  }
+
+  async function deleteSubscription(id: string, companyName?: string | null) {
+    if (!confirm(
+      `Supprimer définitivement l'abonnement de ${companyName || "cet utilisateur"} ?\n` +
+      `Cette action est irréversible. Les factures associées seront supprimées.`
+    )) return;
+    const res = await fetch(`/api/admin/subscriptions/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || "Erreur lors de la suppression");
+      return;
+    }
+    toast.success("Abonnement supprimé");
     load();
   }
 
@@ -164,6 +248,10 @@ export default function AdminSubscriptionsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button className="bg-[#0f4382] hover:bg-[#0a3060]" onClick={openCreateModal}>
+            <Plus className="mr-2 size-4" />
+            Créer un abonnement
+          </Button>
           <Button asChild variant="outline" className="border-[#E5E7EB]">
             <Link href="/admin/abonnements/plans">Configuration des plans</Link>
           </Button>
@@ -371,10 +459,20 @@ export default function AdminSubscriptionsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => changeStatus(s.id, "active")} className="cursor-pointer text-[#065F46]">
-                                Activer
+                                <Play className="mr-2 size-3.5" /> Activer
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => changeStatus(s.id, "suspended")} className="cursor-pointer text-[#9A3412]">
+                                <Pause className="mr-2 size-3.5" /> Suspendre
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => changeStatus(s.id, "canceled")} className="cursor-pointer text-[#991B1B]">
-                                Annuler
+                                <Ban className="mr-2 size-3.5" /> Annuler
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => deleteSubscription(s.id, s.user.companyName)}
+                                className="cursor-pointer text-[#991B1B]"
+                              >
+                                <Trash2 className="mr-2 size-3.5" /> Supprimer définitivement
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -407,6 +505,97 @@ export default function AdminSubscriptionsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create subscription modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-semibold text-[#111827]">
+                  Créer un abonnement
+                </h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  Pour un fabricant qui n&apos;a pas encore d&apos;abonnement.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-[#6B7280] hover:text-[#111827] p-1 rounded hover:bg-[#F9FAFB]"
+                aria-label="Fermer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto vs-scroll">
+              <div>
+                <label className="text-sm font-medium text-[#111827]">Fabricant *</label>
+                {availableUsers.length === 0 ? (
+                  <div className="mt-1 p-3 rounded-lg bg-[#FEF3C7] border border-[#F59E0B]/30 text-xs text-[#92400E]">
+                    Aucun fabricant sans abonnement trouvé. Tous les fabricants ont déjà un abonnement.
+                  </div>
+                ) : (
+                  <select
+                    value={createForm.userId}
+                    onChange={(e) => setCreateForm({ ...createForm, userId: e.target.value })}
+                    className="mt-1 w-full h-10 px-3 rounded-lg border border-[#E5E7EB] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0f4382]"
+                  >
+                    <option value="">— Sélectionner —</option>
+                    {availableUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.companyName || u.email} — {u.email}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Plan</label>
+                  <select
+                    value={createForm.plan}
+                    onChange={(e) => setCreateForm({ ...createForm, plan: e.target.value as any })}
+                    className="mt-1 w-full h-10 px-3 rounded-lg border border-[#E5E7EB] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0f4382]"
+                  >
+                    <option value="starter">Starter (500 QR / 5 produits)</option>
+                    <option value="pro">Pro (5000 QR / illimité)</option>
+                    <option value="enterprise">Enterprise (100k QR / illimité)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Statut initial</label>
+                  <select
+                    value={createForm.status}
+                    onChange={(e) => setCreateForm({ ...createForm, status: e.target.value as any })}
+                    className="mt-1 w-full h-10 px-3 rounded-lg border border-[#E5E7EB] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0f4382]"
+                  >
+                    <option value="trial">Essai (14 jours)</option>
+                    <option value="active">Actif</option>
+                    <option value="past_due">En retard</option>
+                    <option value="suspended">Suspendu</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#E5E7EB]"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-[#0f4382] hover:bg-[#0a3060]"
+                onClick={submitCreateSubscription}
+                disabled={creating || !createForm.userId || availableUsers.length === 0}
+              >
+                {creating ? "Création..." : "Créer l'abonnement"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

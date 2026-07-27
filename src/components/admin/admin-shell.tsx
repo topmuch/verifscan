@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
+import { ThemeToggle } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
 const adminLinks = [
@@ -53,23 +54,27 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex">
-      {/* Sidebar 280px */}
+      {/* Sidebar 280px — green brand theme */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-[280px] bg-white border-r border-[#E5E7EB] flex flex-col transition-transform duration-300",
+          "fixed lg:static inset-y-0 left-0 z-50 w-[280px] flex flex-col transition-transform duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
+        style={{
+          background: "linear-gradient(180deg, #2ebd5a 0%, #1f8a42 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.12)",
+        }}
       >
         {/* Logo */}
-        <div className="px-5 h-[70px] flex items-center border-b border-[#E5E7EB]">
+        <div className="px-5 h-[78px] flex items-center border-b border-white/15">
           <div className="flex items-center gap-2">
-            <VerifScanLogo size="sm" />
-            <span className="ml-1 px-2 py-0.5 rounded-md bg-[#0f4382] text-white text-[10px] font-bold uppercase tracking-wide">
+            <VerifScanLogo size="lg" variant="light" />
+            <span className="ml-1 px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold uppercase tracking-wide">
               Admin
             </span>
           </div>
           <button
-            className="ml-auto lg:hidden text-gray-500"
+            className="ml-auto lg:hidden text-white/80 hover:text-white"
             onClick={() => setMobileOpen(false)}
             aria-label="Fermer le menu"
           >
@@ -79,7 +84,7 @@ export function AdminShell({
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-5 vs-scroll">
-          <div className="px-3 mb-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
+          <div className="px-3 mb-3 text-xs font-semibold text-white/70 uppercase tracking-wider">
             Administration
           </div>
           <ul className="space-y-1">
@@ -97,14 +102,14 @@ export function AdminShell({
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-[#0f4382] text-white shadow-sm"
-                        : "text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]"
+                        ? "bg-white/25 text-white shadow-sm"
+                        : "text-white/90 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     <Icon className="size-4" />
                     <span className="flex-1">{l.label}</span>
                     {badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-white">
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white text-[#1f8a42]">
                         {badge}
                       </span>
                     )}
@@ -114,14 +119,14 @@ export function AdminShell({
             })}
           </ul>
 
-          <div className="mt-6 px-3 mb-3 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
+          <div className="mt-6 px-3 mb-3 text-xs font-semibold text-white/70 uppercase tracking-wider">
             Liens rapides
           </div>
           <ul className="space-y-1">
             <li>
               <Link
                 href="/"
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white"
               >
                 <Home className="size-4" />
                 Site public
@@ -130,7 +135,7 @@ export function AdminShell({
             <li>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-100 hover:bg-red-500/30 hover:text-white"
               >
                 <LogOut className="size-4" />
                 Déconnexion
@@ -140,18 +145,18 @@ export function AdminShell({
         </nav>
 
         {/* Profil admin */}
-        <div className="px-3 py-4 border-t border-[#E5E7EB]">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#F9FAFB]">
-            <div className="size-9 rounded-full bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white font-semibold">
+        <div className="px-3 py-4 border-t border-white/15">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10">
+            <div className="size-9 rounded-full bg-white flex items-center justify-center text-[#1f8a42] font-semibold">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-[#111827] truncate">
+              <p className="text-sm font-semibold text-white truncate">
                 {user.name}
               </p>
-              <p className="text-xs text-[#6B7280] truncate">{user.email}</p>
+              <p className="text-xs text-white/70 truncate">{user.email}</p>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#DBEAFE] text-[#1E40AF] font-semibold uppercase">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white font-semibold uppercase">
               Admin
             </span>
           </div>
@@ -189,6 +194,7 @@ export function AdminShell({
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href="/"
               target="_blank"
