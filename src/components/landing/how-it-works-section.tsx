@@ -152,61 +152,61 @@ function ProcessIllustration() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Product */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#DC2626] to-[#F59E0B] flex items-center justify-center text-4xl shadow-lg mb-3">
+            <div className="size-32 rounded-3xl bg-gradient-to-br from-[#DC2626] to-[#F59E0B] flex items-center justify-center text-6xl shadow-xl mb-4">
               🧃
             </div>
-            <div className="text-sm font-semibold text-[#111827]">Produit</div>
+            <div className="text-base font-semibold text-[#111827]">Produit</div>
             <div className="text-xs text-[#6B7280]">Jus de Bissap</div>
           </div>
 
           {/* Arrow */}
           <div className="hidden md:block text-[#0f4382]">
-            <ArrowRight className="size-6" />
+            <ArrowRight className="size-8" />
           </div>
           <div className="md:hidden text-[#0f4382]">
-            <ArrowRight className="size-6 rotate-90" />
+            <ArrowRight className="size-8 rotate-90" />
           </div>
 
           {/* QR Code */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-white border-2 border-[#2ebd5a] flex items-center justify-center shadow-lg mb-3 vs-qr-pulse">
-              <QrCode className="size-10 text-[#2ebd5a]" />
+            <div className="size-32 rounded-3xl bg-white border-2 border-[#2ebd5a] flex items-center justify-center shadow-xl mb-4 vs-qr-pulse">
+              <QrCode className="size-16 text-[#2ebd5a]" strokeWidth={2} />
             </div>
-            <div className="text-sm font-semibold text-[#111827]">QR Code</div>
+            <div className="text-base font-semibold text-[#111827]">QR Code</div>
             <div className="text-xs text-[#6B7280]">Unique par lot</div>
           </div>
 
           {/* Arrow */}
           <div className="hidden md:block text-[#2ebd5a]">
-            <ArrowRight className="size-6" />
+            <ArrowRight className="size-8" />
           </div>
           <div className="md:hidden text-[#2ebd5a]">
-            <ArrowRight className="size-6 rotate-90" />
+            <ArrowRight className="size-8 rotate-90" />
           </div>
 
           {/* Scan */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#0f4382] to-[#0a3060] flex items-center justify-center shadow-lg mb-3">
-              <ScanLine className="size-10 text-white" />
+            <div className="size-32 rounded-3xl bg-gradient-to-br from-[#0f4382] to-[#0a3060] flex items-center justify-center shadow-xl mb-4">
+              <ScanLine className="size-16 text-white" strokeWidth={2} />
             </div>
-            <div className="text-sm font-semibold text-[#111827]">Scan client</div>
+            <div className="text-base font-semibold text-[#111827]">Scan client</div>
             <div className="text-xs text-[#6B7280]">Vérification instantanée</div>
           </div>
 
           {/* Arrow */}
           <div className="hidden md:block text-[#F59E0B]">
-            <ArrowRight className="size-6" />
+            <ArrowRight className="size-8" />
           </div>
           <div className="md:hidden text-[#F59E0B]">
-            <ArrowRight className="size-6 rotate-90" />
+            <ArrowRight className="size-8 rotate-90" />
           </div>
 
           {/* Result */}
           <div className="flex flex-col items-center text-center">
-            <div className="size-20 rounded-2xl bg-gradient-to-br from-[#2ebd5a] to-[#1f8a42] flex items-center justify-center shadow-lg mb-3">
-              <CheckCircle2 className="size-10 text-white" />
+            <div className="size-32 rounded-3xl bg-gradient-to-br from-[#2ebd5a] to-[#1f8a42] flex items-center justify-center shadow-xl mb-4">
+              <CheckCircle2 className="size-16 text-white" strokeWidth={2} />
             </div>
-            <div className="text-sm font-semibold text-[#111827]">Authentifié</div>
+            <div className="text-base font-semibold text-[#111827]">Authentifié</div>
             <div className="text-xs text-[#6B7280]">Confiance accrue</div>
           </div>
         </div>
