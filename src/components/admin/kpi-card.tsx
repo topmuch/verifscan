@@ -1,11 +1,52 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import {
+  ArrowUp,
+  ArrowDown,
+  Building2,
+  CreditCard,
+  TrendingUp,
+  Ticket,
+  Package,
+  Layers,
+  QrCode,
+  Eye,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Map of icon names → lucide-react components.
+ *
+ * Why this map exists:
+ *   In Next.js 16 / React 19, you CANNOT pass a React component (such as a
+ *   lucide-react icon) as a prop from a Server Component to a Client
+ *   Component — the server-side serializer throws:
+ *     "Functions cannot be passed directly to Client Components"
+ *   because forward_ref components expose a `render` function which is not
+ *   serializable.
+ *
+ *   To work around this, the server side passes the icon as a STRING (its
+ *   name in this map), and the Client Component resolves the string back
+ *   to the actual component via this lookup table.
+ */
+const ICONS: Record<string, LucideIcon> = {
+  Building2,
+  CreditCard,
+  TrendingUp,
+  Ticket,
+  Package,
+  Layers,
+  QrCode,
+  Eye,
+};
+
+export type KpiIconName = keyof typeof ICONS;
+
 type KpiCardProps = {
-  icon: React.ComponentType<{ className?: string }>;
+  /** Name of the lucide-react icon to display (must exist in ICONS map above). */
+  icon: KpiIconName;
   iconBg: string; // tailwind bg class
   iconColor: string; // tailwind text class
   title: string;
@@ -52,7 +93,7 @@ function useCountUp(end: number, duration = 1200) {
 }
 
 export function KpiCard({
-  icon: Icon,
+  icon: iconName,
   iconBg,
   iconColor,
   title,
@@ -62,6 +103,7 @@ export function KpiCard({
   trend,
   subtext,
 }: KpiCardProps) {
+  const Icon = ICONS[iconName] ?? Building2; // safe fallback
   const numericValue = typeof value === "number" ? value : 0;
   const { count, elRef } = useCountUp(numericValue);
   const display = typeof value === "number"

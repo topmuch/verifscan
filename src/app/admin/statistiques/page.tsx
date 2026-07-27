@@ -1,9 +1,4 @@
 import {
-  Building2,
-  Package,
-  Layers,
-  QrCode,
-  Eye,
   Tag,
   TrendingUp,
 } from "lucide-react";
@@ -159,42 +154,42 @@ export default async function AdminStatsPage() {
         <h2 className="text-lg font-display font-semibold text-[#111827] mb-3">Vue d&apos;ensemble</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <KpiCard
-            icon={Building2}
+            icon="Building2"
             iconBg="bg-[#DBEAFE]"
             iconColor="text-[#0f4382]"
             title="Total fabricants"
             value={stats.totals.totalFabricants}
           />
           <KpiCard
-            icon={Building2}
+            icon="Building2"
             iconBg="bg-[#DCFCE7]"
             iconColor="text-[#2ebd5a]"
             title="Fabricants actifs"
             value={stats.totals.activeFabricants}
           />
           <KpiCard
-            icon={Package}
+            icon="Package"
             iconBg="bg-[#FEF3C7]"
             iconColor="text-[#F59E0B]"
             title="Total produits"
             value={stats.totals.totalProducts}
           />
           <KpiCard
-            icon={Layers}
+            icon="Layers"
             iconBg="bg-[#DBEAFE]"
             iconColor="text-[#0f4382]"
             title="Total lots"
             value={stats.totals.totalLots}
           />
           <KpiCard
-            icon={QrCode}
+            icon="QrCode"
             iconBg="bg-[#DCFCE7]"
             iconColor="text-[#2ebd5a]"
             title="Total QR codes"
             value={stats.totals.totalQrCodes}
           />
           <KpiCard
-            icon={Eye}
+            icon="Eye"
             iconBg="bg-[#FEE2E2]"
             iconColor="text-[#EF4444]"
             title="Total scans"
