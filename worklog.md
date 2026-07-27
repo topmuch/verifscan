@@ -764,3 +764,47 @@ Stage Summary:
 - Backend: nouveau modèle ProductReview, nouveau lib/email.ts (nodemailer + fallback ethereal), 2 nouveaux endpoints API, GET lots étendu
 - Pour activer les emails réels en prod: set SMTP_HOST/PORT/USER/PASS/FROM env vars (sinon fallback ethereal qui logge un preview URL)
 - Artéfacts: src/lib/email.ts, src/app/api/lots/[id]/reviews/route.ts, scripts/prepare-logo.py (re-exécutable)
+
+---
+Task ID: phase3-pdf-certs-and-export-edit
+Agent: Super Z (main)
+Task: Phase 3 — Upload certificats PDF + champs export dans édition produit
+
+Work Log:
+- Créé endpoint DELETE /api/certifications/[id] (suppression d'une cert manuelle, refus si vérifiée)
+- Créé endpoint PUT /api/certifications/[id] (édition issuer, n°, dates, documentUrl; refus si vérifiée)
+- Étendu les types de cert valides dans POST /api/certifications: ajout de phytosanitaire, globalgap, origine
+- Refonte complète de /dashboard/certifications:
+  * Section "Mes certificats PDF" avec upload PDF (max 10 MB, application/pdf)
+  * Formulaire: type (10 options), issuer, n° cert, dates émission/expiration, PDF file OU URL externe
+  * Liste des certs manuels avec badge type, statut (vérifié / en attente), dates, lien téléchargement PDF
+  * Bouton supprimer (désactivé pour certs vérifiés)
+  * Conservation de la section sync auto (SONAC, Halal, Bio, ISO)
+  * Note d'info: les certificats vérifiés ne peuvent pas être supprimés
+- Ajout endpoint GET + PUT /api/products/[id]:
+  * GET récupère produit avec catégorie (pageTemplate) pour détecter export_produce
+  * PUT met à jour tous les champs y compris export (variety, regionOfProduction, producerStory, producerPhotoUrl, gpsLat, gpsLng)
+  * Validation Zod, vérification ownership, nettoyage des champs vides → null
+  * Vérifie que la catégorie existe si elle change
+- Refonte /dashboard/produits/[id]/modifier:
+  * Chargement initial des champs export existants (variety, region, producerStory, photos, GPS)
+  * Upload photo produit + photo producteur (deux boutons séparés)
+  * Champs conditionnels affichés si catégorie = export_produce (badge bleu)
+  * Coordonnées GPS lat/lng avec astuce Google Maps
+  * Bouton "Retirer" pour les photos
+  * Correction bug critique: la page faisait un PUT sur /api/products/[id] qui n'existait pas !
+- Vérifications:
+  * tsc --noEmit: aucune nouvelle erreur sur les fichiers modifiés (erreurs pré-existantes dans sync/route.ts non touchées)
+  * next build: ✓ Compiled successfully in 23.5s, 70 pages générées
+  * next dev: routes accessibles
+    - GET /dashboard/certifications → 307 (redirect login, OK)
+    - GET /api/certifications → 401 (auth requise, OK)
+    - DELETE /api/certifications/test-id → 401 (auth requise, OK)
+- Commit + push origin/main: 0d06992
+
+Stage Summary:
+- Phase 3 complète: fabricants peuvent maintenant téléverser leurs certificats PDF (phytosanitaire, GlobalG.A.P., origine, bio, HACCP, ISO 22000, etc.) qui apparaîtront automatiquement sur la page produit publique avec lien de téléchargement direct
+- Bug critique corrigé: l'édition de produit était cassée (endpoint PUT manquant)
+- Champs export (variety, region, producerStory, photo, GPS) désormais éditables dans /dashboard/produits/[id]/modifier
+- 5 fichiers modifiés, 1 nouveau fichier, +1240 lignes / -76 lignes
+- Artéfacts: src/app/api/certifications/[id]/route.ts (nouveau), src/app/api/products/[id]/route.ts (GET+PUT ajoutés), /dashboard/certifications/page.tsx (refonte), /dashboard/produits/[id]/modifier/page.tsx (refonte)
