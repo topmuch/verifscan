@@ -62,20 +62,29 @@ const adminLinks = [
   { href: "/admin/support", label: "Support", icon: Bell },
 ];
 
+// Brand palette
+const SIDEBAR_BG = "#124685"; // brand blue
+const SIDEBAR_ACTIVE_BG = "rgba(255,255,255,0.14)";
+const SIDEBAR_HOVER_BG = "rgba(255,255,255,0.08)";
+
 export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const links = role === "superadmin" ? adminLinks : fabricantLinks;
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r border-emerald-100">
+    <aside
+      className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-white/10"
+      style={{ backgroundColor: SIDEBAR_BG }}
+    >
       <div className="flex-1 flex flex-col overflow-y-auto vs-scroll">
-        <div className="px-4 py-4 border-b border-emerald-100">
-          <VerifScanLogo size="sm" />
+        <div className="px-4 py-4 border-b border-white/10">
+          {/* Logo en version claire pour fond bleu */}
+          <VerifScanLogo size="lg" variant="light" />
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
-          <div className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <div className="px-3 mb-2 text-xs font-semibold text-white/60 uppercase tracking-wider">
             {role === "superadmin" ? "Administration" : "Mon espace"}
           </div>
           {links.map((l) => {
@@ -87,11 +96,22 @@ export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" })
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-white",
                   isActive
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-gray-600 hover:bg-emerald-50/50 hover:text-emerald-700"
+                    ? "shadow-sm"
+                    : "text-white/85 hover:text-white"
                 )}
+                style={{
+                  backgroundColor: isActive
+                    ? SIDEBAR_ACTIVE_BG
+                    : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = SIDEBAR_HOVER_BG;
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "";
+                }}
               >
                 <l.icon className="size-4" />
                 {l.label}
@@ -100,27 +120,29 @@ export function DashboardSidebar({ role }: { role: "fabricant" | "superadmin" })
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-emerald-100 space-y-1">
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-emerald-50/50 hover:text-emerald-700"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/85 hover:text-white"
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = SIDEBAR_HOVER_BG)}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
           >
             <Home className="size-4" />
             Site public
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-200 hover:text-white hover:bg-red-500/30"
           >
             <LogOut className="size-4" />
             Déconnexion
           </button>
 
-          <div className="px-3 pt-3 mt-2 border-t border-emerald-100">
-            <p className="text-xs text-gray-500 truncate">
+          <div className="px-3 pt-3 mt-2 border-t border-white/10">
+            <p className="text-xs text-white/70 truncate">
               {session?.user?.email}
             </p>
-            <p className="text-xs font-semibold text-emerald-700 truncate">
+            <p className="text-xs font-semibold text-white truncate">
               {session?.user?.name}
             </p>
           </div>
@@ -135,10 +157,13 @@ export function MobileDashboardNav({ role }: { role: "fabricant" | "superadmin" 
   const links = role === "superadmin" ? adminLinks : fabricantLinks;
 
   return (
-    <div className="md:hidden sticky top-0 z-40 bg-white border-b border-emerald-100">
+    <div
+      className="md:hidden sticky top-0 z-40 border-b border-white/10"
+      style={{ backgroundColor: SIDEBAR_BG }}
+    >
       <div className="px-4 py-3 flex items-center justify-between">
-        <VerifScanLogo size="sm" />
-        <Button asChild variant="ghost" size="sm">
+        <VerifScanLogo size="md" variant="light" />
+        <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10">
           <Link href="/">Site</Link>
         </Button>
       </div>
@@ -154,9 +179,12 @@ export function MobileDashboardNav({ role }: { role: "fabricant" | "superadmin" 
               className={cn(
                 "flex-shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium",
                 isActive
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "text-gray-600 hover:bg-emerald-50"
+                  ? "text-white"
+                  : "text-white/80 hover:text-white"
               )}
+              style={{
+                backgroundColor: isActive ? SIDEBAR_ACTIVE_BG : undefined,
+              }}
             >
               <l.icon className="size-3.5" />
               {l.label}

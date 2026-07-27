@@ -24,10 +24,10 @@ export function VerifScanLogo({
 }) {
   // Size by height — logo aspect ratio is ~4.12:1 (272×66)
   const heights: Record<"sm" | "md" | "lg" | "xl", number> = {
-    sm: 28,
-    md: 36,
-    lg: 48,
-    xl: 64,
+    sm: 40,
+    md: 52,
+    lg: 64,
+    xl: 80,
   };
   const h = heights[size];
   const w = Math.round(h * (272 / 66));

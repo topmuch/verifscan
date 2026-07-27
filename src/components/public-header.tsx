@@ -48,11 +48,11 @@ export function PublicHeader() {
         "fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300",
         scrolled ? "vs-header-blur shadow-sm" : "bg-white"
       )}
-      style={{ height: 80 }}
+      style={{ height: 88 }}
     >
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
         {/* Logo */}
-        <VerifScanLogo size="md" />
+        <VerifScanLogo size="xl" />
 
         {/* Desktop nav (centered) */}
         <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
