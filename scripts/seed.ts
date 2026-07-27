@@ -22,6 +22,11 @@ const categories = [
   { name: "Produits laitiers", icon: "🥛" },
   { name: "Fruits secs", icon: "🥜" },
   { name: "Huiles", icon: "🫒" },
+  { name: "Fruits de mer", icon: "🦐" },
+  { name: "Agroalimentaire", icon: "🌾" },
+  { name: "Artisanat", icon: "🎨" },
+  { name: "Cosmétiques", icon: "💄" },
+  { name: "Textiles", icon: "🧵" },
 ];
 
 async function main() {

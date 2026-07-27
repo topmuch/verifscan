@@ -5,7 +5,7 @@
 // Creates:
 //   - SUPER_ADMIN:  admin@verifscan.sn  / admin123       (override with ADMIN_EMAIL / ADMIN_PASSWORD)
 //   - Fabricant démo: sarine@verifscan.sn / fabricant123  (override with DEMO_FABRICANT_EMAIL / DEMO_FABRICANT_PASSWORD)
-//   - 8 categories
+//   - 13 categories
 //
 // If accounts already exist they are left untouched (passwords are NOT overwritten
 // on subsequent runs — only created on first run).
@@ -22,6 +22,11 @@ const CATEGORIES = [
   { name: "Produits laitiers", icon: "🥛" },
   { name: "Fruits secs", icon: "🥜" },
   { name: "Huiles", icon: "🫒" },
+  { name: "Fruits de mer", icon: "🦐" },
+  { name: "Agroalimentaire", icon: "🌾" },
+  { name: "Artisanat", icon: "🎨" },
+  { name: "Cosmétiques", icon: "💄" },
+  { name: "Textiles", icon: "🧵" },
 ];
 
 async function upsertAdmin(db) {
