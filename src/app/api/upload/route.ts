@@ -3,7 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getCurrentUser } from "@/lib/session";
 
-const ALLOWED_MIME = new Set([
+const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
   "image/jpg",
   "image/png",
@@ -12,13 +12,26 @@ const ALLOWED_MIME = new Set([
   "image/svg+xml",
 ]);
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_VIDEO_MIME = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+]);
+
+const ALLOWED_DOC_MIME = new Set([
+  "application/pdf",
+]);
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
 
 /**
  * POST /api/upload
- * Upload a single image (logo fabricant or product photo).
+ * Upload a single file (image / video / PDF).
  * Multipart form-data with field "file".
- * Returns { url: "/uploads/<filename>" }
+ * Optional field "kind" = 'image' | 'video' | 'pdf' to bypass auto-detection.
+ * Returns { url: "/uploads/<userId>/<filename>", size, type, kind }
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -38,16 +51,52 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
   }
 
-  if (!ALLOWED_MIME.has(file.type)) {
+  const kind = (formData.get("kind") as string) || null;
+
+  // Détection du type
+  let detectedKind: "image" | "video" | "pdf";
+  let maxSize: number;
+
+  if (kind === "image" || ALLOWED_IMAGE_MIME.has(file.type)) {
+    detectedKind = "image";
+    maxSize = MAX_IMAGE_SIZE;
+    if (!ALLOWED_IMAGE_MIME.has(file.type)) {
+      return NextResponse.json(
+        { error: `Type image non supporté: ${file.type}. Formats: JPG, PNG, WebP, GIF, SVG.` },
+        { status: 400 }
+      );
+    }
+  } else if (kind === "video" || ALLOWED_VIDEO_MIME.has(file.type)) {
+    detectedKind = "video";
+    maxSize = MAX_VIDEO_SIZE;
+    if (!ALLOWED_VIDEO_MIME.has(file.type)) {
+      return NextResponse.json(
+        { error: `Type vidéo non supporté: ${file.type}. Formats: MP4, WebM, OGG.` },
+        { status: 400 }
+      );
+    }
+  } else if (kind === "pdf" || ALLOWED_DOC_MIME.has(file.type)) {
+    detectedKind = "pdf";
+    maxSize = MAX_DOC_SIZE;
+    if (!ALLOWED_DOC_MIME.has(file.type)) {
+      return NextResponse.json(
+        { error: `Type document non supporté: ${file.type}. Format accepté: PDF.` },
+        { status: 400 }
+      );
+    }
+  } else {
     return NextResponse.json(
-      { error: `Type non supporté: ${file.type}. Formats acceptés: JPG, PNG, WebP, GIF, SVG.` },
+      {
+        error: `Type non supporté: ${file.type}. Formats acceptés: JPG, PNG, WebP, GIF, SVG, MP4, WebM, OGG, PDF.`,
+      },
       { status: 400 }
     );
   }
 
-  if (file.size > MAX_SIZE) {
+  if (file.size > maxSize) {
+    const maxMB = Math.round(maxSize / (1024 * 1024));
     return NextResponse.json(
-      { error: `Fichier trop volumineux (max 5 MB).` },
+      { error: `Fichier trop volumineux (max ${maxMB} MB pour ce type).` },
       { status: 400 }
     );
   }
@@ -67,5 +116,10 @@ export async function POST(req: Request) {
   await writeFile(fullPath, buffer);
 
   const publicUrl = `/uploads/${user.id}/${filename}`;
-  return NextResponse.json({ url: publicUrl, size: file.size, type: file.type });
+  return NextResponse.json({
+    url: publicUrl,
+    size: file.size,
+    type: file.type,
+    kind: detectedKind,
+  });
 }

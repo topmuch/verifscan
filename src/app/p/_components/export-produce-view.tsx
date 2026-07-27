@@ -610,9 +610,21 @@ export function ExportProduceView({ lot }: { lot: ExportLot }) {
               <div className="grid sm:grid-cols-2 gap-4">
                 {videos.map((v) => {
                   const embed = toEmbedUrl(v.url);
+                  // Vidéo locale (uploads/ ou .mp4/.webm/.ogg direct)
+                  const isLocalVideo =
+                    v.url.startsWith("/uploads/") ||
+                    /\.(mp4|webm|ogg)$/i.test(v.url);
                   return (
                     <div key={v.id} className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                      {embed ? (
+                      {isLocalVideo ? (
+                        // eslint-disable-next-line jsx-a11y/media-has-caption
+                        <video
+                          src={v.url}
+                          controls
+                          className="w-full aspect-video bg-black"
+                          preload="metadata"
+                        />
+                      ) : embed ? (
                         <div className="aspect-video">
                           <iframe
                             src={embed}
