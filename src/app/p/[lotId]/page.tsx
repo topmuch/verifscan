@@ -40,6 +40,7 @@ import {
   Share2,
 } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
+import { ExportProduceView } from "../_components/export-produce-view";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -124,6 +125,22 @@ type Lot = {
   recallReason: string | null;
   recalledAt: string | null;
   createdAt: string;
+
+  // Champs export_produce
+  harvestDate?: string | null;
+  packagingDate?: string | null;
+  packagingStation?: string | null;
+  containerNumber?: string | null;
+  palletNumber?: string | null;
+  shipDate?: string | null;
+  destination?: string | null;
+  carrier?: string | null;
+  caliber?: string | null;
+  avgWeightGram?: number | null;
+  brix?: number | null;
+  storageTempC?: number | null;
+  shelfLifeDays?: number | null;
+
   product: {
     id: string;
     name: string;
@@ -131,7 +148,14 @@ type Lot = {
     description: string | null;
     photoUrl: string | null;
     weight: string | null;
-    category: { name: string; icon: string | null };
+    // Champs export_produce
+    variety?: string | null;
+    regionOfProduction?: string | null;
+    producerStory?: string | null;
+    producerPhotoUrl?: string | null;
+    gpsLat?: number | null;
+    gpsLng?: number | null;
+    category: { name: string; icon: string | null; pageTemplate?: string };
     user: {
       id: string;
       companyName: string;
@@ -149,6 +173,7 @@ type Lot = {
   };
   qrCodes: { id: string; qrCodeImageUrl: string | null }[];
   certifications: Certification[];
+  lotMedia?: Array<{ id: string; type: string; url: string; caption: string | null }>;
   scanCount: number;
   lastScanAt: string | null;
   fabricantSince: string;
@@ -506,6 +531,15 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
       </div>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        {/* === ROUTEUR DE TEMPLATE ===
+            Si la catégorie du produit utilise `pageTemplate === "export_produce"`,
+            on rend la vue spécialisée export (mangues, crevettes, fonio…).
+            Sinon on rend la vue standard. */}
+        {lot.product.category?.pageTemplate === "export_produce" ? (
+          <ExportProduceView lot={lot as any} />
+        ) : (
+        <>
+
         {/* === 1. HEADER AUTHENTIFICATION — gradient banner === */}
         {/* Note: expired/near-expiry cases are handled by the dedicated red
             alert banner in section 1.bis below. This banner always shows
@@ -1486,6 +1520,8 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
             En savoir plus
           </Link>
         </p>
+
+        </>)}
       </div>
 
       {/* Review modal — opened by the 15-second notification toast or by

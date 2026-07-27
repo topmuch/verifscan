@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-type Category = { id: string; name: string; icon: string | null };
+type Category = { id: string; name: string; icon: string | null; pageTemplate?: string };
 
 export default function NouveauProduitPage() {
   const router = useRouter();
@@ -37,6 +37,13 @@ export default function NouveauProduitPage() {
     weight: "",
     categoryId: "",
     isVisible: true,
+    // Champs export_produce
+    variety: "",
+    regionOfProduction: "",
+    producerStory: "",
+    producerPhotoUrl: "",
+    gpsLat: "",
+    gpsLng: "",
   });
 
   useEffect(() => {
@@ -45,6 +52,34 @@ export default function NouveauProduitPage() {
       .then(setCategories)
       .catch(() => toast.error("Impossible de charger les catégories"));
   }, []);
+
+  // Détecte si la catégorie sélectionnée utilise le template export_produce
+  const selectedCategory = categories.find((c) => c.id === form.categoryId);
+  const isExportProduce = selectedCategory?.pageTemplate === "export_produce";
+
+  async function uploadProducerPhoto(file: File) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 5 MB)");
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur d'upload");
+      setForm((f) => ({ ...f, producerPhotoUrl: data.url }));
+      toast.success("Photo producteur téléversée !");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du téléversement");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  const producerPhotoInputRef = useRef<HTMLInputElement | null>(null);
 
   async function uploadPhoto(file: File) {
     if (!file) return;
@@ -75,7 +110,26 @@ export default function NouveauProduitPage() {
     const res = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        name: form.name,
+        brand: form.brand,
+        description: form.description,
+        photoUrl: form.photoUrl,
+        weight: form.weight,
+        categoryId: form.categoryId,
+        isVisible: form.isVisible,
+        // Champs export_produce (envoyés seulement si pertinent)
+        ...(isExportProduce
+          ? {
+              variety: form.variety || undefined,
+              regionOfProduction: form.regionOfProduction || undefined,
+              producerStory: form.producerStory || undefined,
+              producerPhotoUrl: form.producerPhotoUrl || undefined,
+              gpsLat: form.gpsLat ? Number(form.gpsLat) : undefined,
+              gpsLng: form.gpsLng ? Number(form.gpsLng) : undefined,
+            }
+          : {}),
+      }),
     });
     const data = await res.json();
     setLoading(false);
@@ -258,6 +312,150 @@ export default function NouveauProduitPage() {
                 className="border-emerald-200 focus-visible:ring-emerald-500 resize-none"
               />
             </div>
+
+            {/* === CHAMPS SPÉCIFIQUES EXPORT (affichés seulement pour les catégories export_produce) === */}
+            {isExportProduce && (
+              <div className="space-y-4 mt-2 pt-4 border-t-2 border-dashed border-blue-200">
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
+                  <p className="font-semibold">🚢 Produit d&apos;export</p>
+                  <p className="text-xs mt-0.5">
+                    Cette catégorie utilise un template de page produit spécialisé export.
+                    Les champs ci-dessous apparaîtront sur la page publique scannée par QR code.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="variety">Variété</Label>
+                    <Input
+                      id="variety"
+                      placeholder="Kent, Keitt, Brooks..."
+                      value={form.variety}
+                      onChange={(e) => setForm({ ...form, variety: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="regionOfProduction">Région de production</Label>
+                    <Input
+                      id="regionOfProduction"
+                      placeholder="Casamance, Vallée du fleuve, Niayes..."
+                      value={form.regionOfProduction}
+                      onChange={(e) => setForm({ ...form, regionOfProduction: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="producerStory">Histoire / Présentation du producteur</Label>
+                  <Textarea
+                    id="producerStory"
+                    placeholder="Notre exploitation familiale de 45 hectares cultive la mangue Kent depuis 3 générations..."
+                    rows={4}
+                    value={form.producerStory}
+                    onChange={(e) => setForm({ ...form, producerStory: e.target.value })}
+                    className="border-blue-200 focus-visible:ring-blue-500 resize-none"
+                  />
+                </div>
+
+                {/* === Photo producteur / verger === */}
+                <div className="space-y-1">
+                  <Label>Photo du producteur / verger</Label>
+                  <div className="flex items-start gap-4">
+                    <div className="size-24 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {form.producerPhotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={form.producerPhotoUrl}
+                          alt="Aperçu producteur"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="size-8 text-blue-300" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-2">
+                        Photo du producteur, du verger ou de l&apos;atelier. Affichée sur la page produit.
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={uploadingPhoto}
+                          onClick={() => producerPhotoInputRef.current?.click()}
+                          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                        >
+                          {uploadingPhoto ? (
+                            <>
+                              <Loader2 className="mr-2 size-4 animate-spin" />
+                              Téléversement...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="mr-2 size-4" />
+                              Téléverser
+                            </>
+                          )}
+                        </Button>
+                        {form.producerPhotoUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setForm({ ...form, producerPhotoUrl: "" })}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            Retirer
+                          </Button>
+                        )}
+                      </div>
+                      <input
+                        ref={producerPhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadProducerPhoto(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* === Coordonnées GPS du verger / station === */}
+                <div className="space-y-1">
+                  <Label>Localisation GPS (optionnel)</Label>
+                  <p className="text-xs text-gray-500">
+                    Coordonnées du verger, de la ferme ou de la station de conditionnement.
+                    Affichées sur une carte Google Maps sur la page produit.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="Latitude (ex: 16.4647)"
+                      value={form.gpsLat}
+                      onChange={(e) => setForm({ ...form, gpsLat: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="Longitude (ex: -15.7031)"
+                      value={form.gpsLng}
+                      onChange={(e) => setForm({ ...form, gpsLng: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Astuce : sur Google Maps, clic droit sur un lieu → les coordonnées sont copiées automatiquement.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox

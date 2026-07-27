@@ -49,28 +49,36 @@ model User {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  icon      String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String   @unique
+  icon         String?
+  pageTemplate String   @default("standard") // 'standard' | 'export_produce' | 'artisanat' | 'cosmetique' | 'textile'
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   products  Product[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  userId      String
-  categoryId  String
-  name        String
-  brand       String
-  description String?
-  photoUrl    String?
-  weight      String?
-  isVisible   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String
+  categoryId         String
+  name               String
+  brand              String
+  description        String?
+  photoUrl           String?
+  weight             String?
+  isVisible          Boolean  @default(true)
+  // Champs spécifiques au template 'export_produce' (ignorés sinon)
+  variety            String?   // ex: "Kent", "Keitt" pour les mangues
+  regionOfProduction String?   // ex: "Casamance", "Vallée du fleuve Sénégal"
+  producerStory      String?   // présentation/histoire du producteur
+  producerPhotoUrl   String?   // photo du producteur/verger
+  gpsLat             Float?
+  gpsLng             Float?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category @relation(fields: [categoryId], references: [id])
@@ -102,16 +110,46 @@ model Lot {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  // Champs spécifiques au template 'export_produce' (ignorés sinon)
+  harvestDate            DateTime?  // date de récolte
+  packagingDate          DateTime?  // date de conditionnement
+  packagingStation       String?    // station de conditionnement
+  containerNumber        String?    // n° de conteneur
+  palletNumber           String?    // n° de palette
+  shipDate               DateTime?  // date d'expédition
+  destination            String?    // pays/ville de destination
+  carrier                String?    // transporteur
+  caliber                String?    // calibre (ex: "5-6", "Calibre A")
+  avgWeightGram          Int?       // poids moyen (g)
+  brix                   Float?     // taux de sucre (°Brix)
+  storageTempC           Float?     // température de conservation (°C)
+  shelfLifeDays          Int?       // durée de conservation (jours)
+
   product                Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   qrCodes                QRCode[]
   // V3 relations
   aiAnomalies            AIAnomaly[]
   blockchainCertificate  BlockchainCertificate?
   productReviews         ProductReview[]
+  lotMedia               LotMedia[]
 
   @@index([productId])
   @@index([status])
 }
+
+model LotMedia {
+  id        String   @id @default(cuid())
+  lotId     String
+  type      String   // 'photo' | 'video'
+  url       String   // URL externe (YouTube/Vimeo pour les vidéos) ou locale
+  caption   String?
+  createdAt DateTime @default(now())
+
+  lot       Lot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+}
+
 
 model QRCode {
   id            String   @id @default(cuid())

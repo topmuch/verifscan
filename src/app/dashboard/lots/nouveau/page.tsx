@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-type Product = { id: string; name: string; brand: string };
+type Product = {
+  id: string;
+  name: string;
+  brand: string;
+  category?: { pageTemplate?: string };
+};
 
 const COUNTRIES = [
   "Sénégal",
@@ -53,6 +58,20 @@ export default function NouveauLotPage() {
     transformationLocation: "",
     selectedCountries: [] as string[],
     status: "active" as "active" | "recalled",
+    // Champs export_produce
+    harvestDate: "",
+    packagingDate: "",
+    packagingStation: "",
+    containerNumber: "",
+    palletNumber: "",
+    shipDate: "",
+    destination: "",
+    carrier: "",
+    caliber: "",
+    avgWeightGram: "",
+    brix: "",
+    storageTempC: "",
+    shelfLifeDays: "",
   });
 
   useEffect(() => {
@@ -61,6 +80,10 @@ export default function NouveauLotPage() {
       .then((data) => setProducts(data.items || []))
       .catch(() => toast.error("Erreur de chargement des produits"));
   }, []);
+
+  // Détecte si le produit sélectionné est dans une catégorie export_produce
+  const selectedProduct = products.find((p) => p.id === form.productId);
+  const isExportProduce = selectedProduct?.category?.pageTemplate === "export_produce";
 
   function toggleCountry(c: string) {
     setForm((f) => ({
@@ -86,8 +109,33 @@ export default function NouveauLotPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...form,
+        productId: form.productId,
+        lotNumber: form.lotNumber,
+        manufacturingDate: form.manufacturingDate,
+        expirationDate: form.expirationDate,
+        ingredients: form.ingredients,
+        manufacturingLocation: form.manufacturingLocation,
+        transformationLocation: form.transformationLocation,
         salesCountries: form.selectedCountries.join(", "),
+        status: form.status,
+        // Champs export_produce (envoyés seulement si pertinent)
+        ...(isExportProduce
+          ? {
+              harvestDate: form.harvestDate || undefined,
+              packagingDate: form.packagingDate || undefined,
+              packagingStation: form.packagingStation || undefined,
+              containerNumber: form.containerNumber || undefined,
+              palletNumber: form.palletNumber || undefined,
+              shipDate: form.shipDate || undefined,
+              destination: form.destination || undefined,
+              carrier: form.carrier || undefined,
+              caliber: form.caliber || undefined,
+              avgWeightGram: form.avgWeightGram ? Number(form.avgWeightGram) : undefined,
+              brix: form.brix ? Number(form.brix) : undefined,
+              storageTempC: form.storageTempC ? Number(form.storageTempC) : undefined,
+              shelfLifeDays: form.shelfLifeDays ? Number(form.shelfLifeDays) : undefined,
+            }
+          : {}),
       }),
     });
     const data = await res.json();
@@ -261,6 +309,175 @@ export default function NouveauLotPage() {
                   </p>
                 </div>
               </div>
+
+              {/* === CHAMPS SPÉCIFIQUES EXPORT (affichés seulement pour les catégories export_produce) === */}
+              {isExportProduce && (
+                <div className="space-y-4 mt-4 pt-4 border-t-2 border-dashed border-blue-200">
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
+                    <p className="font-semibold">🚢 Informations d'export</p>
+                    <p className="text-xs mt-0.5">
+                      Ce produit est dans une catégorie d'export. Les champs ci-dessous
+                      apparaîtront sur la page produit publique (template export).
+                    </p>
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-gray-700">📅 Récolte & Conditionnement</h3>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="harvestDate">Date de récolte</Label>
+                      <Input
+                        id="harvestDate"
+                        type="date"
+                        value={form.harvestDate}
+                        onChange={(e) => setForm({ ...form, harvestDate: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="packagingDate">Date de conditionnement</Label>
+                      <Input
+                        id="packagingDate"
+                        type="date"
+                        value={form.packagingDate}
+                        onChange={(e) => setForm({ ...form, packagingDate: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="packagingStation">Station de conditionnement</Label>
+                    <Input
+                      id="packagingStation"
+                      placeholder="Station COSEM Richard-Toll"
+                      value={form.packagingStation}
+                      onChange={(e) => setForm({ ...form, packagingStation: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-gray-700 pt-2">📦 Logistique</h3>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="containerNumber">N° de conteneur</Label>
+                      <Input
+                        id="containerNumber"
+                        placeholder="CMAU-4455667"
+                        value={form.containerNumber}
+                        onChange={(e) => setForm({ ...form, containerNumber: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="palletNumber">N° de palette(s)</Label>
+                      <Input
+                        id="palletNumber"
+                        placeholder="PLT-001 à PLT-020"
+                        value={form.palletNumber}
+                        onChange={(e) => setForm({ ...form, palletNumber: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="shipDate">Date d'expédition</Label>
+                      <Input
+                        id="shipDate"
+                        type="date"
+                        value={form.shipDate}
+                        onChange={(e) => setForm({ ...form, shipDate: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="destination">Destination</Label>
+                      <Input
+                        id="destination"
+                        placeholder="Le Havre, France"
+                        value={form.destination}
+                        onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="carrier">Transporteur</Label>
+                    <Input
+                      id="carrier"
+                      placeholder="Maersk Line"
+                      value={form.carrier}
+                      onChange={(e) => setForm({ ...form, carrier: e.target.value })}
+                      className="border-blue-200 focus-visible:ring-blue-500"
+                    />
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-gray-700 pt-2">🧪 Contrôle qualité</h3>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="caliber">Calibre</Label>
+                      <Input
+                        id="caliber"
+                        placeholder="Calibre A (5-6 fruits / carton)"
+                        value={form.caliber}
+                        onChange={(e) => setForm({ ...form, caliber: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="avgWeightGram">Poids moyen (g)</Label>
+                      <Input
+                        id="avgWeightGram"
+                        type="number"
+                        min="0"
+                        placeholder="580"
+                        value={form.avgWeightGram}
+                        onChange={(e) => setForm({ ...form, avgWeightGram: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="brix">Taux de sucre (°Brix)</Label>
+                      <Input
+                        id="brix"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="14.5"
+                        value={form.brix}
+                        onChange={(e) => setForm({ ...form, brix: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="storageTempC">Temp. conservation (°C)</Label>
+                      <Input
+                        id="storageTempC"
+                        type="number"
+                        step="0.1"
+                        placeholder="8.5"
+                        value={form.storageTempC}
+                        onChange={(e) => setForm({ ...form, storageTempC: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="shelfLifeDays">Durée conservation (j)</Label>
+                      <Input
+                        id="shelfLifeDays"
+                        type="number"
+                        min="0"
+                        placeholder="21"
+                        value={form.shelfLifeDays}
+                        onChange={(e) => setForm({ ...form, shelfLifeDays: e.target.value })}
+                        className="border-blue-200 focus-visible:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <Button

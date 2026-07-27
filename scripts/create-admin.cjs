@@ -5,7 +5,7 @@
 // Creates:
 //   - SUPER_ADMIN:  admin@verifscan.sn  / admin123       (override with ADMIN_EMAIL / ADMIN_PASSWORD)
 //   - Fabricant démo: sarine@verifscan.sn / fabricant123  (override with DEMO_FABRICANT_EMAIL / DEMO_FABRICANT_PASSWORD)
-//   - 13 categories
+//   - 29 categories (14 standard + 15 export_produce)
 //
 // If accounts already exist they are left untouched (passwords are NOT overwritten
 // on subsequent runs — only created on first run).
@@ -14,19 +14,37 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 
 const CATEGORIES = [
-  { name: "Jus & Boissons", icon: "🥤" },
-  { name: "Boulangerie", icon: "🍞" },
-  { name: "Épices & Condiments", icon: "🌶️" },
-  { name: "Conserves", icon: "🥫" },
-  { name: "Céréales & Grains", icon: "🌾" },
-  { name: "Produits laitiers", icon: "🥛" },
-  { name: "Fruits secs", icon: "🥜" },
-  { name: "Huiles", icon: "🫒" },
-  { name: "Fruits de mer", icon: "🦐" },
-  { name: "Agroalimentaire", icon: "🌾" },
-  { name: "Artisanat", icon: "🎨" },
-  { name: "Cosmétiques", icon: "💄" },
-  { name: "Textiles", icon: "🧵" },
+  // === Standard ===
+  { name: "Jus & Boissons",     icon: "🥤", pageTemplate: "standard" },
+  { name: "Boulangerie",        icon: "🍞", pageTemplate: "standard" },
+  { name: "Épices & Condiments", icon: "🌶️", pageTemplate: "standard" },
+  { name: "Conserves",          icon: "🥫", pageTemplate: "standard" },
+  { name: "Céréales & Grains",  icon: "🌾", pageTemplate: "standard" },
+  { name: "Produits laitiers",  icon: "🥛", pageTemplate: "standard" },
+  { name: "Fruits secs & Noix", icon: "🥜", pageTemplate: "standard" },
+  { name: "Huiles végétales",   icon: "🫒", pageTemplate: "standard" },
+  { name: "Snacks",             icon: "🍿", pageTemplate: "standard" },
+  { name: "Agroalimentaire",    icon: "🌾", pageTemplate: "standard" },
+  { name: "Artisanat",          icon: "🎨", pageTemplate: "standard" },
+  { name: "Cosmétiques",        icon: "💄", pageTemplate: "standard" },
+  { name: "Textiles",           icon: "🧵", pageTemplate: "standard" },
+  { name: "Produits transformés", icon: "🥥", pageTemplate: "standard" },
+  // === export_produce ===
+  { name: "Mangues",            icon: "🥭", pageTemplate: "export_produce" },
+  { name: "Arachides",          icon: "🥜", pageTemplate: "export_produce" },
+  { name: "Piment",             icon: "🌶️", pageTemplate: "export_produce" },
+  { name: "Oignons",            icon: "🧅", pageTemplate: "export_produce" },
+  { name: "Tomates",            icon: "🍅", pageTemplate: "export_produce" },
+  { name: "Citrons",            icon: "🍋", pageTemplate: "export_produce" },
+  { name: "Agrumes",            icon: "🍊", pageTemplate: "export_produce" },
+  { name: "Produits de la pêche", icon: "🐟", pageTemplate: "export_produce" },
+  { name: "Crevettes",          icon: "🦐", pageTemplate: "export_produce" },
+  { name: "Hibiscus (Bissap)",  icon: "🌺", pageTemplate: "export_produce" },
+  { name: "Riz",                icon: "🌾", pageTemplate: "export_produce" },
+  { name: "Café",               icon: "☕", pageTemplate: "export_produce" },
+  { name: "Fonio",              icon: "🌿", pageTemplate: "export_produce" },
+  { name: "Sel",                icon: "🧂", pageTemplate: "export_produce" },
+  { name: "Miel",               icon: "🍯", pageTemplate: "export_produce" },
 ];
 
 async function upsertAdmin(db) {
@@ -119,14 +137,23 @@ async function upsertDemoFabricant(db) {
 
 async function upsertCategories(db) {
   let created = 0;
+  let updated = 0;
   for (const cat of CATEGORIES) {
     const existing = await db.category.findUnique({ where: { name: cat.name } });
     if (!existing) {
       await db.category.create({ data: cat });
       created++;
+    } else if (existing.pageTemplate !== cat.pageTemplate || existing.icon !== cat.icon) {
+      // Met à jour l'icône et le template si la catégorie existe déjà
+      // mais avec une configuration obsolète (migration).
+      await db.category.update({
+        where: { id: existing.id },
+        data: { icon: cat.icon, pageTemplate: cat.pageTemplate, isActive: true },
+      });
+      updated++;
     }
   }
-  console.log(`[seed] Categories: ${created} created, ${CATEGORIES.length - created} already present.`);
+  console.log(`[seed] Categories: ${created} created, ${updated} updated, ${CATEGORIES.length - created - updated} unchanged.`);
 }
 
 async function main() {

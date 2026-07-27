@@ -49,6 +49,7 @@ export async function GET(
         },
       },
       qrCodes: { where: { isActive: true }, take: 1 },
+      lotMedia: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -81,6 +82,7 @@ export async function GET(
           },
         },
         qrCodes: { where: { isActive: true }, take: 1 },
+        lotMedia: { orderBy: { createdAt: "asc" } },
       },
     });
   }
