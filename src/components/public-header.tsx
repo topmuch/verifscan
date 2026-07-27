@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, LayoutDashboard, LogOut, User as UserIcon, History, Award, MapPin } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut, History, Award, MapPin } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { VerifScanLogo } from "@/components/verifscan-logo";
@@ -48,11 +48,11 @@ export function PublicHeader() {
         "fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300",
         scrolled ? "vs-header-blur shadow-sm" : "bg-white"
       )}
-      style={{ height: 88 }}
+      style={{ height: 76 }}
     >
       <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
         {/* Logo */}
-        <VerifScanLogo size="xl" />
+        <VerifScanLogo size="md" />
 
         {/* Desktop nav (centered) */}
         <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
@@ -76,42 +76,6 @@ export function PublicHeader() {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
-          {/* Consumer menu — Mon espace */}
-          {status !== "authenticated" && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-[#374151] hover:bg-[#F9FAFB] hover:text-[#0f4382] font-medium gap-1.5"
-                >
-                  <UserIcon className="size-4" />
-                  Mon espace
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link href="/mon-historique" className="cursor-pointer">
-                    <History className="mr-2 size-4" />
-                    Mon historique
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/mes-recompenses" className="cursor-pointer">
-                    <Award className="mr-2 size-4" />
-                    Mes récompenses
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/carte" className="cursor-pointer">
-                    <MapPin className="mr-2 size-4" />
-                    Carte des scans
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
           {status === "authenticated" ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -196,8 +160,8 @@ export function PublicHeader() {
             </Link>
           ))}
 
-          {/* Consumer links — mobile */}
-          {status !== "authenticated" && (
+          {/* Consumer links — mobile (visible only if authenticated) */}
+          {status === "authenticated" && (
             <>
               <div className="pt-3 mt-3 border-t border-[#E5E7EB] text-xs font-semibold text-[#6B7280] uppercase tracking-wider px-4">
                 Mon espace

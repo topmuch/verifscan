@@ -42,7 +42,10 @@ export function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-10">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-5">
-            <VerifScanLogo size="lg" variant="light" />
+            {/* Logo sur pastille blanche pour lisibilité sur fond bleu foncé */}
+            <div className="inline-flex items-center bg-white rounded-xl px-4 py-2.5 shadow-lg">
+              <VerifScanLogo size="md" variant="color" />
+            </div>
             <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
               La vérité au bout du scan. VerifScan offre aux fabricants un passeport
               numérique pour leurs produits, garantissant traçabilité, authenticité

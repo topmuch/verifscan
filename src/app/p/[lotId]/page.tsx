@@ -28,6 +28,8 @@ import {
   Check,
   Twitter,
   Linkedin,
+  Facebook,
+  Instagram,
   ThumbsUp,
   Clock,
   Star,
@@ -138,6 +140,10 @@ type Lot = {
       whatsapp: string | null;
       emailContact: string | null;
       address: string | null;
+      socialFacebook: string | null;
+      socialTwitter: string | null;
+      socialLinkedin: string | null;
+      socialInstagram: string | null;
       createdAt: string;
     };
   };
@@ -644,12 +650,79 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                 <p className="text-gray-600 dark:text-gray-300">
                   Marque : <span className="font-semibold text-gray-900 dark:text-gray-100">{lot.product.brand}</span>
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Fabricant :{" "}
-                  <span className="font-semibold" style={{ color: GREEN_DARK }}>
-                    {lot.product.user.companyName}
-                  </span>
-                </p>
+                {/* Fabricant + logo + réseaux sociaux */}
+                <div className="flex items-center gap-3 flex-wrap pt-1">
+                  {lot.product.user.logoUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={lot.product.user.logoUrl}
+                      alt={`Logo ${lot.product.user.companyName}`}
+                      className="size-10 rounded-lg object-contain bg-white border border-gray-200 p-0.5"
+                    />
+                  )}
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Fabricant :{" "}
+                    <span className="font-semibold" style={{ color: GREEN_DARK }}>
+                      {lot.product.user.companyName}
+                    </span>
+                  </div>
+                  {/* Réseaux sociaux fabricant */}
+                  {(lot.product.user.socialFacebook ||
+                    lot.product.user.socialTwitter ||
+                    lot.product.user.socialLinkedin ||
+                    lot.product.user.socialInstagram) && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      {lot.product.user.socialFacebook && (
+                        <a
+                          href={lot.product.user.socialFacebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#1877F2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Facebook"
+                          title="Facebook"
+                        >
+                          <Facebook className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialTwitter && (
+                        <a
+                          href={lot.product.user.socialTwitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#1DA1F2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Twitter / X"
+                          title="Twitter / X"
+                        >
+                          <Twitter className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialLinkedin && (
+                        <a
+                          href={lot.product.user.socialLinkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#0A66C2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="LinkedIn"
+                          title="LinkedIn"
+                        >
+                          <Linkedin className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialInstagram && (
+                        <a
+                          href={lot.product.user.socialInstagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#E4405F] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Instagram"
+                          title="Instagram"
+                        >
+                          <Instagram className="size-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {lot.product.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pt-2 border-t border-gray-100 dark:border-gray-800">
                     {lot.product.description}

@@ -21,6 +21,11 @@ model User {
   whatsapp      String?
   emailContact  String?
   address       String?
+  // Réseaux sociaux (renseignés par le fabricant, affichés sur sa fiche produit)
+  socialFacebook   String?
+  socialTwitter    String?
+  socialLinkedin   String?
+  socialInstagram  String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
