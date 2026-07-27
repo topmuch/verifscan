@@ -65,8 +65,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd --system --gid 1001 nodejs \
  && useradd  --system --uid 1001 --gid nodejs nextjs
 
-# Persistent data dir for SQLite (mount as volume in Coolify)
-RUN mkdir -p /app/data /app/public \
+# Persistent data dir for SQLite AND uploaded files (mount as volume in Coolify)
+# - /app/data/verifscan.db : SQLite database
+# - /app/data/uploads/<userId>/<filename> : PDFs, images, videos uploaded by fabricants
+# Both survive container redeployments when /app/data is mounted as a Coolify persistent volume.
+RUN mkdir -p /app/data/uploads /app/public \
  && chown -R nextjs:nodejs /app
 
 # --- Copy standalone server ---

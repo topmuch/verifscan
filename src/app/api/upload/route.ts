@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getCurrentUser } from "@/lib/session";
+import { storeFile } from "@/lib/uploads";
 
 const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
@@ -18,9 +18,7 @@ const ALLOWED_VIDEO_MIME = new Set([
   "video/ogg",
 ]);
 
-const ALLOWED_DOC_MIME = new Set([
-  "application/pdf",
-]);
+const ALLOWED_DOC_MIME = new Set(["application/pdf"]);
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -31,7 +29,14 @@ const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
  * Upload a single file (image / video / PDF).
  * Multipart form-data with field "file".
  * Optional field "kind" = 'image' | 'video' | 'pdf' to bypass auto-detection.
- * Returns { url: "/uploads/<userId>/<filename>", size, type, kind }
+ *
+ * Returns { url, size, type, kind }
+ *
+ * Files are stored in a persistent directory:
+ *   - Production (Docker/Coolify): /app/data/uploads/<userId>/<filename>
+ *     Served via /api/files/<userId>/<filename>
+ *   - Dev: ./public/uploads/<userId>/<filename>
+ *     Served directly by Next dev server at /uploads/<userId>/<filename>
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -53,7 +58,6 @@ export async function POST(req: Request) {
 
   const kind = (formData.get("kind") as string) || null;
 
-  // Détection du type
   let detectedKind: "image" | "video" | "pdf";
   let maxSize: number;
 
@@ -101,25 +105,29 @@ export async function POST(req: Request) {
     );
   }
 
-  // Build safe filename: <userId>/<timestamp>-<sanitized-name>
+  // Build safe filename: <timestamp>-<sanitized-name>
   const ext = path.extname(file.name) || `.${file.type.split("/")[1] || "bin"}`;
   const safeBase = file.name
     .replace(/[^a-zA-Z0-9-_]/g, "_")
     .replace(/_+/g, "_")
     .slice(0, 40);
   const filename = `${Date.now()}-${safeBase}${ext}`;
-  const userDir = path.join(process.cwd(), "public", "uploads", user.id);
-  await mkdir(userDir, { recursive: true });
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const fullPath = path.join(userDir, filename);
-  await writeFile(fullPath, buffer);
 
-  const publicUrl = `/uploads/${user.id}/${filename}`;
-  return NextResponse.json({
-    url: publicUrl,
-    size: file.size,
-    type: file.type,
-    kind: detectedKind,
-  });
+  try {
+    const { publicUrl } = await storeFile(user.id, filename, buffer);
+    return NextResponse.json({
+      url: publicUrl,
+      size: file.size,
+      type: file.type,
+      kind: detectedKind,
+    });
+  } catch (err: any) {
+    console.error("[api/upload POST] error:", err);
+    return NextResponse.json(
+      { error: "Erreur lors de l'enregistrement du fichier. Réessayez." },
+      { status: 500 }
+    );
+  }
 }
