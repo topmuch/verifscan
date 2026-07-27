@@ -1006,3 +1006,101 @@ Vérifications:
 Stage Summary:
 - Le footer affiche maintenant 6 colonnes: Produit, Entreprise, Légal, Développeurs, Consommateur, Contact (+ bloc brand 2 cols)
 - Toutes les pages utilisent à nouveau le logo PNG original (couleurs brand #0f4382 + #2ebd5a avec wordmark VerifScan) au lieu des SVG blancs/colorés
+
+---
+Task ID: fix-sw-syntax-pwa-icons-admin-reset
+Agent: Super Z (main)
+Task: Corriger 3 problèmes signalés en production (verifscan.roomscan.pro):
+  1. Erreur F12 "ServiceWorker script evaluation failed"
+  2. Erreur F12 "Manifest: Resource size is not correct" sur /logo.png
+  3. Login superadmin 401 Unauthorized sur /api/auth/callback/credentials
+
+Work Log:
+
+- diagnostic SW:
+  * node --check public/sw.js → SyntaxError: Unexpected token ')' ligne 129
+  * Cause: parenthèse fermante en trop dans .catch(() => ... .then(...))
+    à l'intérieur de event.respondWith() pour la route /api/*
+  * La fonction isApiGet() (lignes 58-66) référençait `url` hors scope
+    (dead code, jamais appelée) — supprimée pour hygiène
+
+- fix SW (public/sw.js):
+  * Supprimé la parenthèse superflue
+  * Bump CACHE_VERSION v4-20260727 → v5-20260728 (force update clients)
+  * Ajouté /icon-192.png + /icon-512.png au PRECACHE_URLS
+  * node --check public/sw.js → exit 0 ✅
+
+- diagnostic manifest:
+  * public/logo.png = 272×66 (wordmark horizontal, non carré)
+  * manifest.json déclarait /logo.png en 192×192 et 512×512 → "Resource size is not correct"
+  * layout.tsx metadata.icons pointait aussi vers /logo.png pour 192/512
+
+- fix icônes PWA:
+  * Nouveau script scripts/generate-pwa-icons.py (PIL) qui composite le logo
+    sur fond bleu brand #0f4382 pour produire 8 PNG carrés:
+    - icon-16.png, icon-32.png (favicons)
+    - icon-192.png, icon-512.png (purpose=any)
+    - icon-192-maskable.png, icon-512-maskable.png (purpose=maskable, safe zone 60%)
+    - apple-touch-icon.png (180×180, fond blanc)
+    - favicon.ico (multi-size 16/32/48/64)
+  * manifest.json: 4 références /logo.png → /icon-{192,512}{,-maskable}.png
+  * layout.tsx metadata.icons: 4 tailles (16/32/192/512), apple-touch-icon dédié,
+    shortcut icon, image OG 512×512
+
+- fix reset superadmin (401 login):
+  * Diagnostic local: admin@verifscan.sn existe, hash bcrypt $2b$10$ valide,
+    mot de passe 'admin123' valide localement. Production devait avoir un
+    mot de passe différent (peut-être ADMIN_PASSWORD env var différent ou
+    password oublié).
+  * Nouveau script scripts/reset-admin.cjs:
+    - Usage: `node scripts/reset-admin.cjs --password='...'`
+    - Idempotent: crée l'admin s'il n'existe pas, sinon reset juste passwordHash
+    - Promut role fabricant/distributor → superadmin
+    - Réactive isActive=true
+    - Format tableau ASCII pour lisibilité dans logs Coolify
+  * Dockerfile: copie reset-admin.cjs dans l'image runner (COPY --from=builder)
+  * Testé localement: reset → verify bcrypt.compare → ✅
+
+- durcissement /api/setup (sécurité):
+  * L'endpoint existant permettait `POST /api/setup?force=true` sans auth
+    → n'importe qui pouvait reset le mdp admin à admin123
+  * Ajouté: si env SETUP_TOKEN est défini, ?force=true requiert ?token=<SETUP_TOKEN>
+  * Sans SETUP_TOKEN (dev): autorisé + warning dans la réponse
+  * Rétro-compatible (installations existantes sans SETUP_TOKEN continuent de marcher)
+
+- vérifications:
+  * npx tsc --noEmit sur src/app/api/setup/route.ts: erreurs pré-existantes
+    (log: never[]) non introduites par mes changements (vérifié via git stash)
+  * next build: ✓ Compiled successfully in 27.1s, 110 pages statiques
+  * node --check public/sw.js: exit 0
+  * Test reset-admin.cjs localement: password reset + bcrypt.compare ✅
+
+Stage Summary:
+- 3 correctifs poussés dans commit 0a4b8a1 sur origin/main
+- Coolify va redéployer automatiquement
+
+Procédure de reset du superadmin (à communiquer à l'utilisateur):
+
+  Option A — via HTTP (si SETUP_TOKEN non configuré):
+    curl -X POST 'https://verifscan.roomscan.pro/api/setup?force=true'
+    → reset admin@verifscan.sn à admin123 (ou ADMIN_PASSWORD si env défini)
+
+  Option B — via HTTP avec SETUP_TOKEN (recommandé en prod):
+    1. Ajouter env SETUP_TOKEN=<random> dans Coolify
+    2. curl -X POST 'https://verifscan.roomscan.pro/api/setup?force=true&token=<random>'
+
+  Option C — via terminal Coolify (in-container, le plus sûr):
+    docker exec <container> node scripts/reset-admin.cjs
+    → reset admin@verifscan.sn à admin123
+    docker exec <container> node scripts/reset-admin.cjs --password='NouveauMdp!42'
+    → reset avec mot de passe custom
+
+  Option D — via Coolify "Exec command" UI:
+    node scripts/reset-admin.cjs --password='...'
+
+Note sur les erreurs F12:
+  - L'erreur manifest "Resource size is not correct" disparaîtra après
+    redéploiement (nouvelles icônes carrées aux bonnes dimensions)
+  - L'erreur SW "ServiceWorker script evaluation failed" disparaîtra après
+    redéploiement + hard refresh navigateur (Ctrl+Shift+R) pour libérer
+    l'ancien SW cassé. Le nouveau SW v5-20260728 s'enregistrera proprement.
