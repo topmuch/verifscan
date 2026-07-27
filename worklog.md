@@ -808,3 +808,57 @@ Stage Summary:
 - Champs export (variety, region, producerStory, photo, GPS) désormais éditables dans /dashboard/produits/[id]/modifier
 - 5 fichiers modifiés, 1 nouveau fichier, +1240 lignes / -76 lignes
 - Artéfacts: src/app/api/certifications/[id]/route.ts (nouveau), src/app/api/products/[id]/route.ts (GET+PUT ajoutés), /dashboard/certifications/page.tsx (refonte), /dashboard/produits/[id]/modifier/page.tsx (refonte)
+
+---
+Task ID: phase4-ocr-and-producer-page
+Agent: Super Z (main)
+Task: Phase 4 — OCR auto-fill PDF + page producteur publique
+
+Work Log:
+- Installé pdfjs-dist@4.10.38 (v6 incompatible Node SSR à cause de DOMMatrix)
+- Créé src/lib/pdf-extract.ts:
+  * extractPdfText(bytes): workerless, cap 10 pages, libère ressources via loadingTask.destroy()
+  * extractCertFields(text): regex heuristiques pour issuer / cert number / dates
+  * parseDateCandidate(): support FR (12 mars 2024) + EN (March 12 2024) + ISO + numeric DD/MM/YYYY + 12-MAR-2024
+  * extractCertificateNumber(): patterns N°, No, Réf, Certificate No + fallback SN-2024-001234
+  * extractIssuer(): keywords 'délivré par / organisme / issued by' + base de 20 organismes (SGS, Bureau Veritas, Ecocert, SONAC, Cotecna, ISODC, Lloyd's Register, ABS Quality, etc.)
+  * Score de confiance high/medium/low basé sur nb de champs extraits
+- Créé endpoint POST /api/certifications/ocr (auth fabricant):
+  * Multipart form-data avec 'file' (PDF, max 10 MB)
+  * Retourne { ok, fields: { certificateNumber, issuedAt, expiresAt, issuer, confidence }, rawTextPreview }
+- Refonte /dashboard/certifications pour intégrer OCR:
+  * Nouvel état ocrLoading
+  * Nouvelle fonction runOcr(): appelle /api/certifications/ocr, pré-remplit les champs vides uniquement (préserve les valeurs déjà saisies)
+  * Toast de succès: 'N champ(s) pré-rempli(s) : ... (confiance haute/moyenne/basse)'
+  * Toast info si 0 champ extrait (PDF scanné probablement)
+  * Bloc UI dédié avec gradient purple→blue, icônes Wand2 + Sparkles, description pédagogique
+  * Bouton "Analyser le PDF" s'affiche uniquement si un PDF est sélectionné
+- Créé endpoint GET /api/producers/[id] (public, sans auth):
+  * Vérifie user est actif + role=fabricant (sinon 404)
+  * Retourne: producer (company info + social), products (avec primaryLotId résolu), certifications, stats (totalProducts, totalLots, totalScans, verifiedCerts/totalCerts)
+- Créé page publique /producteur/[id] (Server Component):
+  * Hero header: bandeau dégradé blue→green + logo 24/28 + badge 'Producteur vérifié' + date adhésion
+  * 4 StatCards colorées: Produits, Lots créés, Scans cumulés, Certifs vérifiées
+  * Section contact CTA: WhatsApp (vert), Appeler (bleu), Email (vert foncé) + réseaux sociaux (Facebook/Twitter/LinkedIn/Instagram)
+  * Grille produits 3 colonnes: photos, badges Export, variété, région, badge Disponible/Indisponible
+  * Section certifications: cards par type avec PDF téléchargeable, statut vérifié/en attente/expiré
+  * Footer note 'Producteur vérifié par VerifScan'
+  * 404 si user n'existe pas / inactif / pas fabricant
+- Liens croisés:
+  * ExportProduceView: bouton 'Voir la fiche producteur' (icône ExternalLink) dans la section Producteur → /producteur/[id]
+  * /produit/[id]: nom du fabricant devient lien cliquable vers /producteur/[id]
+- Vérifications:
+  * tsc --noEmit: 0 erreur sur les fichiers Phase 4
+  * next build: ✓ Compiled successfully in 26.1s, 96 pages statiques (vs 70 en Phase 3)
+  * Routes testées:
+    - GET /producteur/nonexistent → 404 (producteur introuvable)
+    - GET /api/producers/nonexistent → 404
+    - POST /api/certifications/ocr → 401 (auth requise)
+- Commit + push origin/main: 5eb4849
+
+Stage Summary:
+- OCR: fabricants peuvent téléverser un PDF et cliquer 'Analyser le PDF' pour pré-remplir automatiquement émetteur, n° cert et dates (gain de temps significatif pour les producteurs avec beaucoup de certificats)
+- Page producteur publique: nouvelle vitrine /producteur/[id] qui rassemble tous les produits, certifications et contacts d'un producteur — utile pour les acheteurs B2B internationaux
+- 9 fichiers modifiés/créés, +1272 lignes / -7 lignes
+- Dépendance: pdfjs-dist@4.10.38 (workerless Node SSR)
+- Artéfacts: src/lib/pdf-extract.ts, src/app/api/certifications/ocr/route.ts, src/app/api/producers/[id]/route.ts, src/app/producteur/[id]/page.tsx
