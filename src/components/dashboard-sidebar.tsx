@@ -25,6 +25,7 @@ import {
   Leaf,
   Award,
   Code2,
+  Webhook,
   Upload,
   type LucideIcon,
 } from "lucide-react";
@@ -86,6 +87,7 @@ const fabricantSections: NavSection[] = [
       { href: "/dashboard/abonnement", label: "Abonnement", icon: CreditCard },
       { href: "/dashboard/export", label: "Exports", icon: Download },
       { href: "/dashboard/api-keys", label: "API & Intégrations", icon: Code2, badge: "NEW" },
+      { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook, badge: "NEW" },
       { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
       { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
     ],

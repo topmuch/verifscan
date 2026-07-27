@@ -47,6 +47,7 @@ model User {
   productReviewsReceived  ProductReview[] @relation("ProductReviewFabricant")
   conversations           Conversation[]
   apiKeys                 ApiKey[]
+  webhooks                Webhook[]
 }
 
 model Category {
@@ -811,4 +812,54 @@ model ApiKey {
 
   @@index([userId])
   @@index([hashedKey])
+}
+
+// ============================================================
+// WEBHOOKS — pour notifier les systèmes externes
+// ------------------------------------------------------------
+// Quand un événement se produit (ex: scan d'un QR code), VerifScan
+// envoie une requête HTTP POST signée à toutes les URLs configurées
+// par le fabricant. Le secret permet au destinataire de vérifier
+// l'authenticité via un HMAC SHA-256 dans le header X-VerifScan-Signature.
+// ============================================================
+
+model Webhook {
+  id          String    @id @default(cuid())
+  userId      String    // propriétaire (fabricant)
+  url         String    // URL de destination (https://...)
+  secret      String    // secret partagé pour HMAC signature
+  events      String    // CSV des événements écoutés: "scan,recall,review,lot_created,product_created"
+  description String?   // libellé optionnel (ex: "Notifier ERP Sage")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDelivery[]
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model WebhookDelivery {
+  id          String    @id @default(cuid())
+  webhookId   String
+  event       String    // "scan" | "recall" | "review" | "lot_created" | "product_created"
+  payload     String    // JSON stringifié envoyé au destinataire
+  status      String    @default("pending") // 'pending' | 'success' | 'failed' | 'retry'
+  statusCode  Int?      // code HTTP de la réponse (200, 500, etc.)
+  response    String?   // body de la réponse tronqué (max 2 KB)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lastError   String?
+  deliveredAt DateTime?
+  createdAt   DateTime  @default(now())
+  nextRetryAt DateTime?
+
+  webhook     Webhook   @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([status])
+  @@index([event])
+  @@index([createdAt])
 }

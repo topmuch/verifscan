@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/public-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Code2, Key, Zap, Shield } from "lucide-react";
+import { Code2, Key, Zap, Shield, Webhook } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
@@ -37,6 +37,12 @@ export default function DevelopersPage() {
             <Button asChild size="lg" variant="outline">
               <Link href="#endpoints">
                 Voir les endpoints
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="#webhooks">
+                <Webhook className="mr-2 size-4" />
+                Webhooks
               </Link>
             </Button>
           </div>
@@ -219,6 +225,232 @@ console.log(data.items);`}
   "recentScans": [...]
 }`}
             />
+
+            <Endpoint
+              method="POST"
+              path="/api/v1/products"
+              title="Créer un produit"
+              desc="Crée un nouveau produit. Nécessite la permission 'readwrite' ou 'admin'. Déclenche le webhook 'product_created'."
+              params={[
+                { name: "name", type: "string", desc: "Nom du produit (min 2 caractères)" },
+                { name: "brand", type: "string", desc: "Marque" },
+                { name: "categoryId", type: "string", desc: "ID de la catégorie" },
+                { name: "barcode", type: "string?", desc: "Code-barres EAN/UPC (optionnel)" },
+                { name: "description", type: "string?", desc: "Description (optionnel)" },
+                { name: "weight", type: "string?", desc: "Poids/format (optionnel)" },
+                { name: "isVisible", type: "boolean?", desc: "Visible publiquement (défaut true)" },
+              ]}
+              example={`curl -X POST https://verifscan.roomscan.pro/api/v1/products \\
+  -H "Authorization: Bearer vsk_live_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Mangue Kent",
+    "brand": "SOPRIM",
+    "categoryId": "clx...",
+    "barcode": "6112345678905",
+    "weight": "5kg"
+  }'
+
+# Réponse 201:
+{
+  "id": "clx...",
+  "name": "Mangue Kent",
+  "brand": "SOPRIM",
+  "barcode": "6112345678905",
+  "category": { "name": "Fruits", "icon": "🥭" },
+  "createdAt": "2026-07-28T..."
+}`}
+            />
+
+            <Endpoint
+              method="PUT"
+              path="/api/v1/products/[id]"
+              title="Mettre à jour un produit"
+              desc="Met à jour tout sous-ensemble de champs. Déclenche le webhook 'product_updated'."
+              params={[
+                { name: "name", type: "string?", desc: "Nouveau nom" },
+                { name: "brand", type: "string?", desc: "Nouvelle marque" },
+                { name: "categoryId", type: "string?", desc: "Changer de catégorie" },
+                { name: "isVisible", type: "boolean?", desc: "Masquer/afficher" },
+              ]}
+              example={`curl -X PUT https://verifscan.roomscan.pro/api/v1/products/clx... \\
+  -H "Authorization: Bearer vsk_live_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "isVisible": false }'
+
+# Réponse 200: produit complet mis à jour`}
+            />
+
+            <Endpoint
+              method="DELETE"
+              path="/api/v1/products/[id]"
+              title="Supprimer un produit"
+              desc="Supprime un produit et CASCADE sur tous les lots, QR codes, scans associés. Irréversible."
+              params={[]}
+              example={`curl -X DELETE https://verifscan.roomscan.pro/api/v1/products/clx... \\
+  -H "Authorization: Bearer vsk_live_xxx"
+
+# Réponse 200:
+{
+  "ok": true,
+  "deletedProductId": "clx...",
+  "deletedProductName": "Mangue Kent",
+  "cascadedLotsCount": 3
+}`}
+            />
+
+            <Endpoint
+              method="POST"
+              path="/api/v1/lots"
+              title="Créer un lot + QR code"
+              desc="Crée un nouveau lot pour un produit existant et génère automatiquement un QR code. Déclenche le webhook 'lot_created'."
+              params={[
+                { name: "productId", type: "string", desc: "ID du produit parent (obligatoire)" },
+                { name: "lotNumber", type: "string?", desc: "Numéro de lot (auto-généré si absent)" },
+                { name: "manufacturingDate", type: "ISO date", desc: "Date de fabrication" },
+                { name: "expirationDate", type: "ISO date", desc: "Date de péremption" },
+                { name: "generateQrCode", type: "boolean?", desc: "Générer le QR (défaut true)" },
+                { name: "ingredients", type: "string?", desc: "Ingrédients (optionnel)" },
+              ]}
+              example={`curl -X POST https://verifscan.roomscan.pro/api/v1/lots \\
+  -H "Authorization: Bearer vsk_live_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "productId": "clx...",
+    "lotNumber": "LOT-2026-001",
+    "manufacturingDate": "2026-07-01",
+    "expirationDate": "2026-07-15"
+  }'
+
+# Réponse 201: { lot, qrCode }`}
+            />
+
+            <Endpoint
+              method="PUT"
+              path="/api/v1/lots/[id]"
+              title="Mettre à jour un lot"
+              desc="Met à jour un lot. Si status passe à 'recalled', déclenche aussi le webhook 'recall'."
+              params={[
+                { name: "status", type: "'active' | 'recalled'", desc: "Changer le statut" },
+                { name: "recallReason", type: "string?", desc: "Raison du rappel" },
+                { name: "expirationDate", type: "ISO date?", desc: "Nouvelle date de péremption" },
+              ]}
+              example={`curl -X PUT https://verifscan.roomscan.pro/api/v1/lots/clx... \\
+  -H "Authorization: Bearer vsk_live_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "status": "recalled", "recallReason": "Contamination détectée" }'
+
+# Réponse 200: lot mis à jour`}
+            />
+
+            <Endpoint
+              method="DELETE"
+              path="/api/v1/lots/[id]"
+              title="Supprimer un lot"
+              desc="Supprime un lot et CASCADE sur QR codes + scans associés. Irréversible."
+              params={[]}
+              example={`curl -X DELETE https://verifscan.roomscan.pro/api/v1/lots/clx... \\
+  -H "Authorization: Bearer vsk_live_xxx"
+
+# Réponse 200: { ok: true, deletedLotId, cascadedQrCodesCount }`}
+            />
+          </div>
+        </section>
+
+        {/* Webhooks */}
+        <section id="webhooks" className="px-4 py-12 max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-[#0f4382] mb-4">Webhooks</h2>
+          <p className="text-gray-600 mb-6">
+            Recevez une notification HTTP POST en temps réel quand un événement se produit sur votre compte.
+            Parfait pour synchroniser votre ERP, déclencher un processus métier, ou alerter votre équipe.
+          </p>
+
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-base text-[#0f4382]">Événements disponibles</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {[
+                { event: "scan", desc: "Déclenché à chaque scan d'un QR code (page /p/[lotId])" },
+                { event: "recall", desc: "Déclenché quand un lot passe en statut 'recalled'" },
+                { event: "review", desc: "Déclenché quand un consommateur laisse un avis" },
+                { event: "lot_created", desc: "Déclenché à la création d'un lot (POST /api/v1/lots ou dashboard)" },
+                { event: "lot_updated", desc: "Déclenché à la mise à jour d'un lot" },
+                { event: "product_created", desc: "Déclenché à la création d'un produit" },
+                { event: "product_updated", desc: "Déclenché à la mise à jour d'un produit" },
+              ].map((e) => (
+                <div key={e.event} className="flex items-start gap-3 text-sm">
+                  <code className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-xs font-mono">{e.event}</code>
+                  <span className="text-gray-700">{e.desc}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-base text-[#0f4382]">Format de la requête</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-gray-600">Headers :</p>
+              <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto">{`POST /votre-endpoint HTTP/1.1
+Host: votre-erp.com
+Content-Type: application/json
+User-Agent: VerifScan-Webhook/1.0
+X-VerifScan-Event: scan
+X-VerifScan-Delivery: clx...
+X-VerifScan-Signature: <hmac-sha256-hex>`}</pre>
+
+              <p className="text-sm text-gray-600 mt-3">Body (exemple pour l'événement <code>scan</code>) :</p>
+              <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto">{`{
+  "event": "scan",
+  "timestamp": "2026-07-28T14:32:00.000Z",
+  "data": {
+    "scanId": "clx...",
+    "qrCodeId": "clx...",
+    "lotId": "clx...",
+    "product": { "name": "Mangue Kent", "brand": "SOPRIM" },
+    "scannedAt": "2026-07-28T14:32:00.000Z",
+    "location": { "country": "Sénégal", "city": "Dakar", "region": "Dakar" },
+    "device": { "type": "mobile" }
+  }
+}`}</pre>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base text-[#0f4382]">Vérification de la signature (Node.js)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto">{`import crypto from 'crypto';
+
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const sig = req.headers['x-verifscan-signature'];
+  const expected = crypto
+    .createHmac('sha256', process.env.VERIFSCAN_WEBHOOK_SECRET)
+    .update(req.body)
+    .digest('hex');
+  if (sig !== expected) return res.status(401).send('Invalid signature');
+
+  res.status(200).send('OK'); // répondre vite (timeout 10s)
+  const payload = JSON.parse(req.body);
+  // Traiter l'événement de façon asynchrone
+});`}</pre>
+              <p className="text-xs text-gray-500 mt-3">
+                💡 Si votre serveur ne répond pas 2xx dans les 10 secondes, VerifScan réessaiera
+                jusqu'à 3 fois (à 1 min, 5 min, 15 min).
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="mt-6 text-center">
+            <Button asChild size="lg">
+              <Link href="/dashboard/webhooks">
+                <Webhook className="mr-2 size-4" />
+                Configurer mes webhooks
+              </Link>
+            </Button>
           </div>
         </section>
 

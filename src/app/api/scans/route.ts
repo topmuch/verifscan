@@ -206,6 +206,28 @@ export async function POST(req: Request) {
       }
     }
 
+    // Notifier les webhooks du fabricant (scan event) — non bloquant
+    triggerScanWebhook(
+      scan.id,
+      qr.id,
+      qr.lotId,
+      {
+        product: {
+          userId: qr.lot.product.userId,
+          name: qr.lot.product.name,
+          brand: qr.lot.product.brand,
+        },
+      },
+      {
+        country: parsed.data.location ? extractCountry(parsed.data.location) : null,
+        city: parsed.data.location ? extractCity(parsed.data.location) : null,
+        region,
+        deviceType,
+        latitude: parsed.data.latitude ?? null,
+        longitude: parsed.data.longitude ?? null,
+      }
+    ).catch(() => {});
+
     return NextResponse.json({
       ok: true,
       scanId: scan.id,
@@ -218,6 +240,42 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[scans POST] error:", err);
     return NextResponse.json({ error: "Erreur" }, { status: 500 });
+  }
+}
+
+/* ============================================================
+   WEBHOOK HOOK (intégré dans la route POST ci-dessus)
+   ------------------------------------------------------------
+   On appelle dispatchWebhookEvent() après l'insertion du scan en BDD.
+   Cela notifie tous les systèmes externes configurés par le fabricant.
+   Non bloquant — fire and forget.
+   ============================================================ */
+
+async function triggerScanWebhook(scanId: string, qrCodeId: string, lotId: string, lot: { product: { userId: string; name: string; brand: string } }, scanData: { country?: string | null; city?: string | null; region?: string | null; deviceType?: string | null; latitude?: number | null; longitude?: number | null }): Promise<void> {
+  try {
+    const { dispatchWebhookEvent } = await import("@/lib/webhooks");
+    await dispatchWebhookEvent(lot.product.userId, "scan", {
+      scanId,
+      qrCodeId,
+      lotId,
+      product: {
+        name: lot.product.name,
+        brand: lot.product.brand,
+      },
+      scannedAt: new Date().toISOString(),
+      location: {
+        country: scanData.country,
+        city: scanData.city,
+        region: scanData.region,
+        latitude: scanData.latitude,
+        longitude: scanData.longitude,
+      },
+      device: {
+        type: scanData.deviceType,
+      },
+    });
+  } catch (err) {
+    console.error("[webhooks] scan dispatch error:", err);
   }
 }
 
