@@ -5,8 +5,13 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/session";
 
 /**
- * List all fabricant accounts with subscription + counts (SuperAdmin only).
- * Supports ?search=&status=&plan=&page=&pageSize= for filtering.
+ * List all user accounts (superadmin + fabricant) with subscription + counts.
+ * SuperAdmin only. Supports ?search=&status=&plan=&role=&page=&pageSize= filters.
+ *
+ * The `role` query parameter accepts: "all" (default) | "superadmin" | "fabricant".
+ * This is what makes newly-created SuperAdmins visible in the admin user list —
+ * previously the query was hardcoded to `role: "fabricant"` and silently hid every
+ * superadmin account.
  */
 export async function GET(req: Request) {
   const admin = await requireSuperAdmin();
@@ -16,10 +21,14 @@ export async function GET(req: Request) {
   const search = url.searchParams.get("search") || "";
   const status = url.searchParams.get("status") || "all"; // all|active|inactive
   const plan = url.searchParams.get("plan") || "all"; // all|starter|pro|enterprise|trial
+  const role = url.searchParams.get("role") || "all"; // all|superadmin|fabricant
   const page = parseInt(url.searchParams.get("page") || "1", 10);
   const pageSize = parseInt(url.searchParams.get("pageSize") || "20", 10);
 
-  const where: any = { role: "fabricant" };
+  const where: any = {};
+  if (role === "superadmin" || role === "fabricant") {
+    where.role = role;
+  }
   if (search) {
     where.OR = [
       { companyName: { contains: search } },
@@ -29,6 +38,7 @@ export async function GET(req: Request) {
   if (status === "active") where.isActive = true;
   if (status === "inactive") where.isActive = false;
 
+  // Plan filter only makes sense for fabricants (superadmins have no subscription).
   if (plan !== "all") {
     if (plan === "trial") {
       where.subscription = { status: "trial" };
@@ -47,6 +57,7 @@ export async function GET(req: Request) {
       select: {
         id: true,
         email: true,
+        role: true,
         companyName: true,
         logoUrl: true,
         phone: true,

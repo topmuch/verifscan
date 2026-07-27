@@ -53,7 +53,8 @@ import { toast } from "sonner";
 type Fabricant = {
   id: string;
   email: string;
-  companyName: string;
+  role: "superadmin" | "fabricant" | "distributor";
+  companyName: string | null;
   logoUrl: string | null;
   phone: string | null;
   whatsapp: string | null;
@@ -84,6 +85,7 @@ export default function AdminFabricantsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [planFilter, setPlanFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all"); // all|superadmin|fabricant
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
@@ -160,6 +162,7 @@ export default function AdminFabricantsPage() {
         search,
         status: statusFilter,
         plan: planFilter,
+        role: roleFilter,
         page: String(page),
         pageSize: String(pageSize),
       });
@@ -174,7 +177,7 @@ export default function AdminFabricantsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, planFilter, page, pageSize]);
+  }, [search, statusFilter, planFilter, roleFilter, page, pageSize]);
 
   useEffect(() => {
     const t = setTimeout(load, 300);
@@ -224,7 +227,7 @@ export default function AdminFabricantsPage() {
       {/* Filtres */}
       <Card className="border-[#E5E7EB]">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div className="relative sm:col-span-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9CA3AF]" />
               <Input
@@ -237,6 +240,16 @@ export default function AdminFabricantsPage() {
                 }}
               />
             </div>
+            <Select value={roleFilter} onValueChange={(v) => { setRoleFilter(v); setPage(1); }}>
+              <SelectTrigger className="border-[#E5E7EB]">
+                <SelectValue placeholder="Rôle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les rôles</SelectItem>
+                <SelectItem value="superadmin">SuperAdmins</SelectItem>
+                <SelectItem value="fabricant">Fabricants</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="border-[#E5E7EB]">
                 <SelectValue placeholder="Statut" />
@@ -293,7 +306,8 @@ export default function AdminFabricantsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-[#6B7280] uppercase tracking-wider border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    <th className="py-3 px-4 font-medium">Entreprise</th>
+                    <th className="py-3 px-4 font-medium">Utilisateur</th>
+                    <th className="py-3 px-4 font-medium">Rôle</th>
                     <th className="py-3 px-4 font-medium">Contact</th>
                     <th className="py-3 px-4 font-medium">Plan</th>
                     <th className="py-3 px-4 font-medium">Statut</th>
@@ -308,20 +322,37 @@ export default function AdminFabricantsPage() {
                     const planBadge = f.subscription?.plan
                       ? PLAN_BADGE[f.subscription.plan] || PLAN_BADGE.starter
                       : null;
+                    const isSuperAdmin = f.role === "superadmin";
+                    const displayName = isSuperAdmin
+                      ? (f.companyName || f.email.split("@")[0])
+                      : (f.companyName || "Sans nom");
                     return (
                       <tr key={f.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                         <td className="py-3 px-4">
                           <Link href={`/admin/fabricants/${f.id}`} className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                              {f.companyName?.[0]?.toUpperCase() || "?"}
+                            <div className={isSuperAdmin
+                              ? "size-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                              : "size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"}>
+                              {displayName?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold text-[#111827] truncate">
-                                {f.companyName || "Sans nom"}
+                                {displayName}
                               </div>
                               <div className="text-xs text-[#6B7280] truncate">{f.email}</div>
                             </div>
                           </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          {isSuperAdmin ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800">
+                              SuperAdmin
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                              Fabricant
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-xs text-[#6B7280] flex items-center gap-1">
