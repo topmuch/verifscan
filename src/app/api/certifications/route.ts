@@ -29,7 +29,21 @@ export async function POST(req: Request) {
   }
 
   // Validation type
-  const validTypes = ["bio", "halal", "iso22000", "fda", "haccp", "nsf", "cedeao"];
+  // Types étendus pour les produits d'export : phytosanitaire (certificat phytosanitaire UE/CEDEAO),
+  // globalgap (GlobalG.A.P.), origine (certificat d'origine / préférence tarifaire),
+  // en plus des types historiques (bio, halal, iso22000, fda, haccp, nsf, cedeao).
+  const validTypes = [
+    "bio",
+    "halal",
+    "iso22000",
+    "fda",
+    "haccp",
+    "nsf",
+    "cedeao",
+    "phytosanitaire",
+    "globalgap",
+    "origine",
+  ];
   if (!validTypes.includes(type)) {
     return NextResponse.json({ error: "Type invalide" }, { status: 400 });
   }
