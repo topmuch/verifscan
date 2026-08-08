@@ -14,14 +14,37 @@ import QRCode from "qrcode";
 const db = new PrismaClient();
 
 const categories = [
-  { name: "Jus & Boissons", icon: "🥤" },
-  { name: "Boulangerie", icon: "🍞" },
-  { name: "Épices & Condiments", icon: "🌶️" },
-  { name: "Conserves", icon: "🥫" },
-  { name: "Céréales & Grains", icon: "🌾" },
-  { name: "Produits laitiers", icon: "🥛" },
-  { name: "Fruits secs", icon: "🥜" },
-  { name: "Huiles", icon: "🫒" },
+  // === Standard ===
+  { name: "Jus & Boissons",      icon: "🥤", pageTemplate: "standard" },
+  { name: "Boulangerie",         icon: "🍞", pageTemplate: "standard" },
+  { name: "Épices & Condiments", icon: "🌶️", pageTemplate: "standard" },
+  { name: "Conserves",           icon: "🥫", pageTemplate: "standard" },
+  { name: "Céréales & Grains",   icon: "🌾", pageTemplate: "standard" },
+  { name: "Produits laitiers",   icon: "🥛", pageTemplate: "standard" },
+  { name: "Fruits secs & Noix",  icon: "🥜", pageTemplate: "standard" },
+  { name: "Huiles végétales",    icon: "🫒", pageTemplate: "standard" },
+  { name: "Snacks",              icon: "🍿", pageTemplate: "standard" },
+  { name: "Agroalimentaire",     icon: "🌾", pageTemplate: "standard" },
+  { name: "Artisanat",           icon: "🎨", pageTemplate: "standard" },
+  { name: "Cosmétiques",         icon: "💄", pageTemplate: "standard" },
+  { name: "Textiles",            icon: "🧵", pageTemplate: "standard" },
+  { name: "Produits transformés",icon: "🥥", pageTemplate: "standard" },
+  // === export_produce ===
+  { name: "Mangues",             icon: "🥭", pageTemplate: "export_produce" },
+  { name: "Arachides",           icon: "🥜", pageTemplate: "export_produce" },
+  { name: "Piment",              icon: "🌶️", pageTemplate: "export_produce" },
+  { name: "Oignons",             icon: "🧅", pageTemplate: "export_produce" },
+  { name: "Tomates",             icon: "🍅", pageTemplate: "export_produce" },
+  { name: "Citrons",             icon: "🍋", pageTemplate: "export_produce" },
+  { name: "Agrumes",             icon: "🍊", pageTemplate: "export_produce" },
+  { name: "Produits de la pêche",icon: "🐟", pageTemplate: "export_produce" },
+  { name: "Crevettes",           icon: "🦐", pageTemplate: "export_produce" },
+  { name: "Hibiscus (Bissap)",   icon: "🌺", pageTemplate: "export_produce" },
+  { name: "Riz",                 icon: "🌾", pageTemplate: "export_produce" },
+  { name: "Café",                icon: "☕", pageTemplate: "export_produce" },
+  { name: "Fonio",               icon: "🌿", pageTemplate: "export_produce" },
+  { name: "Sel",                 icon: "🧂", pageTemplate: "export_produce" },
+  { name: "Miel",                icon: "🍯", pageTemplate: "export_produce" },
 ];
 
 async function main() {
@@ -49,11 +72,11 @@ async function main() {
   for (const cat of categories) {
     await db.category.upsert({
       where: { name: cat.name },
-      update: {},
+      update: { icon: cat.icon, pageTemplate: cat.pageTemplate, isActive: true },
       create: cat,
     });
   }
-  console.log(`✅ ${categories.length} catégories créées`);
+  console.log(`✅ ${categories.length} catégories créées/mises à jour`);
 
   // 3. Demo fabricant
   const fabricantPassword = await bcrypt.hash("fabricant123", 10);

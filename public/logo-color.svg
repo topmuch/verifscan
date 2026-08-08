@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80" role="img" aria-label="VerifScan">
+  <!--
+    Logo VerifScan — version couleur pour fonds clairs (header public, footer, pages admin).
+    Même composition que logo-light.svg mais avec des couleurs plus contrastées sur fond blanc.
+  -->
+  <defs>
+    <linearGradient id="shieldGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2ebd5a"/>
+      <stop offset="100%" stop-color="#1d9c46"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Bouclier arrondi -->
+  <g>
+    <path d="M 28 8 L 48 16 L 48 36 C 48 52 38 64 28 70 C 18 64 8 52 8 36 L 8 16 Z"
+          fill="url(#shieldGradDark)" stroke="#0f4382" stroke-opacity="0.15" stroke-width="1"/>
+    <!-- Coche de vérification -->
+    <path d="M 19 36 L 26 44 L 39 26"
+          fill="none" stroke="#ffffff" stroke-width="4.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="64" y="40" font-family="Poppins, Inter, system-ui, sans-serif"
+        font-size="28" font-weight="700" fill="#0f4382" letter-spacing="-0.5">Verif</text>
+  <text x="138" y="40" font-family="Poppins, Inter, system-ui, sans-serif"
+        font-size="28" font-weight="400" fill="#2ebd5a" letter-spacing="-0.5">Scan</text>
+
+  <!-- Sous-titre / baseline -->
+  <text x="64" y="58" font-family="Inter, system-ui, sans-serif"
+        font-size="9" font-weight="500" fill="#6B7280" letter-spacing="2.4">TRACABILITÉ &amp; AUTHENTICITÉ</text>
+</svg>
