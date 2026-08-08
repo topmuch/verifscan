@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Layers, Eye, AlertOctagon, CheckCircle2 } from "lucide-react";
+import { Plus, Layers, Eye, AlertOctagon, CheckCircle2, Film, Upload } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +33,12 @@ export default async function DashboardLotsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {lots.length > 0 && <RegenerateAllQrButton />}
+          <Button asChild variant="outline">
+            <Link href="/dashboard/lots/importer">
+              <Upload className="mr-2 size-4" />
+              Importer (CSV/Excel)
+            </Link>
+          </Button>
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
             <Link href="/dashboard/lots/nouveau">
               <Plus className="mr-2 size-4" />
@@ -119,6 +125,12 @@ export default async function DashboardLotsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button asChild size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50" title="Gérer les médias (photos / vidéos)">
+                        <Link href={`/dashboard/lots/${lot.id}/medias`}>
+                          <Film className="mr-2 size-4" />
+                          Médias
+                        </Link>
+                      </Button>
                       <Button asChild size="sm" variant="outline" className="border-emerald-200">
                         <Link href={`/p/${lot.id}`} target="_blank">
                           <Eye className="mr-2 size-4" />

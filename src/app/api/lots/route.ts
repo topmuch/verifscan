@@ -14,6 +14,20 @@ const createSchema = z.object({
   transformationLocation: z.string().optional(),
   salesCountries: z.string().optional(),
   status: z.enum(["active", "recalled"]).default("active"),
+  // Champs spécifiques au template export_produce (ignorés pour les autres templates)
+  harvestDate: z.string().optional(),
+  packagingDate: z.string().optional(),
+  packagingStation: z.string().optional(),
+  containerNumber: z.string().optional(),
+  palletNumber: z.string().optional(),
+  shipDate: z.string().optional(),
+  destination: z.string().optional(),
+  carrier: z.string().optional(),
+  caliber: z.string().optional(),
+  avgWeightGram: z.number().int().positive().optional(),
+  brix: z.number().min(0).max(100).optional(),
+  storageTempC: z.number().optional(),
+  shelfLifeDays: z.number().int().positive().optional(),
 });
 
 /** List lots for the logged-in fabricant. */
@@ -90,6 +104,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Numéro de lot déjà utilisé" }, { status: 400 });
     }
 
+    // Parse optional export_produce date fields
+    const harvestDate = data.harvestDate ? new Date(data.harvestDate) : null;
+    const packagingDate = data.packagingDate ? new Date(data.packagingDate) : null;
+    const shipDate = data.shipDate ? new Date(data.shipDate) : null;
+
     const lot = await db.lot.create({
       data: {
         productId: data.productId,
@@ -101,6 +120,20 @@ export async function POST(req: Request) {
         transformationLocation: data.transformationLocation?.trim() || null,
         salesCountries: data.salesCountries?.trim() || null,
         status: data.status,
+        // Champs export_produce (ignorés pour les autres templates)
+        harvestDate: harvestDate && !isNaN(harvestDate.getTime()) ? harvestDate : null,
+        packagingDate: packagingDate && !isNaN(packagingDate.getTime()) ? packagingDate : null,
+        packagingStation: data.packagingStation?.trim() || null,
+        containerNumber: data.containerNumber?.trim() || null,
+        palletNumber: data.palletNumber?.trim() || null,
+        shipDate: shipDate && !isNaN(shipDate.getTime()) ? shipDate : null,
+        destination: data.destination?.trim() || null,
+        carrier: data.carrier?.trim() || null,
+        caliber: data.caliber?.trim() || null,
+        avgWeightGram: data.avgWeightGram ?? null,
+        brix: data.brix ?? null,
+        storageTempC: data.storageTempC ?? null,
+        shelfLifeDays: data.shelfLifeDays ?? null,
       },
     });
 
