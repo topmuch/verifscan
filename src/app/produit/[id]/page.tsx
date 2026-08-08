@@ -85,9 +85,12 @@ export default async function ProduitDetailPage({
               </p>
               <p className="text-sm text-gray-600">
                 Fabricant :{" "}
-                <span className="font-semibold text-emerald-700">
+                <Link
+                  href={`/producteur/${product.user.id}`}
+                  className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
                   {product.user.companyName}
-                </span>
+                </Link>
               </p>
               {product.description && (
                 <p className="text-sm text-gray-600 leading-relaxed pt-2 border-t border-gray-100">

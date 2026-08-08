@@ -28,6 +28,8 @@ import {
   Check,
   Twitter,
   Linkedin,
+  Facebook,
+  Instagram,
   ThumbsUp,
   Clock,
   Star,
@@ -38,6 +40,7 @@ import {
   Share2,
 } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
+import { ExportProduceView } from "../_components/export-produce-view";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -57,6 +60,7 @@ import {
   starArray,
 } from "../_lib/product-helpers";
 import { useDarkMode } from "../_lib/use-dark-mode";
+import { Barcode } from "@/components/barcode";
 
 /* ============ Types ============ */
 
@@ -122,6 +126,22 @@ type Lot = {
   recallReason: string | null;
   recalledAt: string | null;
   createdAt: string;
+
+  // Champs export_produce
+  harvestDate?: string | null;
+  packagingDate?: string | null;
+  packagingStation?: string | null;
+  containerNumber?: string | null;
+  palletNumber?: string | null;
+  shipDate?: string | null;
+  destination?: string | null;
+  carrier?: string | null;
+  caliber?: string | null;
+  avgWeightGram?: number | null;
+  brix?: number | null;
+  storageTempC?: number | null;
+  shelfLifeDays?: number | null;
+
   product: {
     id: string;
     name: string;
@@ -129,7 +149,15 @@ type Lot = {
     description: string | null;
     photoUrl: string | null;
     weight: string | null;
-    category: { name: string; icon: string | null };
+    barcode?: string | null;
+    // Champs export_produce
+    variety?: string | null;
+    regionOfProduction?: string | null;
+    producerStory?: string | null;
+    producerPhotoUrl?: string | null;
+    gpsLat?: number | null;
+    gpsLng?: number | null;
+    category: { name: string; icon: string | null; pageTemplate?: string };
     user: {
       id: string;
       companyName: string;
@@ -138,11 +166,16 @@ type Lot = {
       whatsapp: string | null;
       emailContact: string | null;
       address: string | null;
+      socialFacebook: string | null;
+      socialTwitter: string | null;
+      socialLinkedin: string | null;
+      socialInstagram: string | null;
       createdAt: string;
     };
   };
   qrCodes: { id: string; qrCodeImageUrl: string | null }[];
   certifications: Certification[];
+  lotMedia?: Array<{ id: string; type: string; url: string; caption: string | null }>;
   scanCount: number;
   lastScanAt: string | null;
   fabricantSince: string;
@@ -212,6 +245,32 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               location = [ipData.city, ipData.country_name].filter(Boolean).join(", ");
             }
           } catch {}
+
+          // V4 — geolocation (ask permission) + anonymous fingerprint for rewards
+          let latitude: number | undefined;
+          let longitude: number | undefined;
+          try {
+            const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+              if (!navigator.geolocation) return resolve(null);
+              navigator.geolocation.getCurrentPosition(
+                (p) => resolve(p),
+                () => resolve(null),
+                { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
+              );
+            });
+            if (pos) {
+              latitude = pos.coords.latitude;
+              longitude = pos.coords.longitude;
+            }
+          } catch {}
+
+          // V4 — device fingerprint (anonymous, stored in localStorage)
+          let deviceFingerprint: string | undefined;
+          try {
+            const { getDeviceFingerprint } = await import("@/lib/offline");
+            deviceFingerprint = getDeviceFingerprint();
+          } catch {}
+
           fetch("/api/scans", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -220,8 +279,32 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               location,
               deviceType: isMobile ? "mobile" : "desktop",
               userAgent: ua,
+              latitude,
+              longitude,
+              deviceFingerprint,
             }),
-          }).catch(() => {});
+          })
+            .then((r) => r.json())
+            .then((scanData) => {
+              // V4 — show points earned / recall alert
+              if (scanData.pointsAwarded > 0) {
+                toast.success(`+${scanData.pointsAwarded} points VerifScan`, {
+                  description: "Voir mes récompenses",
+                  action: {
+                    label: "Voir",
+                    onClick: () => window.location.href = "/mes-recompenses",
+                  },
+                  duration: 6000,
+                });
+              }
+              if (scanData.recallAlert) {
+                toast.error(scanData.recallAlert.title, {
+                  description: scanData.recallAlert.reason,
+                  duration: 10000,
+                });
+              }
+            })
+            .catch(() => {});
         }
 
         setLoading(false);
@@ -450,6 +533,15 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
       </div>
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+        {/* === ROUTEUR DE TEMPLATE ===
+            Si la catégorie du produit utilise `pageTemplate === "export_produce"`,
+            on rend la vue spécialisée export (mangues, crevettes, fonio…).
+            Sinon on rend la vue standard. */}
+        {lot.product.category?.pageTemplate === "export_produce" ? (
+          <ExportProduceView lot={lot as any} />
+        ) : (
+        <>
+
         {/* === 1. HEADER AUTHENTIFICATION — gradient banner === */}
         {/* Note: expired/near-expiry cases are handled by the dedicated red
             alert banner in section 1.bis below. This banner always shows
@@ -594,12 +686,79 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
                 <p className="text-gray-600 dark:text-gray-300">
                   Marque : <span className="font-semibold text-gray-900 dark:text-gray-100">{lot.product.brand}</span>
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Fabricant :{" "}
-                  <span className="font-semibold" style={{ color: GREEN_DARK }}>
-                    {lot.product.user.companyName}
-                  </span>
-                </p>
+                {/* Fabricant + logo + réseaux sociaux */}
+                <div className="flex items-center gap-3 flex-wrap pt-1">
+                  {lot.product.user.logoUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={lot.product.user.logoUrl}
+                      alt={`Logo ${lot.product.user.companyName}`}
+                      className="size-20 rounded-lg object-contain bg-white border border-gray-200 p-1"
+                    />
+                  )}
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Fabricant :{" "}
+                    <span className="font-semibold" style={{ color: GREEN_DARK }}>
+                      {lot.product.user.companyName}
+                    </span>
+                  </div>
+                  {/* Réseaux sociaux fabricant */}
+                  {(lot.product.user.socialFacebook ||
+                    lot.product.user.socialTwitter ||
+                    lot.product.user.socialLinkedin ||
+                    lot.product.user.socialInstagram) && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      {lot.product.user.socialFacebook && (
+                        <a
+                          href={lot.product.user.socialFacebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#1877F2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Facebook"
+                          title="Facebook"
+                        >
+                          <Facebook className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialTwitter && (
+                        <a
+                          href={lot.product.user.socialTwitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#1DA1F2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Twitter / X"
+                          title="Twitter / X"
+                        >
+                          <Twitter className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialLinkedin && (
+                        <a
+                          href={lot.product.user.socialLinkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#0A66C2] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="LinkedIn"
+                          title="LinkedIn"
+                        >
+                          <Linkedin className="size-3.5" />
+                        </a>
+                      )}
+                      {lot.product.user.socialInstagram && (
+                        <a
+                          href={lot.product.user.socialInstagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="size-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-[#E4405F] hover:text-white text-gray-600 dark:text-gray-300 flex items-center justify-center transition-colors"
+                          aria-label="Instagram"
+                          title="Instagram"
+                        >
+                          <Instagram className="size-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {lot.product.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pt-2 border-t border-gray-100 dark:border-gray-800">
                     {lot.product.description}
@@ -679,6 +838,111 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
               />
             </div>
 
+            {/* === Statut de consommation (calcul automatique) === */}
+            {!isRecalled && (() => {
+              // États possibles :
+              //   - expired        : périmé depuis N jours  (rouge)
+              //   - remainingDays<=5  : expire dans N jours  (rouge clair)
+              //   - remainingDays<=10 : expire dans N jours  (orange)
+              //   - sinon           : conforme               (vert)
+              const expiredSinceDays = expired ? Math.abs(remainingDays) : 0;
+              const isGreen = !expired && remainingDays > 10;
+              const isOrange = !expired && remainingDays > 5 && remainingDays <= 10;
+              const isRedLight = !expired && remainingDays > 0 && remainingDays <= 5;
+
+              const cfg = expired
+                ? {
+                    bg: "linear-gradient(135deg, #FEE2E2 0%, #FFFFFF 100%)",
+                    border: "#B91C1C",
+                    chipBg: "#991B1B",
+                    title: "Produit expiré",
+                    titleColor: "#7F1D1D",
+                    textColor: "#991B1B",
+                    emoji: "🚫",
+                  }
+                : isRedLight
+                  ? {
+                      bg: "linear-gradient(135deg, #FECACA 0%, #FFFFFF 100%)",
+                      border: "#DC2626",
+                      chipBg: "#DC2626",
+                      title: "À consommer urgemment",
+                      titleColor: "#991B1B",
+                      textColor: "#991B1B",
+                      emoji: "⚠️",
+                    }
+                  : isOrange
+                    ? {
+                        bg: "linear-gradient(135deg, #FED7AA 0%, #FFFFFF 100%)",
+                        border: "#F59E0B",
+                        chipBg: "#F59E0B",
+                        title: "À consommer prochainement",
+                        titleColor: "#92400E",
+                        textColor: "#92400E",
+                        emoji: "⏳",
+                      }
+                  : {
+                      bg: "linear-gradient(135deg, #D1FAE5 0%, #FFFFFF 100%)",
+                      border: "#2EBD5A",
+                      chipBg: "#2EBD5A",
+                      title: "Conforme à la consommation",
+                      titleColor: "#065F46",
+                      textColor: "#065F46",
+                      emoji: "🟢",
+                    };
+
+              const conseil = expired
+                ? `Produit expiré depuis ${expiredSinceDays} jour${expiredSinceDays > 1 ? "s" : ""}. Nous déconseillons sa consommation. Contactez le fabricant en cas de doute.`
+                : isRedLight
+                  ? `Ce produit expire dans ${remainingDays} jour${remainingDays > 1 ? "s" : ""}. Vérifiez l'emballage et consommez-le rapidement. Au-delà de cette date, ne le consommez plus.`
+                  : isOrange
+                    ? `Ce produit expire dans ${remainingDays} jours. Pensez à le consommer avant cette date pour une qualité optimale.`
+                    : `Produit authentifié et conforme. À consommer avant le ${formatDate(lot.expirationDate)} pour une qualité optimale.`;
+
+              return (
+                <div
+                  className="rounded-xl p-4 mb-4 flex items-start gap-4 shadow-sm"
+                  style={{ background: cfg.bg, border: `2px solid ${cfg.border}` }}
+                  role="status"
+                >
+                  <div
+                    className="flex-shrink-0 size-12 rounded-xl flex items-center justify-center text-2xl shadow-md"
+                    style={{ backgroundColor: cfg.chipBg }}
+                    aria-hidden="true"
+                  >
+                    <span className="text-white">{cfg.emoji}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p
+                      className="font-display text-lg font-bold uppercase tracking-wide"
+                      style={{ color: cfg.titleColor }}
+                    >
+                      {cfg.emoji} {cfg.title}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed" style={{ color: cfg.textColor }}>
+                      {conseil}
+                    </p>
+                    <div className="mt-3 grid sm:grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Fabriqué le :</span>{" "}
+                        <strong>{formatDate(lot.manufacturingDate)}</strong>
+                      </div>
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Péremption :</span>{" "}
+                        <strong>{formatDate(lot.expirationDate)}</strong>
+                      </div>
+                      <div className="rounded-md bg-white/70 px-3 py-2" style={{ color: cfg.textColor }}>
+                        <span className="opacity-70">Temps restant :</span>{" "}
+                        <strong>
+                          {expired
+                            ? `Expiré (${expiredSinceDays} j)`
+                            : `${remainingDays} jour${remainingDays > 1 ? "s" : ""}`}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {/* Lieux — fabrication (bleu) / transformation (vert) */}
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {lot.manufacturingLocation && (
@@ -882,25 +1146,40 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
           </div>
         </Reveal>
 
-        {/* === 7. QR CODE & CONTACT === */}
+        {/* === 7. QR CODE & BARCODE & CONTACT === */}
         <div className="grid sm:grid-cols-2 gap-4">
           {lot.qrCodes[0]?.qrCodeImageUrl && (
             <Reveal>
               <div className="rounded-2xl bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800 p-6 sm:p-8 text-center shadow-md h-full">
                 <h3 className="font-display font-semibold mb-4 flex items-center justify-center gap-2 text-gray-900 dark:text-gray-100">
                   <QrCode className="size-5" style={{ color: BLUE }} />
-                  QR code officiel
+                  QR code &amp; Code-barres
                 </h3>
-                <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={lot.qrCodes[0].qrCodeImageUrl}
-                    alt="QR code"
-                    className="w-40 h-40"
-                  />
+                {/* QR + Barcode côte à côte sur desktop, empilés sur mobile */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={lot.qrCodes[0].qrCodeImageUrl}
+                      alt="QR code"
+                      className="w-32 h-32 sm:w-36 sm:h-36"
+                    />
+                  </div>
+                  {lot.product.barcode && (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="inline-block p-3 bg-white rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+                        <Barcode value={lot.product.barcode} width={2} height={56} />
+                      </div>
+                      <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        EAN / UPC
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                  Scannez ce code pour vérifier l&apos;authenticité à tout moment
+                  {lot.product.barcode
+                    ? "Scannez le QR code pour la traçabilité, le code-barres pour la caisse."
+                    : "Scannez ce code pour vérifier l'authenticité à tout moment."}
                 </p>
               </div>
             </Reveal>
@@ -1258,6 +1537,8 @@ export default function PublicLotPage({ params }: { params: Promise<{ lotId: str
             En savoir plus
           </Link>
         </p>
+
+        </>)}
       </div>
 
       {/* Review modal — opened by the 15-second notification toast or by
