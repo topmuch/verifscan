@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { DashboardSidebar, MobileDashboardNav } from "@/components/dashboard-sidebar";
 import { NotificationBell } from "@/components/notification-bell";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export default async function DashboardLayout({
   children,
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
             <span>La vérité au bout du scan</span>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell />
           </div>
         </header>

@@ -1,9 +1,6 @@
 import Link from "next/link";
 import {
   Building2,
-  CreditCard,
-  TrendingUp,
-  Ticket,
   ArrowRight,
 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -257,16 +254,17 @@ export default async function AdminHomePage() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          icon={Building2}
+          icon="Building2"
           iconBg="bg-[#DBEAFE]"
           iconColor="text-[#0f4382]"
           title="Total Fabricants"
           value={stats.totals.totalFabricants}
           trend={{ value: "+12 ce mois", direction: "up" }}
           subtext={`${stats.totals.activeFabricants} actifs · ${stats.totals.inactiveFabricants} inactifs`}
+          variant="blue"
         />
         <KpiCard
-          icon={CreditCard}
+          icon="CreditCard"
           iconBg="bg-[#DCFCE7]"
           iconColor="text-[#2ebd5a]"
           title="Revenus MRR"
@@ -274,24 +272,27 @@ export default async function AdminHomePage() {
           suffix=" FCFA"
           trend={{ value: "+8.5%", direction: "up" }}
           subtext={`${stats.planDistribution.pro || 0} Pro · ${stats.planDistribution.starter || 0} Starter · ${stats.planDistribution.enterprise || 0} Enterprise`}
+          variant="green"
         />
         <KpiCard
-          icon={TrendingUp}
+          icon="TrendingUp"
           iconBg="bg-[#FEF3C7]"
           iconColor="text-[#F59E0B]"
           title="Scans Totaux"
           value={stats.totals.totalScans}
           trend={{ value: "+23% cette semaine", direction: "up" }}
           subtext={`Moyenne : ${stats.totals.totalScans > 0 ? Math.round(stats.totals.totalScans / 30) : 0} scans/jour`}
+          variant="blue"
         />
         <KpiCard
-          icon={Ticket}
+          icon="Ticket"
           iconBg="bg-[#FEE2E2]"
           iconColor="text-[#EF4444]"
           title="Lots Rappelés"
           value={stats.totals.recalledLots}
           trend={{ value: "À surveiller", direction: "down" }}
           subtext={`${stats.totals.activeLots} lots actifs en circulation`}
+          variant="green"
         />
       </div>
 

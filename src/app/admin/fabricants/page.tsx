@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Users as UsersIcon,
+  Plus,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,7 +53,8 @@ import { toast } from "sonner";
 type Fabricant = {
   id: string;
   email: string;
-  companyName: string;
+  role: "superadmin" | "fabricant" | "distributor";
+  companyName: string | null;
   logoUrl: string | null;
   phone: string | null;
   whatsapp: string | null;
@@ -82,10 +85,75 @@ export default function AdminFabricantsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [planFilter, setPlanFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all"); // all|superadmin|fabricant
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // "Create user" modal — supports both superadmin and fabricant accounts.
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    password: "",
+    role: "fabricant" as "superadmin" | "fabricant",
+    companyName: "",
+    phone: "",
+  });
+  const [creating, setCreating] = useState(false);
+
+  function openCreateModal() {
+    setCreateForm({
+      email: "",
+      password: "",
+      role: "fabricant",
+      companyName: "",
+      phone: "",
+    });
+    setShowCreateModal(true);
+  }
+
+  async function submitCreateUser() {
+    if (!createForm.email || !createForm.password) {
+      toast.error("Email et mot de passe sont obligatoires");
+      return;
+    }
+    if (createForm.password.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: createForm.email,
+          password: createForm.password,
+          role: createForm.role,
+          companyName: createForm.companyName || undefined,
+          phone: createForm.phone || undefined,
+          isActive: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Erreur lors de la création");
+        return;
+      }
+      toast.success(
+        createForm.role === "superadmin"
+          ? "SuperAdmin créé avec succès"
+          : "Utilisateur fabricant créé avec succès"
+      );
+      setShowCreateModal(false);
+      load();
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,6 +162,7 @@ export default function AdminFabricantsPage() {
         search,
         status: statusFilter,
         plan: planFilter,
+        role: roleFilter,
         page: String(page),
         pageSize: String(pageSize),
       });
@@ -108,7 +177,7 @@ export default function AdminFabricantsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, planFilter, page, pageSize]);
+  }, [search, statusFilter, planFilter, roleFilter, page, pageSize]);
 
   useEffect(() => {
     const t = setTimeout(load, 300);
@@ -137,22 +206,28 @@ export default function AdminFabricantsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827] font-display">
-            Gestion des Fabricants
+            Gestion des Utilisateurs
           </h1>
           <p className="mt-1 text-[#6B7280]">
-            {total} fabricant{total > 1 ? "s" : ""} inscrit{total > 1 ? "s" : ""}
+            {total} utilisateur{total > 1 ? "s" : ""} inscrit{total > 1 ? "s" : ""}
           </p>
         </div>
-        <Button variant="outline" className="border-[#E5E7EB]">
-          <Download className="mr-2 size-4" />
-          Exporter CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button className="bg-[#0f4382] hover:bg-[#0a3060]" onClick={openCreateModal}>
+            <Plus className="mr-2 size-4" />
+            Créer un utilisateur
+          </Button>
+          <Button variant="outline" className="border-[#E5E7EB]">
+            <Download className="mr-2 size-4" />
+            Exporter CSV
+          </Button>
+        </div>
       </div>
 
       {/* Filtres */}
       <Card className="border-[#E5E7EB]">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div className="relative sm:col-span-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#9CA3AF]" />
               <Input
@@ -165,6 +240,16 @@ export default function AdminFabricantsPage() {
                 }}
               />
             </div>
+            <Select value={roleFilter} onValueChange={(v) => { setRoleFilter(v); setPage(1); }}>
+              <SelectTrigger className="border-[#E5E7EB]">
+                <SelectValue placeholder="Rôle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les rôles</SelectItem>
+                <SelectItem value="superadmin">SuperAdmins</SelectItem>
+                <SelectItem value="fabricant">Fabricants</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="border-[#E5E7EB]">
                 <SelectValue placeholder="Statut" />
@@ -221,7 +306,8 @@ export default function AdminFabricantsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-[#6B7280] uppercase tracking-wider border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    <th className="py-3 px-4 font-medium">Entreprise</th>
+                    <th className="py-3 px-4 font-medium">Utilisateur</th>
+                    <th className="py-3 px-4 font-medium">Rôle</th>
                     <th className="py-3 px-4 font-medium">Contact</th>
                     <th className="py-3 px-4 font-medium">Plan</th>
                     <th className="py-3 px-4 font-medium">Statut</th>
@@ -236,20 +322,37 @@ export default function AdminFabricantsPage() {
                     const planBadge = f.subscription?.plan
                       ? PLAN_BADGE[f.subscription.plan] || PLAN_BADGE.starter
                       : null;
+                    const isSuperAdmin = f.role === "superadmin";
+                    const displayName = isSuperAdmin
+                      ? (f.companyName || f.email.split("@")[0])
+                      : (f.companyName || "Sans nom");
                     return (
                       <tr key={f.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                         <td className="py-3 px-4">
                           <Link href={`/admin/fabricants/${f.id}`} className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                              {f.companyName?.[0]?.toUpperCase() || "?"}
+                            <div className={isSuperAdmin
+                              ? "size-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                              : "size-9 rounded-lg bg-gradient-to-br from-[#0f4382] to-[#2ebd5a] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"}>
+                              {displayName?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold text-[#111827] truncate">
-                                {f.companyName || "Sans nom"}
+                                {displayName}
                               </div>
                               <div className="text-xs text-[#6B7280] truncate">{f.email}</div>
                             </div>
                           </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          {isSuperAdmin ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800">
+                              SuperAdmin
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">
+                              Fabricant
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-xs text-[#6B7280] flex items-center gap-1">
@@ -398,6 +501,124 @@ export default function AdminFabricantsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create user modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-semibold text-[#111827]">
+                  Créer un utilisateur
+                </h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  SuperAdmin (accès /admin) ou Fabricant (accès /dashboard)
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-[#6B7280] hover:text-[#111827] p-1 rounded hover:bg-[#F9FAFB]"
+                aria-label="Fermer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto vs-scroll">
+              {/* Role toggle */}
+              <div>
+                <label className="text-sm font-medium text-[#111827]">Type de compte</label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, role: "fabricant" })}
+                    className={`px-4 py-3 rounded-lg border text-left transition-colors ${
+                      createForm.role === "fabricant"
+                        ? "border-[#0f4382] bg-[#DBEAFE]"
+                        : "border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                    }`}
+                  >
+                    <div className="text-sm font-semibold text-[#111827]">Fabricant</div>
+                    <div className="text-xs text-[#6B7280] mt-0.5">Accès dashboard client</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreateForm({ ...createForm, role: "superadmin" })}
+                    className={`px-4 py-3 rounded-lg border text-left transition-colors ${
+                      createForm.role === "superadmin"
+                        ? "border-[#0f4382] bg-[#DBEAFE]"
+                        : "border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                    }`}
+                  >
+                    <div className="text-sm font-semibold text-[#111827]">SuperAdmin</div>
+                    <div className="text-xs text-[#6B7280] mt-0.5">Accès administration</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Email *</label>
+                  <Input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="exemple@verifscan.sn"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Mot de passe *</label>
+                  <Input
+                    type="password"
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                    placeholder="Min. 6 caractères"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">
+                    {createForm.role === "fabricant" ? "Nom de l'entreprise" : "Nom affiché"}
+                  </label>
+                  <Input
+                    value={createForm.companyName}
+                    onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
+                    placeholder={createForm.role === "fabricant" ? "Ex : Jus de Bissap SN" : "Ex : Support VerifScan"}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Téléphone</label>
+                  <Input
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    placeholder="+221 77 000 00 00"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#E5E7EB]"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-[#0f4382] hover:bg-[#0a3060]"
+                onClick={submitCreateUser}
+                disabled={creating}
+              >
+                {creating ? "Création..." : "Créer le compte"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

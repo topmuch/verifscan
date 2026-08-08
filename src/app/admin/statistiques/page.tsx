@@ -1,9 +1,4 @@
 import {
-  Building2,
-  Package,
-  Layers,
-  QrCode,
-  Eye,
   Tag,
   TrendingUp,
 } from "lucide-react";
@@ -101,21 +96,39 @@ async function getStats() {
       productsCount: f._count.products,
     }));
 
-  // Top products by scans
-  const topProductsRaw = await db.product.findMany({
+  // Top products by scans — Product has no direct `scans` relation, so we
+  // count scans via the QRCode → Lot → Product chain using a groupBy on Scan.
+  const topProductScans = await db.scan.findMany({
     select: {
-      id: true,
-      name: true,
-      brand: true,
-      _count: { select: { scans: true, lots: true } },
-      user: { select: { companyName: true } },
+      qrCode: { select: { lot: { select: { productId: true } } } },
     },
-    take: 200,
+    take: 50000,
   });
+  const scansByProduct = new Map<string, number>();
+  for (const s of topProductScans) {
+    const pid = s.qrCode.lot.productId;
+    scansByProduct.set(pid, (scansByProduct.get(pid) || 0) + 1);
+  }
+  const topProductIds = Array.from(scansByProduct.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([id]) => id);
+  const topProductsRaw = topProductIds.length
+    ? await db.product.findMany({
+        where: { id: { in: topProductIds } },
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          _count: { select: { lots: true } },
+          user: { select: { companyName: true } },
+        },
+      })
+    : [];
+  // Map back to the scan count and preserve the sort order
   const topProducts = topProductsRaw
-    .filter((p) => p._count.scans > 0)
-    .sort((a, b) => b._count.scans - a._count.scans)
-    .slice(0, 20);
+    .map((p) => ({ ...p, scanCount: scansByProduct.get(p.id) || 0 }))
+    .sort((a, b) => b.scanCount - a.scanCount);
 
   return {
     totals: {
@@ -159,46 +172,52 @@ export default async function AdminStatsPage() {
         <h2 className="text-lg font-display font-semibold text-[#111827] mb-3">Vue d&apos;ensemble</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <KpiCard
-            icon={Building2}
+            icon="Building2"
             iconBg="bg-[#DBEAFE]"
             iconColor="text-[#0f4382]"
             title="Total fabricants"
             value={stats.totals.totalFabricants}
+            variant="blue"
           />
           <KpiCard
-            icon={Building2}
+            icon="Building2"
             iconBg="bg-[#DCFCE7]"
             iconColor="text-[#2ebd5a]"
             title="Fabricants actifs"
             value={stats.totals.activeFabricants}
+            variant="green"
           />
           <KpiCard
-            icon={Package}
+            icon="Package"
             iconBg="bg-[#FEF3C7]"
             iconColor="text-[#F59E0B]"
             title="Total produits"
             value={stats.totals.totalProducts}
+            variant="blue"
           />
           <KpiCard
-            icon={Layers}
+            icon="Layers"
             iconBg="bg-[#DBEAFE]"
             iconColor="text-[#0f4382]"
             title="Total lots"
             value={stats.totals.totalLots}
+            variant="green"
           />
           <KpiCard
-            icon={QrCode}
+            icon="QrCode"
             iconBg="bg-[#DCFCE7]"
             iconColor="text-[#2ebd5a]"
             title="Total QR codes"
             value={stats.totals.totalQrCodes}
+            variant="blue"
           />
           <KpiCard
-            icon={Eye}
+            icon="Eye"
             iconBg="bg-[#FEE2E2]"
             iconColor="text-[#EF4444]"
             title="Total scans"
             value={stats.totals.totalScans}
+            variant="green"
           />
         </div>
       </div>
@@ -278,7 +297,7 @@ export default async function AdminStatsPage() {
                         </td>
                         <td className="py-3 px-4 text-[#4B5563]">{p.user.companyName || "—"}</td>
                         <td className="py-3 px-4 text-center font-mono">{p._count.lots}</td>
-                        <td className="py-3 px-4 text-center font-mono font-semibold text-[#0f4382]">{p._count.scans}</td>
+                        <td className="py-3 px-4 text-center font-mono font-semibold text-[#0f4382]">{p.scanCount}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -10,6 +10,10 @@ import { cn } from "@/lib/utils";
  *
  * Because the wordmark is baked into the image, the `showText` prop is kept only
  * for API backward-compatibility and has no visual effect.
+ *
+ * The SVG assets (logo-light.svg, logo-color.svg, logo-icon.svg) are still
+ * available for specific use cases but the main <VerifScanLogo /> uses PNG
+ * for maximum visual fidelity across all pages.
  */
 export function VerifScanLogo({
   className,
@@ -24,10 +28,10 @@ export function VerifScanLogo({
 }) {
   // Size by height — logo aspect ratio is ~4.12:1 (272×66)
   const heights: Record<"sm" | "md" | "lg" | "xl", number> = {
-    sm: 28,
-    md: 36,
-    lg: 48,
-    xl: 64,
+    sm: 34,
+    md: 44,
+    lg: 56,
+    xl: 76,
   };
   const h = heights[size];
   const w = Math.round(h * (272 / 66));
@@ -54,5 +58,30 @@ export function VerifScanLogo({
         style={{ height: h, width: "auto" }}
       />
     </Link>
+  );
+}
+
+/**
+ * Compact icon-only logo (just the shield + checkmark, no wordmark).
+ * Useful in mobile headers, favicons, narrow spaces.
+ * Uses the SVG icon asset for crisp rendering at small sizes.
+ */
+export function VerifScanIcon({
+  className,
+  size = 32,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo-icon.svg"
+      alt="VerifScan"
+      width={size}
+      height={size}
+      className={cn("transition-transform duration-300 hover:scale-[1.05]", className)}
+      style={{ width: size, height: size }}
+    />
   );
 }

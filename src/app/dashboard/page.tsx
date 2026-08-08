@@ -7,6 +7,7 @@ import {
   Plus,
   ArrowRight,
   TrendingUp,
+  LifeBuoy,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
@@ -45,11 +46,12 @@ export default async function DashboardHome() {
     where: { qrCode: { lot: { product: { userId: user.id } } } },
   });
 
+  // KPI cards — brand green background (#2ebd5b), white text
   const stats = [
-    { label: "Produits", value: products, icon: Package, color: "bg-emerald-600", href: "/dashboard/produits" },
-    { label: "Lots", value: lots, icon: Layers, color: "bg-amber-500", href: "/dashboard/lots" },
-    { label: "QR Codes", value: qrCodes, icon: QrCode, color: "bg-emerald-600", href: "/dashboard/qr-codes" },
-    { label: "Scans", value: totalScans, icon: Eye, color: "bg-amber-500", href: "/dashboard/statistiques" },
+    { label: "Produits", value: products, icon: Package, href: "/dashboard/produits" },
+    { label: "Lots", value: lots, icon: Layers, href: "/dashboard/lots" },
+    { label: "QR Codes", value: qrCodes, icon: QrCode, href: "/dashboard/qr-codes" },
+    { label: "Scans", value: totalScans, icon: Eye, href: "/dashboard/statistiques" },
   ];
 
   return (
@@ -79,20 +81,23 @@ export default async function DashboardHome() {
         </div>
       </div>
 
-      {/* Stats grid */}
+      {/* Stats grid — fond vert #2ebd5b, texte blanc */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Link key={s.label} href={s.href}>
-            <Card className="vs-card-shadow border-emerald-100 hover:shadow-lg transition-shadow h-full">
+            <Card
+              className="vs-card-shadow hover:shadow-lg transition-shadow h-full border-0"
+              style={{ backgroundColor: "#2ebd5b" }}
+            >
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <div className={`w-11 h-11 rounded-xl ${s.color} flex items-center justify-center text-white`}>
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white">
                     <s.icon className="size-5" />
                   </div>
-                  <ArrowRight className="size-4 text-gray-300" />
+                  <ArrowRight className="size-4 text-white/70" />
                 </div>
-                <div className="mt-3 text-3xl font-bold">{s.value}</div>
-                <div className="text-sm text-gray-500">{s.label}</div>
+                <div className="mt-3 text-3xl font-bold text-white">{s.value}</div>
+                <div className="text-sm text-white/90">{s.label}</div>
               </CardContent>
             </Card>
           </Link>
@@ -143,6 +148,16 @@ export default async function DashboardHome() {
               <div className="flex items-center gap-3">
                 <TrendingUp className="size-5 text-amber-600" />
                 <span className="text-sm font-medium">Voir les statistiques</span>
+              </div>
+              <ArrowRight className="size-4 text-gray-400" />
+            </Link>
+            <Link
+              href="/dashboard/assistance"
+              className="flex items-center justify-between p-3 rounded-lg border border-emerald-100 hover:bg-emerald-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <LifeBuoy className="size-5 text-[#2ebd5a]" />
+                <span className="text-sm font-medium">Contacter le support</span>
               </div>
               <ArrowRight className="size-4 text-gray-400" />
             </Link>

@@ -12,6 +12,7 @@ export async function GET() {
       id: true,
       name: true,
       icon: true,
+      pageTemplate: true,
     },
   });
   return NextResponse.json(categories);

@@ -10,6 +10,10 @@ const schema = z.object({
   emailContact: z.string().email().optional().or(z.literal("")),
   address: z.string().optional(),
   logoUrl: z.string().optional().or(z.literal("")),
+  socialFacebook: z.string().optional().or(z.literal("")),
+  socialTwitter: z.string().optional().or(z.literal("")),
+  socialLinkedin: z.string().optional().or(z.literal("")),
+  socialInstagram: z.string().optional().or(z.literal("")),
 });
 
 /** Get own profile. */
@@ -28,6 +32,10 @@ export async function GET() {
       emailContact: true,
       address: true,
       logoUrl: true,
+      socialFacebook: true,
+      socialTwitter: true,
+      socialLinkedin: true,
+      socialInstagram: true,
       role: true,
     },
   });
@@ -59,6 +67,10 @@ export async function PUT(req: Request) {
       ...(data.emailContact !== undefined && { emailContact: data.emailContact?.trim() || null }),
       ...(data.address !== undefined && { address: data.address?.trim() || null }),
       ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
+      ...(data.socialFacebook !== undefined && { socialFacebook: data.socialFacebook?.trim() || null }),
+      ...(data.socialTwitter !== undefined && { socialTwitter: data.socialTwitter?.trim() || null }),
+      ...(data.socialLinkedin !== undefined && { socialLinkedin: data.socialLinkedin?.trim() || null }),
+      ...(data.socialInstagram !== undefined && { socialInstagram: data.socialInstagram?.trim() || null }),
     },
     select: {
       id: true,
@@ -69,6 +81,10 @@ export async function PUT(req: Request) {
       emailContact: true,
       address: true,
       logoUrl: true,
+      socialFacebook: true,
+      socialTwitter: true,
+      socialLinkedin: true,
+      socialInstagram: true,
     },
   });
 

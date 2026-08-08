@@ -14,6 +14,7 @@ import {
   Clock,
   Tag,
   MoreVertical,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -159,6 +160,62 @@ export default function AdminSupportPage() {
   const [selectedId, setSelectedId] = useState<string | null>(mockTickets[0]?.id || null);
   const [reply, setReply] = useState("");
 
+  // "Create internal ticket" modal state — previously the button was a no-op.
+  // Now it opens a real form, validates input, and inserts a new ticket at
+  // the top of the list with status "ouvert" and a generated TKT-YYYY-NNNN id.
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTicket, setNewTicket] = useState({
+    subject: "",
+    requester: "",
+    company: "",
+    priority: "normale" as Ticket["priority"],
+    content: "",
+  });
+
+  function openCreateModal() {
+    setNewTicket({
+      subject: "",
+      requester: "",
+      company: "",
+      priority: "normale",
+      content: "",
+    });
+    setShowCreateModal(true);
+  }
+
+  function submitNewTicket() {
+    if (!newTicket.subject.trim() || !newTicket.requester.trim() || !newTicket.content.trim()) {
+      toast.error("Sujet, demandeur et description sont obligatoires");
+      return;
+    }
+    const id = `TKT-${new Date().getFullYear()}-${String(tickets.length + 146).padStart(4, "0")}`;
+    const now = new Date().toISOString();
+    const created: Ticket = {
+      id,
+      subject: newTicket.subject.trim(),
+      requester: newTicket.requester.trim(),
+      company: newTicket.company.trim() || "Interne",
+      priority: newTicket.priority,
+      status: "ouvert",
+      assignedTo: null,
+      createdAt: now,
+      lastReply: now,
+      messages: [
+        {
+          id: "m1",
+          author: "client",
+          authorName: newTicket.requester.trim(),
+          content: newTicket.content.trim(),
+          timestamp: now,
+        },
+      ],
+    };
+    setTickets((list) => [created, ...list]);
+    setSelectedId(created.id);
+    setShowCreateModal(false);
+    toast.success(`Ticket interne ${id} créé`);
+  }
+
   const filtered = tickets.filter((t) => {
     if (activeTab === "ouverts" && t.status !== "ouvert" && t.status !== "en_cours") return false;
     if (activeTab === "en_cours" && t.status !== "en_cours") return false;
@@ -231,7 +288,7 @@ export default function AdminSupportPage() {
             {tickets.filter((t) => t.status === "ouvert").length} tickets ouverts
           </p>
         </div>
-        <Button className="bg-[#0f4382] hover:bg-[#0a3060]">
+        <Button className="bg-[#0f4382] hover:bg-[#0a3060]" onClick={openCreateModal}>
           <Plus className="mr-2 size-4" />
           Créer un ticket interne
         </Button>
@@ -467,6 +524,107 @@ export default function AdminSupportPage() {
           </Card>
         )}
       </div>
+
+      {/* Create internal ticket modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-semibold text-[#111827]">
+                  Créer un ticket interne
+                </h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  Pour ouvrir un ticket au nom d&apos;un client ou d&apos;un sujet interne.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-[#6B7280] hover:text-[#111827] p-1 rounded hover:bg-[#F9FAFB]"
+                aria-label="Fermer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto vs-scroll">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Sujet *</label>
+                  <Input
+                    value={newTicket.subject}
+                    onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                    placeholder="Ex : Problème de génération QR"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Priorité</label>
+                  <Select
+                    value={newTicket.priority}
+                    onValueChange={(v) => setNewTicket({ ...newTicket, priority: v as Ticket["priority"] })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basse">Basse</SelectItem>
+                      <SelectItem value="normale">Normale</SelectItem>
+                      <SelectItem value="haute">Haute</SelectItem>
+                      <SelectItem value="urgente">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Demandeur *</label>
+                  <Input
+                    value={newTicket.requester}
+                    onChange={(e) => setNewTicket({ ...newTicket, requester: e.target.value })}
+                    placeholder="Nom du demandeur"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#111827]">Entreprise</label>
+                  <Input
+                    value={newTicket.company}
+                    onChange={(e) => setNewTicket({ ...newTicket, company: e.target.value })}
+                    placeholder="Nom de l'entreprise (optionnel)"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[#111827]">Description *</label>
+                <Textarea
+                  value={newTicket.content}
+                  onChange={(e) => setNewTicket({ ...newTicket, content: e.target.value })}
+                  rows={6}
+                  placeholder="Décrivez le problème ou la demande..."
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#E5E7EB]"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-[#0f4382] hover:bg-[#0a3060]"
+                onClick={submitNewTicket}
+              >
+                <Plus className="mr-1 size-4" />
+                Créer le ticket
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

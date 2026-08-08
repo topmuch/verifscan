@@ -18,6 +18,7 @@ export async function GET(
     select: {
       id: true,
       email: true,
+      role: true,
       companyName: true,
       logoUrl: true,
       phone: true,
@@ -78,8 +79,8 @@ export async function GET(
     },
   });
 
-  if (!user || user.role !== "fabricant") {
-    return NextResponse.json({ error: "Fabricant introuvable" }, { status: 404 });
+  if (!user) {
+    return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   }
 
   // Recent scans (30 days)

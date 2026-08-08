@@ -11,6 +11,7 @@ import {
   Wrench,
   Save,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -200,6 +201,80 @@ function EmailSection() {
     adminEmail: "admin@verifscan.sn",
   });
 
+  // Email templates — editable inline. Each template has a subject + body.
+  // In a future iteration these can be persisted to the DB; for now we
+  // keep them in component state and expose a working "Éditer" button that
+  // opens a real editor (instead of being a no-op like before).
+  const [templates, setTemplates] = useState<Record<string, { subject: string; body: string }>>({
+    inscription: {
+      subject: "Bienvenue sur VerifScan — votre compte fabricant est créé",
+      body:
+        "Bonjour {{companyName}},\n\n" +
+        "Votre compte fabricant VerifScan a été créé avec succès.\n" +
+        "Vous pouvez dès maintenant vous connecter et créer vos premiers produits.\n\n" +
+        "L'équipe VerifScan",
+    },
+    bienvenue: {
+      subject: "Votre premier produit sur VerifScan",
+      body:
+        "Bonjour {{companyName}},\n\n" +
+        "Bienvenue dans la communauté VerifScan ! Découvrez comment créer votre premier produit et générer vos QR codes.\n\n" +
+        "L'équipe VerifScan",
+    },
+    reset: {
+      subject: "Réinitialisation de votre mot de passe VerifScan",
+      body:
+        "Bonjour,\n\n" +
+        "Vous avez demandé une réinitialisation de mot de passe.\n" +
+        "Cliquez sur le lien suivant pour choisir un nouveau mot de passe :\n{{resetLink}}\n\n" +
+        "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n" +
+        "L'équipe VerifScan",
+    },
+    paiement: {
+      subject: "Confirmation de paiement — {{invoiceNumber}}",
+      body:
+        "Bonjour {{companyName}},\n\n" +
+        "Nous confirmons la réception de votre paiement de {{amount}} FCFA.\n" +
+        "Facture : {{invoiceNumber}}\n" +
+        "Plan : {{plan}}\n\n" +
+        "Merci pour votre confiance.\n\n" +
+        "L'équipe VerifScan",
+    },
+    rapport: {
+      subject: "Rapport hebdomadaire VerifScan — {{weekLabel}}",
+      body:
+        "Bonjour {{companyName}},\n\n" +
+        "Voici votre rapport hebdomadaire :\n" +
+        "- Scans cette semaine : {{scansCount}}\n" +
+        "- Nouveaux produits : {{newProductsCount}}\n" +
+        "- Top produit : {{topProduct}}\n\n" +
+        "Connectez-vous à votre dashboard pour plus de détails.\n\n" +
+        "L'équipe VerifScan",
+    },
+  });
+  const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
+
+  const TEMPLATE_LABELS: Record<string, string> = {
+    inscription: "Inscription",
+    bienvenue: "Bienvenue",
+    reset: "Réinitialisation mot de passe",
+    paiement: "Notification paiement",
+    rapport: "Rapport hebdomadaire",
+  };
+
+  function openEditor(key: string) {
+    setEditingTemplate(key);
+    setDraft({ ...templates[key] });
+  }
+  function saveDraft() {
+    if (!editingTemplate || !draft) return;
+    setTemplates({ ...templates, [editingTemplate]: draft });
+    setEditingTemplate(null);
+    setDraft(null);
+    toast.success(`Template "${TEMPLATE_LABELS[editingTemplate]}" enregistré`);
+  }
+
   return (
     <div className="space-y-6">
       <Card className="border-[#E5E7EB]">
@@ -264,14 +339,96 @@ function EmailSection() {
           <CardTitle className="text-base font-display">Templates d&apos;emails</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {["Inscription", "Bienvenue", "Réinitialisation mot de passe", "Notification paiement", "Rapport hebdomadaire"].map((t) => (
-            <div key={t} className="flex items-center justify-between p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB]">
-              <span className="text-sm font-medium text-[#111827]">{t}</span>
-              <Button variant="outline" size="sm" className="border-[#E5E7EB]">Éditer</Button>
+          {Object.entries(TEMPLATE_LABELS).map(([key, label]) => (
+            <div key={key} className="flex items-center justify-between p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB]">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-[#111827]">{label}</div>
+                <div className="text-xs text-[#6B7280] truncate mt-0.5">
+                  Sujet : {templates[key].subject}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#E5E7EB] ml-3"
+                onClick={() => openEditor(key)}
+              >
+                Éditer
+              </Button>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* Template editor modal */}
+      {editingTemplate && draft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-semibold text-[#111827]">
+                  Éditer le template
+                </h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  {TEMPLATE_LABELS[editingTemplate]}
+                </p>
+              </div>
+              <button
+                onClick={() => { setEditingTemplate(null); setDraft(null); }}
+                className="text-[#6B7280] hover:text-[#111827] p-1 rounded hover:bg-[#F9FAFB]"
+                aria-label="Fermer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4 overflow-y-auto vs-scroll">
+              <div>
+                <Label>Objet de l&apos;email</Label>
+                <Input
+                  value={draft.subject}
+                  onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Corps de l&apos;email</Label>
+                <Textarea
+                  value={draft.body}
+                  onChange={(e) => setDraft({ ...draft, body: e.target.value })}
+                  rows={12}
+                  className="mt-1 font-mono text-sm"
+                />
+              </div>
+              <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-3 text-xs text-[#6B7280]">
+                <strong className="text-[#111827]">Variables disponibles :</strong>{" "}
+                <code className="text-[#0f4382]">{`{{companyName}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{email}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{resetLink}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{invoiceNumber}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{amount}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{plan}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{weekLabel}}`}</code>,{" "}
+                <code className="text-[#0f4382]">{`{{scansCount}}`}</code>.
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-[#E5E7EB] flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="border-[#E5E7EB]"
+                onClick={() => { setEditingTemplate(null); setDraft(null); }}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-[#0f4382] hover:bg-[#0a3060]"
+                onClick={saveDraft}
+              >
+                Enregistrer le template
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
