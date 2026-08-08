@@ -21,6 +21,11 @@ model User {
   whatsapp      String?
   emailContact  String?
   address       String?
+  // Réseaux sociaux (renseignés par le fabricant, affichés sur sa fiche produit)
+  socialFacebook   String?
+  socialTwitter    String?
+  socialLinkedin   String?
+  socialInstagram  String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -41,31 +46,43 @@ model User {
   b2bReviewsReceived      B2BReview[]   @relation("FabricantReviews")
   productReviewsReceived  ProductReview[] @relation("ProductReviewFabricant")
   conversations           Conversation[]
+  apiKeys                 ApiKey[]
+  webhooks                Webhook[]
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  icon      String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String   @unique
+  icon         String?
+  pageTemplate String   @default("standard") // 'standard' | 'export_produce' | 'artisanat' | 'cosmetique' | 'textile'
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   products  Product[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  userId      String
-  categoryId  String
-  name        String
-  brand       String
-  description String?
-  photoUrl    String?
-  weight      String?
-  isVisible   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String
+  categoryId         String
+  name               String
+  brand              String
+  description        String?
+  photoUrl           String?
+  weight             String?
+  isVisible          Boolean  @default(true)
+  // Code-barres produit (EAN-13, EAN-8, UPC-A, Code 128...) pour affichage à côté du QR code
+  barcode            String?
+  // Champs spécifiques au template 'export_produce' (ignorés sinon)
+  variety            String?   // ex: "Kent", "Keitt" pour les mangues
+  regionOfProduction String?   // ex: "Casamance", "Vallée du fleuve Sénégal"
+  producerStory      String?   // présentation/histoire du producteur
+  producerPhotoUrl   String?   // photo du producteur/verger
+  gpsLat             Float?
+  gpsLng             Float?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category @relation(fields: [categoryId], references: [id])
@@ -97,16 +114,46 @@ model Lot {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  // Champs spécifiques au template 'export_produce' (ignorés sinon)
+  harvestDate            DateTime?  // date de récolte
+  packagingDate          DateTime?  // date de conditionnement
+  packagingStation       String?    // station de conditionnement
+  containerNumber        String?    // n° de conteneur
+  palletNumber           String?    // n° de palette
+  shipDate               DateTime?  // date d'expédition
+  destination            String?    // pays/ville de destination
+  carrier                String?    // transporteur
+  caliber                String?    // calibre (ex: "5-6", "Calibre A")
+  avgWeightGram          Int?       // poids moyen (g)
+  brix                   Float?     // taux de sucre (°Brix)
+  storageTempC           Float?     // température de conservation (°C)
+  shelfLifeDays          Int?       // durée de conservation (jours)
+
   product                Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   qrCodes                QRCode[]
   // V3 relations
   aiAnomalies            AIAnomaly[]
   blockchainCertificate  BlockchainCertificate?
   productReviews         ProductReview[]
+  lotMedia               LotMedia[]
 
   @@index([productId])
   @@index([status])
 }
+
+model LotMedia {
+  id        String   @id @default(cuid())
+  lotId     String
+  type      String   // 'photo' | 'video'
+  url       String   // URL externe (YouTube/Vimeo pour les vidéos) ou locale
+  caption   String?
+  createdAt DateTime @default(now())
+
+  lot       Lot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+}
+
 
 model QRCode {
   id            String   @id @default(cuid())
@@ -138,14 +185,24 @@ model Scan {
   country     String?
   city        String?
   ipAddress   String?
+  // V4 — geolocation, photo, anonymous user tracking
+  latitude    Float?
+  longitude   Float?
+  region      String?  // administrative region (e.g. "Dakar", "Thiès")
+  photoUrl    String?  // optional photo taken by consumer at scan time
+  photoMatchScore Float? // 0-100 — IA similarity vs reference packaging
+  deviceFingerprint String? // anonymous browser fingerprint for history/rewards
 
   qrCode      QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reward      RewardTransaction?
 
   @@index([qrCodeId])
   @@index([userId])
   @@index([scannedAt])
   @@index([country])
+  @@index([region])
+  @@index([deviceFingerprint])
 }
 
 // === V2: Système d'abonnement ===
@@ -510,4 +567,299 @@ model ProductReview {
   @@index([lotId])
   @@index([productId])
   @@index([fabricantId])
+}
+
+// === V4: PWA, Rewards, Insights, A/B Testing, Nutrition ===
+
+/// Lot recalled by the manufacturer or authorities.
+/// One recall can affect multiple lots (batch issue).
+model Recall {
+  id              String   @id @default(cuid())
+  title           String
+  reason          String
+  severity        String   @default("warning") // 'info' | 'warning' | 'critical'
+  recallDate      DateTime @default(now())
+  // Affected scope
+  productId       String?
+  lotIds          String?  // JSON array of lot IDs (CSV-compatible alternative)
+  // Notification tracking
+  notifiedScansCount Int   @default(0) // # of past scans that received push/SMS
+  status          String   @default("active") // 'active' | 'resolved' | 'cancelled'
+  authority       String?  // issuing body (SONAC, manufacturer, etc.)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+  @@index([status])
+}
+
+/// Loyalty wallet — one row per anonymous consumer (deviceFingerprint) OR per registered user.
+model RewardWallet {
+  id                  String   @id @default(cuid())
+  deviceFingerprint   String?  // anonymous consumers
+  userId              String?  // registered users (if linked)
+  pointsBalance       Int      @default(0)
+  totalEarned         Int      @default(0)
+  totalRedeemed       Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  transactions        RewardTransaction[]
+  redemptions         CouponRedemption[]
+
+  @@unique([deviceFingerprint, userId])
+  @@index([userId])
+  @@index([deviceFingerprint])
+}
+
+/// Each scan (or action) generates points. Keeps an immutable ledger.
+model RewardTransaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  scanId      String?  @unique // 1 scan = 1 transaction max
+  type        String   // 'scan' | 'review' | 'referral' | 'bonus' | 'redemption'
+  points      Int      // positive for earn, negative for redemption
+  description String?
+  createdAt   DateTime @default(now())
+
+  wallet      RewardWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  scan        Scan?        @relation(fields: [scanId], references: [id], onDelete: SetNull)
+
+  @@index([walletId])
+  @@index([type])
+}
+
+/// Coupons offered by manufacturers — redeemable against points.
+model Coupon {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  title           String
+  description     String?
+  pointsCost      Int      // points required to redeem
+  discountValue   Int?     // discount value in FCFA
+  discountPercent Int?     // OR discount percentage (mutually exclusive with value)
+  productIds      String?  // JSON array of eligible product IDs (null = all)
+  validFrom       DateTime @default(now())
+  validUntil      DateTime
+  totalQuantity   Int      @default(100)
+  redeemedQuantity Int     @default(0)
+  isActive        Boolean  @default(true)
+  codePrefix      String   @default("VSCAN") // generates unique codes like VSCAN-XXXX
+  createdAt       DateTime @default(now())
+
+  redemptions     CouponRedemption[]
+
+  @@index([fabricantId])
+  @@index([isActive])
+}
+
+/// Tracks a coupon redeemed by a consumer.
+model CouponRedemption {
+  id          String   @id @default(cuid())
+  couponId    String
+  walletId    String
+  code        String   @unique // generated unique code (e.g. VSCAN-AB12CD)
+  pointsSpent Int
+  status      String   @default("issued") // 'issued' | 'used' | 'expired'
+  redeemedAt  DateTime @default(now())
+  usedAt      DateTime?
+
+  coupon      Coupon        @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  wallet      RewardWallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@index([walletId])
+  @@index([status])
+}
+
+/// Premium weekly market insights generated per manufacturer.
+/// Behind a paywall (Pro/Enterprise plans).
+model MarketInsight {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalScans      Int      @default(0)
+  uniqueConsumers Int      @default(0)
+  topRegion       String?
+  topDayOfWeek    String?  // e.g. "Thursday"
+  topHour         Int?     // 0-23
+  growthPct       Float?   // vs previous period
+  // Top region breakdown (JSON)
+  regionsBreakdown String? // JSON: [{region, scans, share}]
+  // Recommendations text
+  summaryHtml     String?
+  isPremium       Boolean  @default(true)
+  generatedAt     DateTime @default(now())
+
+  @@index([fabricantId])
+  @@index([periodStart])
+}
+
+/// Anonymized competitor benchmark — share of scans within a category.
+model CompetitorBenchmark {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  categoryId      String
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalCategoryScans Int   @default(0)
+  fabricantScans  Int      @default(0)
+  fabricantSharePct Float  @default(0)
+  rank            Int      @default(1)
+  topCompetitorSharePct Float? // leader's share (anonymized)
+  generatedAt     DateTime @default(now())
+
+  @@index([fabricantId])
+  @@index([categoryId])
+}
+
+/// A/B testing of packaging — multiple QR codes per lot, each tied to a variant.
+model PackagingVariant {
+  id              String   @id @default(cuid())
+  productId       String
+  name            String   // e.g. "Design A — Rouge"
+  description     String?
+  qrCodeId        String?  // linked QR code (1:1 with variant)
+  // Photo reference for IA matching (consumer scan photo vs this)
+  referencePhotoUrl String?
+  // Stats
+  scansCount      Int      @default(0)
+  conversionCount Int      @default(0) // # of scans leading to a desired action (review, purchase intent)
+  status          String   @default("active") // 'draft' | 'active' | 'paused' | 'completed'
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([productId])
+  @@index([status])
+}
+
+/// Auto-synced certification from official APIs (SONAC, Halal, Bio, ISO).
+/// Mirrors the manual Certification model but with `source: 'auto'`.
+model OfficialCertification {
+  id              String   @id @default(cuid())
+  fabricantId     String
+  source          String   // 'sonac' | 'halal' | 'bio' | 'iso' | 'fda'
+  externalId      String   // ID from the official register
+  certNumber      String?
+  productNames    String?  // JSON array — products covered
+  issuedAt        DateTime?
+  expiresAt       DateTime?
+  status          String   @default("valid") // 'valid' | 'expired' | 'suspended' | 'revoked'
+  rawPayload      String?  // JSON snapshot from the API
+  lastSyncedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([fabricantId])
+  @@index([source])
+  @@index([status])
+}
+
+/// Nutrition info + carbon footprint per product.
+/// Used for display on public product page + EU compliance prep.
+model NutritionInfo {
+  id              String   @id @default(cuid())
+  productId       String   @unique
+  // Nutri-Score (a/b/c/d/e) — computed from nutrients
+  nutriScore      String?  // 'a' | 'b' | 'c' | 'd' | 'e'
+  nutriScoreValue Int?     // -15 to +40 (algorithm input)
+  // Per 100g
+  energyKcal      Int?
+  fatG            Float?
+  saturatedFatG   Float?
+  carbsG          Float?
+  sugarsG         Float?
+  fiberG          Float?
+  proteinG        Float?
+  saltG           Float?
+  // Allergens (CSV)
+  allergens       String?
+  // Environmental
+  carbonFootprintKgCo2e Float? // per kg of product
+  waterFootprintL       Float? // per kg of product
+  ecoScore             String? // 'a' | 'b' | 'c' | 'd' | 'e'
+  // Ingredients
+  ingredientsList String?
+  // Source
+  dataSource      String   @default("manual") // 'manual' | 'openfoodfacts' | 'ocr' | 'ai_generated'
+  lastVerifiedAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+}
+
+// ============================================================
+// API Keys — pour intégration avec systèmes externes (ERP, CRM,
+// marketplaces, applications tierces). Permet à un fabricant ou
+// admin de générer des clés d'API persistantes qui s'authentifient
+// via l'en-tête Authorization: Bearer <key>.
+// ============================================================
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String    // propriétaire de la clé
+  name        String    // libellé (ex: "ERP Sage", "Marketplace Jumia")
+  hashedKey   String    @unique // hash bcrypt de la clé brute
+  prefix      String    // 8 premiers caractères affichables (ex: "vsk_abc1...")
+  permissions String    @default("read") // 'read' | 'readwrite' | 'admin'
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime? // null = active, non-null = révoquée
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hashedKey])
+}
+
+// ============================================================
+// WEBHOOKS — pour notifier les systèmes externes
+// ------------------------------------------------------------
+// Quand un événement se produit (ex: scan d'un QR code), VerifScan
+// envoie une requête HTTP POST signée à toutes les URLs configurées
+// par le fabricant. Le secret permet au destinataire de vérifier
+// l'authenticité via un HMAC SHA-256 dans le header X-VerifScan-Signature.
+// ============================================================
+
+model Webhook {
+  id          String    @id @default(cuid())
+  userId      String    // propriétaire (fabricant)
+  url         String    // URL de destination (https://...)
+  secret      String    // secret partagé pour HMAC signature
+  events      String    // CSV des événements écoutés: "scan,recall,review,lot_created,product_created"
+  description String?   // libellé optionnel (ex: "Notifier ERP Sage")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDelivery[]
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model WebhookDelivery {
+  id          String    @id @default(cuid())
+  webhookId   String
+  event       String    // "scan" | "recall" | "review" | "lot_created" | "product_created"
+  payload     String    // JSON stringifié envoyé au destinataire
+  status      String    @default("pending") // 'pending' | 'success' | 'failed' | 'retry'
+  statusCode  Int?      // code HTTP de la réponse (200, 500, etc.)
+  response    String?   // body de la réponse tronqué (max 2 KB)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lastError   String?
+  deliveredAt DateTime?
+  createdAt   DateTime  @default(now())
+  nextRetryAt DateTime?
+
+  webhook     Webhook   @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([status])
+  @@index([event])
+  @@index([createdAt])
 }
