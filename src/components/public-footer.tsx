@@ -1,25 +1,35 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, ShieldCheck } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Facebook, Twitter, Linkedin, Instagram, ShieldCheck } from "lucide-react";
 import { VerifScanLogo } from "@/components/verifscan-logo";
 
 const footerLinks = {
   produit: [
     { label: "Produits", href: "/produits" },
+    { label: "Le concept", href: "/concept" },
     { label: "Fonctionnalités", href: "/#fonctionnalites" },
-    { label: "Tarifs", href: "/#pricing" },
-    { label: "Marketplace B2B", href: "/marketplace" },
+    { label: "Carte de chaleur", href: "/carte" },
   ],
   entreprise: [
-    { label: "À propos", href: "/#about" },
+    { label: "À propos", href: "/a-propos" },
+    { label: "Devenir partenaire", href: "/devenir-partenaire" },
     { label: "Contact", href: "/contact" },
-    { label: "Blog", href: "/#blog" },
-    { label: "Carrières", href: "/#careers" },
+    { label: "Connexion", href: "/login" },
+  ],
+  consommateur: [
+    { label: "Mon historique", href: "/mon-historique" },
+    { label: "Mes récompenses", href: "/mes-recompenses" },
+    { label: "Carte des scans", href: "/carte" },
+  ],
+  developpeurs: [
+    { label: "API REST", href: "/developers" },
+    { label: "Webhooks", href: "/developers#webhooks" },
+    { label: "Créer une clé API", href: "/dashboard/api-keys" },
   ],
   legal: [
-    { label: "Mentions légales", href: "/#mentions" },
-    { label: "CGU", href: "/#cgu" },
-    { label: "Politique de confidentialité", href: "/#privacy" },
-    { label: "Cookies", href: "/#cookies" },
+    { label: "Mentions légales", href: "/mentions-legales" },
+    { label: "CGU", href: "/cgu" },
+    { label: "Politique de confidentialité", href: "/mentions-legales#donnees" },
+    { label: "Cookies", href: "/mentions-legales#cookies" },
   ],
 };
 
@@ -34,10 +44,13 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#0a3060] text-white">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-10">
           {/* Brand */}
-          <div className="md:col-span-4 space-y-5">
-            <VerifScanLogo size="lg" variant="light" />
+          <div className="lg:col-span-2 space-y-5">
+            {/* Logo sur pastille blanche pour lisibilité sur fond bleu foncé */}
+            <div className="inline-flex items-center bg-white rounded-xl px-4 py-2.5 shadow-lg">
+              <VerifScanLogo size="md" variant="color" />
+            </div>
             <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
               La vérité au bout du scan. VerifScan offre aux fabricants un passeport
               numérique pour leurs produits, garantissant traçabilité, authenticité
@@ -66,7 +79,7 @@ export function PublicFooter() {
           </div>
 
           {/* Links */}
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Produit</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.produit.map((l) => (
@@ -79,7 +92,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Entreprise</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.entreprise.map((l) => (
@@ -92,7 +105,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Légal</h3>
             <ul className="space-y-3 text-sm">
               {footerLinks.legal.map((l) => (
@@ -105,22 +118,67 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="lg:col-span-1">
+            <h3 className="font-semibold text-sm text-white mb-4 font-display">Développeurs</h3>
+            <ul className="space-y-3 text-sm">
+              {footerLinks.developpeurs.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-gray-400 hover:text-[#2ebd5a] transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-1">
+            <h3 className="font-semibold text-sm text-white mb-4 font-display">Consommateur</h3>
+            <ul className="space-y-3 text-sm">
+              {footerLinks.consommateur.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="text-gray-400 hover:text-[#2ebd5a] transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-sm text-white mb-4 font-display">Contact</h3>
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-start gap-2">
-                <Mail className="size-4 mt-0.5 text-[#0f4382] flex-shrink-0" />
-                <a href="mailto:contact@verifscan.sn" className="hover:text-white transition-colors">
-                  contact@verifscan.sn
+                <Mail className="size-4 mt-0.5 text-[#2ebd5a] flex-shrink-0" />
+                <a
+                  href="mailto:info@verifscan.com"
+                  className="hover:text-white transition-colors break-all"
+                >
+                  info@verifscan.com
                 </a>
               </li>
               <li className="flex items-start gap-2">
-                <Phone className="size-4 mt-0.5 text-[#0f4382] flex-shrink-0" />
-                <span>+221 33 800 00 00</span>
+                <Phone className="size-4 mt-0.5 text-[#2ebd5a] flex-shrink-0" />
+                <a
+                  href="tel:+221784858226"
+                  className="hover:text-white transition-colors"
+                >
+                  78 485 82 26
+                </a>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin className="size-4 mt-0.5 text-[#0f4382] flex-shrink-0" />
-                <span>Dakar, Sénégal</span>
+                <MessageCircle className="size-4 mt-0.5 text-[#2ebd5a] flex-shrink-0" />
+                <a
+                  href="https://wa.me/2217848582226"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  WhatsApp: +221 78 485 82 226
+                </a>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin className="size-4 mt-0.5 text-[#2ebd5a] flex-shrink-0" />
+                <span>Sicap Foire, Lot N° 1256<br />Dakar, Sénégal</span>
               </li>
             </ul>
           </div>

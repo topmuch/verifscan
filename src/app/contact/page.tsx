@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Phone, MapPin, MessageCircle, Send } from "lucide-react";
+import { Mail, Phone, MapPin, MessageCircle, Send, Clock } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ export default function ContactPage() {
             Parlons de votre projet
           </h1>
           <p className="mt-3 text-gray-600 max-w-2xl">
-            Une question sur VerifScan, une démo, ou besoin d'accompagnement pour déployer
+            Une question sur VerifScan, une démo, ou besoin d&apos;accompagnement pour déployer
             la traçabilité dans votre entreprise ? Notre équipe est à votre écoute.
           </p>
         </div>
@@ -38,8 +38,11 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Email</p>
-                      <a href="mailto:contact@verifscan.sn" className="font-semibold text-gray-900 hover:text-emerald-700">
-                        contact@verifscan.sn
+                      <a
+                        href="mailto:info@verifscan.com"
+                        className="font-semibold text-gray-900 hover:text-emerald-700 break-all"
+                      >
+                        info@verifscan.com
                       </a>
                     </div>
                   </li>
@@ -49,8 +52,11 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Téléphone</p>
-                      <a href="tel:+221338000000" className="font-semibold text-gray-900 hover:text-emerald-700">
-                        +221 33 800 00 00
+                      <a
+                        href="tel:+221784858226"
+                        className="font-semibold text-gray-900 hover:text-emerald-700"
+                      >
+                        78 485 82 26
                       </a>
                     </div>
                   </li>
@@ -61,12 +67,12 @@ export default function ContactPage() {
                     <div>
                       <p className="text-gray-500">WhatsApp</p>
                       <a
-                        href="https://wa.me/221338000000"
+                        href="https://wa.me/2217848582226"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-semibold text-gray-900 hover:text-emerald-700"
                       >
-                        +221 33 800 00 00
+                        +221 78 485 82 226
                       </a>
                     </div>
                   </li>
@@ -77,9 +83,13 @@ export default function ContactPage() {
                     <div>
                       <p className="text-gray-500">Adresse</p>
                       <p className="font-semibold text-gray-900">
-                        Dakar, Sénégal
+                        Sicap Foire, Lot N° 1256
                       </p>
-                      <p className="text-xs text-gray-500">Lun - Ven : 9h - 18h</p>
+                      <p className="font-semibold text-gray-900">Dakar, Sénégal</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <Clock className="size-3" />
+                        Lun - Ven : 9h - 18h
+                      </p>
                     </div>
                   </li>
                 </ul>
@@ -104,89 +114,128 @@ export default function ContactPage() {
             </Card>
           </div>
 
-          <Card className="vs-card-shadow border-emerald-100">
-            <CardContent className="p-6">
-              <h2 className="font-semibold flex items-center gap-2 mb-4">
-                <Send className="size-5 text-emerald-600" />
-                Envoyez-nous un message
-              </h2>
-              <form
-                className="space-y-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget);
-                  const subject = encodeURIComponent(
-                    `[VerifScan Contact] ${fd.get("subject") || "Demande"}`
-                  );
-                  const body = encodeURIComponent(
-                    `Nom: ${fd.get("name")}\nEmail: ${fd.get("email")}\nEntreprise: ${fd.get("company")}\n\n${fd.get("message")}`
-                  );
-                  window.location.href = `mailto:contact@verifscan.sn?subject=${subject}&body=${body}`;
-                }}
-              >
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Nom complet *</label>
-                    <input
-                      name="name"
-                      required
-                      className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Awa Diop"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Email *</label>
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="awa@entreprise.sn"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Entreprise</label>
-                  <input
-                    name="company"
-                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Sarine Bio"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Sujet</label>
-                  <select
-                    name="subject"
-                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                  >
-                    <option>Demande de démo</option>
-                    <option>Question produit</option>
-                    <option>Partenariat</option>
-                    <option>Support technique</option>
-                    <option>Autre</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Message *</label>
-                  <textarea
-                    name="message"
-                    required
-                    rows={5}
-                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-                    placeholder="Votre message..."
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 text-sm transition-colors"
+          {/* Carte Google Maps */}
+          <Card className="vs-card-shadow border-emerald-100 overflow-hidden">
+            <CardContent className="p-0">
+              <div className="p-6 pb-3 flex items-center justify-between">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <MapPin className="size-5 text-emerald-600" />
+                  Nous trouver
+                </h2>
+                <a
+                  href="https://www.google.com/maps/@14.7486007,-17.4828143,17z?entry=ttu&g_ep=EgoyMDI2MDcyMi4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-emerald-700 hover:underline"
                 >
-                  <Send className="size-4" />
-                  Envoyer le message
-                </button>
-              </form>
+                  Ouvrir dans Google Maps →
+                </a>
+              </div>
+              <div className="relative w-full" style={{ height: 380 }}>
+                <iframe
+                  title="VerifScan — Sicap Foire, Dakar"
+                  src="https://www.google.com/maps?q=14.7486007,-17.4828143&z=17&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, display: "block" }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+              <div className="p-6 pt-4 bg-emerald-50/50 border-t border-emerald-100">
+                <p className="text-sm font-semibold text-gray-900">VerifScan</p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Sicap Foire, Lot N° 1256 — Dakar, Sénégal
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Formulaire de contact — sur toute la largeur */}
+        <Card className="vs-card-shadow border-emerald-100 mt-8">
+          <CardContent className="p-6">
+            <h2 className="font-semibold flex items-center gap-2 mb-4">
+              <Send className="size-5 text-emerald-600" />
+              Envoyez-nous un message
+            </h2>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                const subject = encodeURIComponent(
+                  `[VerifScan Contact] ${fd.get("subject") || "Demande"}`
+                );
+                const body = encodeURIComponent(
+                  `Nom: ${fd.get("name")}\nEmail: ${fd.get("email")}\nEntreprise: ${fd.get("company")}\n\n${fd.get("message")}`
+                );
+                window.location.href = `mailto:info@verifscan.com?subject=${subject}&body=${body}`;
+              }}
+            >
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Nom complet *</label>
+                  <input
+                    name="name"
+                    required
+                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Awa Diop"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Email *</label>
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="awa@entreprise.sn"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Entreprise</label>
+                <input
+                  name="company"
+                  className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Sarine Bio"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Sujet</label>
+                <select
+                  name="subject"
+                  className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                >
+                  <option>Demande de démo</option>
+                  <option>Question produit</option>
+                  <option>Partenariat</option>
+                  <option>Support technique</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Message *</label>
+                <textarea
+                  name="message"
+                  required
+                  rows={5}
+                  className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  placeholder="Votre message..."
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 text-sm transition-colors"
+              >
+                <Send className="size-4" />
+                Envoyer le message
+              </button>
+            </form>
+          </CardContent>
+        </Card>
       </section>
     </PublicShell>
   );
