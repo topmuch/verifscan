@@ -11,6 +11,15 @@ const createSchema = z.object({
   weight: z.string().optional(),
   categoryId: z.string().min(1),
   isVisible: z.boolean().default(true),
+  // Code-barres produit (EAN-13, EAN-8, UPC-A, Code 128...) affiché à côté du QR
+  barcode: z.string().optional(),
+  // Champs spécifiques au template export_produce
+  variety: z.string().optional(),
+  regionOfProduction: z.string().optional(),
+  producerStory: z.string().optional(),
+  producerPhotoUrl: z.string().optional().or(z.literal("")),
+  gpsLat: z.number().optional(),
+  gpsLng: z.number().optional(),
 });
 
 /**
@@ -44,7 +53,7 @@ export async function GET(req: Request) {
       skip,
       take: limit,
       include: {
-        category: { select: { id: true, name: true, icon: true } },
+        category: { select: { id: true, name: true, icon: true, pageTemplate: true } },
         user: {
           select: {
             id: true,
@@ -105,6 +114,14 @@ export async function POST(req: Request) {
         photoUrl: data.photoUrl || null,
         weight: data.weight?.trim() || null,
         isVisible: data.isVisible,
+        barcode: data.barcode?.trim() || null,
+        // Champs export_produce (ignorés pour les autres templates)
+        variety: data.variety?.trim() || null,
+        regionOfProduction: data.regionOfProduction?.trim() || null,
+        producerStory: data.producerStory?.trim() || null,
+        producerPhotoUrl: data.producerPhotoUrl || null,
+        gpsLat: data.gpsLat ?? null,
+        gpsLng: data.gpsLng ?? null,
       },
       include: { category: true },
     });
